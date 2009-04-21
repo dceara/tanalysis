@@ -2,6 +2,12 @@ open Cil_types
 
 type taintValue = T | U | G of varinfo list
 
+type formalParam = Formal of varinfo
+
+type actualParam = Actual of varinfo
+
+type paramBinding = Param of formalParam * actualParam
+
 (* Gamma mapping *)
 module Gamma = struct
     
