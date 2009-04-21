@@ -4,18 +4,24 @@ open Db_types
 open Db
 open Cilutil
 
+(* obsolete *)
 type dependencyList = string list (* TODO add real dependency list types *)
 
+(* obsolete *)
 type taintLatticeValue = T | U | G of dependencyList 
 
+(* obsolete *)
 type taintLattice = Value of taintLatticeValue Inthash.t
 
+(* obsolete *)
 type statementsHash = SH of taintLattice Inthash.t
 
+(* obsolete *)
 (* TODO must combine dependencies for real and remove duplicates *)
 let combine_dependency_lists d1 d2 =
     List.append d1 d2 
 
+(* obsolete *)
 let compute_new_taint v1 v2 =
     match (v1, v2) with 
         | T, _
@@ -26,6 +32,7 @@ let compute_new_taint v1 v2 =
         | (G deps1), (G deps2) -> (G (combine_dependency_lists deps1 deps2))
         
 (* returns true if the values are new *)
+(* obsolete *)
 let test_and_compute_new_taint (Value old) (Value new_) =
     (Inthash.fold 
         (fun id v result ->
@@ -37,7 +44,8 @@ let test_and_compute_new_taint (Value old) (Value new_) =
             else
                 result)
         old false, new_)
-    
+  
+(* obsolete *)  
 module TaintComputer(Param:sig
 	                    val current_values : statementsHash
 	                 end) = struct
@@ -93,6 +101,15 @@ module TaintComputer(Param:sig
     let doGuard _ _ _ = Dataflow.GDefault
 end
 
+(* Computes the taint analysis for a given function with regard to already *)
+(* computed functions and library functions. *)
+(* Params: *)
+(* func - the fundec for the requested function *)
+(* envs - the Hastbl of previously computed function environments *)
+let compute_taint func envs =
+    ignore ()
+
+(* obsolete *)
 let compute_taint funcdec initialVarTaint = 
     let module TaintComputer = TaintComputer(struct
 			                                    let current_values = (SH (Inthash.create 512))
