@@ -31,9 +31,3 @@ module Gamma = struct
         Hashtbl.add env vinfo.vid taint
         
 end
-
-(* Gamma lib mapping *)
-module GammaLib = struct
-    include Gamma
-end
-
