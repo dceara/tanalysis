@@ -8,6 +8,10 @@ type actualParam = Actual of varinfo
 
 type paramBinding = Param of formalParam * actualParam
 
+type environment = (varinfo, taintValue) Hashtbl.t
+
+type functionEnvironment = (varinfo, environment) Hashtbl.t
+
 (* Gamma mapping *)
 module Gamma = struct
     

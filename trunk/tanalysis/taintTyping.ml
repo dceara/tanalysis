@@ -80,7 +80,7 @@ module Typing = struct
     (* Processes a while statement. Combines the types for the assigned variables *)
     (* with regard to the taintedness of the guard expression. *)
     (* Params: *)
-    (* env - the current environmen *)
+    (* env - the current environment *)
     (* env_loop - the environment after executing the loop *)
     (* expr_vinfos - the variables used in the guard expression *)
     (* assigned_loop - the list of variables assigned in the loop *)
