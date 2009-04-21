@@ -15,7 +15,7 @@ module Typing = struct
             | (U, U) -> U
             | ((G g1), (G g2)) -> (G (List.concat [g1; g2]))
     
-    (* Literals are always untainte.d *)
+    (* Literals are always untainted. *)
     let process_literal env _ =
         U
     
