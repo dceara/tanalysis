@@ -96,6 +96,39 @@ module Typing = struct
             assigned_loop;
         env
     
-    let process_call env func env_func =
-        
+    (* Processes a function call. Instantiates the taint types for a previously *)
+    (* computed function. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* func - the fundec for the called function *)
+    (* vinfo - the variable assigned by the function call: for now we consider that *)
+    (* functions always return a value and do not have side effects *) 
+    (* env_funv - the previously computed callee environment *)
+    (* param_bindings - the list of bindings between formal and actual parameters for *)
+    (* the callee *)
+    let process_call env func vinfo env_func param_bindings =
+        (* Local function used for finding the actual parameter passed for a *)
+        (* formal one. *)
+        let find_binding param_bindings formal_info =
+            List.find
+                (fun (Param ((Formal finfo), _)) 
+                    -> formal_info.vid = finfo.vid) 
+                param_bindings 
+        in
+        (* Local function used for instantiating all the formal parameter taints *)
+        (* according to actual parameter taints. *)
+        let instantiate_call env ret_taint param_bindings =
+            List.fold_left 
+                (fun t dep -> 
+                    let (Param (_, (Actual ainfo))) = find_binding param_bindings dep in
+                    combine_taint t (Gamma.get_taint env ainfo))
+	            U
+	            ret_taint
+        in
+        (match Gamma.get_taint env_func func.svar with
+            | U -> Gamma.set_taint env vinfo U
+            | T -> Gamma.set_taint env vinfo T
+            | (G g) 
+                -> Gamma.set_taint env vinfo (instantiate_call env g param_bindings));
+        env
 end
