@@ -9,10 +9,10 @@ RM=rm -f
 
 build: pack
 
-pack: utils taintGamma taintTyping taintStatementComputer customTaintFlow \
+pack: utils taintGamma taintTyping taintInstructionComputer customTaintFlow \
 	sccCallgraph taintFlow scopeBuilder taint 
 	$(CC) $(PACKFLAGS) utils.cmo taintGamma.cmo taintTyping.cmo \
-	taintStatementComputer.cmo customTaintFlow.cmo \
+	taintInstructionComputer.cmo customTaintFlow.cmo \
 	sccCallgraph.cmo taintFlow.cmo scopeBuilder.cmo taint.cmo  
 
 sccCallgraph: sccCallgraph.ml
@@ -33,7 +33,7 @@ taintGamma: taintGamma.ml
 taintTyping: taintTyping.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 
-taintStatementComputer: taintStatementComputer.ml
+taintInstructionComputer: taintInstructionComputer.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 	
 customTaintFlow: customTaintFlow.ml
