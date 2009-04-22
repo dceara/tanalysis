@@ -3,37 +3,66 @@ open Cil
 open Db_types
 open Db
 open Cilutil
+open TaintGamma
+open TaintTyping
 
 (* obsolete *)
+(*
 type dependencyList = string list (* TODO add real dependency list types *)
+*)
 
 (* obsolete *)
+(*
 type taintLatticeValue = T | U | G of dependencyList 
+*)
 
 (* obsolete *)
+(*
 type taintLattice = Value of taintLatticeValue Inthash.t
+*)
 
 (* obsolete *)
+(*
 type statementsHash = SH of taintLattice Inthash.t
+*)
 
 (* obsolete *)
+(*
 (* TODO must combine dependencies for real and remove duplicates *)
 let combine_dependency_lists d1 d2 =
     List.append d1 d2 
+*)
 
 (* obsolete *)
-let compute_new_taint v1 v2 =
+(* let compute_new_taint v1 v2 =
     match (v1, v2) with 
         | T, _
         | _, T -> T
         | (G deps) , U -> (G deps) 
         | U, (G deps) -> (G deps)
         | U, U -> U
-        | (G deps1), (G deps2) -> (G (combine_dependency_lists deps1 deps2))
-        
+        | (G deps1), (G deps2) -> (G (combine_dependency_lists deps1 deps2)) *)
+             
+
+let compute_initial_taint func =
+    let env = Gamma.create_env () in
+    List.iter
+        (fun formal
+            -> Gamma.set_taint env formal.vid (G [formal]))
+        func.sformals;
+    List.iter
+        (fun local
+            -> Gamma.set_taint env local.vid T)
+        func.slocals;
+    env
+
+(* TODO: implement this function *)
+let test_and_compute_new_taint old new_ =
+    (false, new_)
+
 (* returns true if the values are new *)
-(* obsolete *)
-let test_and_compute_new_taint (Value old) (Value new_) =
+(* obsolete *)    
+(* let test_and_compute_new_taint (Value old) (Value new_) =
     (Inthash.fold 
         (fun id v result ->
             let v2 = Inthash.find new_ id in
@@ -43,32 +72,34 @@ let test_and_compute_new_taint (Value old) (Value new_) =
                 true
             else
                 result)
-        old false, new_)
+        old false, new_) *)
   
 (* obsolete *)  
 module TaintComputer(Param:sig
-	                    val current_values : statementsHash
+	                    val current_values : statementsEnvironment
+                        val idom_states_stack : environmentStack
 	                 end) = struct
 
     let name = "taint-computer"
     let debug = ref true
-    type t = taintLattice
+    type t = environment
     module StmtStartData = struct
-	    type data = taintLattice
+        type data = environment
 	    
 	    let values = 
-            match Param.current_values with 
-                | SH latticeHash -> latticeHash
-                
-	    let clear () = Inthash.clear values 
-	    let mem = Inthash.mem values
-	    let find = Inthash.find values
+            Param.current_values
+        
+        let clear () = Inthash.clear values
+	    let mem = Inthash.mem values 
+        let find = Inthash.find values
 	    let replace = Inthash.replace values
 	    let add = Inthash.add values
 	    let iter f = Inthash.iter f values            
     end 
 
-    let pretty fmt _ = Format.fprintf fmt "%s\n" "Not implemented yet"
+    let pretty fmt state = 
+        Format.fprintf fmt "%s\n" "Printing current dataflow state";
+        Gamma.pretty_print fmt state
 
     let copy (s:t) = s
 
@@ -78,11 +109,13 @@ module TaintComputer(Param:sig
         Simply 'join' the two states.
         Return None if the new state is already included in the old one
         to stop processing (fix point reached).
+        TODO: we also have to combine the values from the immediate dominator
+        for the two blocks (i.e. for if statements)
     *)
     let combinePredecessors stmt ~old new_ =
         let is_new, new_values = test_and_compute_new_taint old new_ in
         if is_new then (
-            Some (Value new_values)
+            Some new_values
         ) else (
             (* debug is a reference.. that's why we use ! *)
             (if !debug then
@@ -107,23 +140,22 @@ end
 (* func - the fundec for the requested function *)
 (* envs - the Hastbl of previously computed function environments *)
 let compute_taint func envs =
-    ignore ()
-
-(* obsolete *)
-let compute_taint funcdec initialVarTaint = 
     let module TaintComputer = TaintComputer(struct
-			                                    let current_values = (SH (Inthash.create 512))
-			                                  end) in
+                                                let current_values = (Inthash.create 512)
+                                                let idom_states_stack = []
+                                            end) in
     let module TaintCompute = Dataflow.ForwardsDataFlow(TaintComputer) in
     let module StartData = TaintComputer.StmtStartData in
-    let start = List.hd funcdec.sallstmts in  
-    Printf.printf "[taint-analysis] computing for function %s\n" funcdec.svar.vname;
-    let stmts = funcdec.sallstmts in
-        List.iter (
-                fun s 
-                    -> Inthash.add 
-                        StartData.values 
-                        s.sid 
-                        (Value (Inthash.copy initialVarTaint))) stmts; 
+    let start = List.hd func.sallstmts in
+    Printf.printf "[taint-analysis] computing for function %s\n" func.svar.vname;
+    let initial_var_taint = compute_initial_taint func in
+    let stmts = func.sallstmts in
+        List.iter 
+            (fun s -> Inthash.add
+                        StartData.values
+                        s.sid
+                        (Hashtbl.copy initial_var_taint))
+            stmts;
         TaintCompute.compute [start];
-        Printf.printf "[taint-analysis] done for function %s\n" funcdec.svar.vname;  
+        Printf.printf "[taint-analysis] done for function %s\n" func.svar.vname
+

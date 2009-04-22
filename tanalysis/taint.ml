@@ -26,7 +26,7 @@ let get_config_name () =
          else
             "default.cfg"
 
-let print_scopes globals =
+(* let print_scopes globals =
     Printf.printf "%s\n" "Listing global variables:";
     Scope.iter_current_scope globals (fun v -> Printf.printf "\t%s\n" v.vname);
     Printf.printf "%s" "=============\n";
@@ -41,15 +41,6 @@ let print_scopes globals =
                 Printf.printf "%s" "=============\n"
             | _ 
             -> ignore ())
-
-let run_taint globals =
-    let fs = List.hd (globals.children) in
-    match fs.func with
-        | None -> ignore ()
-        | Some funcdec 
-        -> 
-            (* TODO initialize lattice values for function *)
-            compute_taint funcdec (Inthash.create 512)
 
 let run_scc_cg () =
     let (mappings, nodes, components) = scc (computeGraph (Cil_state.file ())) in
@@ -68,6 +59,17 @@ let run_scc_cg () =
         
 let test () =
     top_iter (computeGraph (Cil_state.file ()))
+*) 
+
+let run_taint globals =
+    let fs = List.hd (globals.children) in
+    match fs.func with
+        | None -> ignore ()
+        | Some funcdec 
+        -> 
+            (* TODO initialize lattice values for function *)
+            compute_taint funcdec (Hashtbl.create 1000)
+
                                                                                                                 					                                    
 let run fmt =
     if Enabled.get () then 
@@ -75,11 +77,7 @@ let run fmt =
         let scope_visitor = (v :> frama_c_visitor) in 
         visitFramacFile scope_visitor (Cil_state.file ());
         let globals = v#get_global in
-        
-        print_scopes globals;
-        run_taint globals; 
-        run_scc_cg ();
-        test ()
+        run_taint globals
     
 (* Extend the Frama-C command line. *)
 let () =
