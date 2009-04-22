@@ -23,7 +23,7 @@ type functionEnvironment = environment Inthash.t
 module Gamma = struct
     
     let create_env () = 
-        Hashtbl.create 1000
+        Hashtbl.create 1024
     
     (* Returns the taint value or the delayed taint value if found, raises Not_found otherwise *)
     let get_taint env vid =

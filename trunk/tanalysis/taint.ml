@@ -25,11 +25,11 @@ let get_config_name () =
          else
             "default.cfg"
 
-let run_taint globals =
+let run_taint fmt globals =
     let fs = List.hd (globals.children) in
     match fs.func with
         | None -> ignore ()
-        | Some func -> run_custom_taint func (Inthash.create 1024)
+        | Some func -> run_custom_taint fmt func (Inthash.create 1024)
                                                                                                                 					                                    
 let run fmt =
     if Enabled.get () then 
@@ -37,7 +37,7 @@ let run fmt =
         let scope_visitor = (v :> frama_c_visitor) in 
         visitFramacFile scope_visitor (Cil_state.file ());
         let globals = v#get_global in
-        run_taint globals
+        run_taint fmt globals
     
 (* Extend the Frama-C command line. *)
 let () =
