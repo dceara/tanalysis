@@ -16,15 +16,26 @@ module TaintComputer(Param:sig
             | false -> (false, new_)
 
     (* Applies the transformations done by a statement to a given environment. *)
+    (* Params: *)
+    (* stmt - the statement being analyzed *)
+    (* new_env - the environment before the statement is analyzed *)
+    (* is_cond_tainted - taints all the assignments if true *)
     (* Returns the new environment. *)
-    let do_stmt stmt new_env =
+    let do_stmt stmt new_env is_cond_tainted =
         new_env
 
     (* This is the main entry point of the analysis. *)
     (* Params: *)
     (* worklist - the list of statements that will be computed. Initially this *)
-    (* must hold only the starting statement *) 
-    let rec compute worklist =
+    (* must hold only the starting statement *)
+    let start worklist = 
+        compute worklist false
+     
+    (* Params: *)
+    (* worklist - the list of statements that will be computed. *)
+    (* is_cond_tainted - if true all the assignments in the block must become *)
+    (* tainted so that implicit data flows are covered. *)
+    let rec compute worklist is_cond_tainted =
         let current_stmt = List.hd worklist in
         (* Foreach predecessor, combine the results. If there aren't any preds *)
         (* then the statements' environment is returned. *)
@@ -44,7 +55,7 @@ module TaintComputer(Param:sig
 		                current_stmt.preds
         in
         let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
-        let (changed, env) = test_for_change old_env (do_stmt current_stmt new_env) in 
+        let (changed, env) = test_for_change old_env (do_stmt current_stmt new_env is_cond_tainted) in 
         match (changed, env) with
             | (false, _) 
                 -> 
