@@ -8,14 +8,16 @@ type actualParam = Actual of varinfo
 
 type paramBinding = Param of formalParam * actualParam
 
-(* the environment is a mapping between symbol ids and taint values *)
+(* The environment is a mapping between symbol ids and taint values. *)
 type environment = (int, taintValue) Hashtbl.t
 
 type statementsEnvironment = environment Inthash.t
 
 type environmentStack = environment list
 
-type functionEnvironment = (varinfo, environment) Hashtbl.t
+(* The function environment is a mapping between a function id and it's *)
+(* computed environment. *)
+type functionEnvironment = environment Inthash.t
 
 (* Gamma mapping *)
 module Gamma = struct

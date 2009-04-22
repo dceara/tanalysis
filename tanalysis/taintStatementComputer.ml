@@ -49,23 +49,56 @@ let do_assign env lvalue expr cond_taint =
                 env
         | _ ->  env
         
-(* Make the assumption that all the functions return a single value*)
-(* and aren't called from inside an expression *)
-let do_call env null_lval param_exprs cond_taint =
+(* Make the assumption that all the functions return a single value and have no*)
+(* side effects. *)
+let do_call env null_lval param_exprs cond_taint func func_envs =
+    (* Local function used for finding the actual parameter passed for a *)
+    (* formal one. *)
+    let find_binding actuals formals dep =
+        let i = List.fold_left
+		            (fun idx f ->
+		                if dep = f then idx
+		                else idx + 1)
+                    0
+		            formals in
+        List.nth actuals i
+    in
+    (* Local function used for instantiating all the formal parameter taints *)
+    (* according to actual parameter taints. *)
+    let instantiate_call env ret_taint actuals formals =
+        List.fold_left 
+            (fun t dep -> 
+                let param_expr = find_binding actuals formals dep in
+                let param_taint = do_expr env param_expr in
+                Typing.combine_taint t param_taint)
+            U
+            ret_taint
+    in
     match null_lval with
         | Some (Var vinfo, _)
-            -> (* TODO *)
-            env
+            -> 
+                let callee_env = Inthash.find func_envs func.svar.vid in
+                let formals = func.sformals in
+                (match Gamma.get_taint callee_env func.svar.vid with
+                    | U -> Gamma.set_taint env vinfo.vid U
+                    | T -> Gamma.set_taint env vinfo.vid T
+                    | (G g) 
+                        ->
+                            Gamma.set_taint 
+                                env 
+                                vinfo.vid
+                                (instantiate_call env g param_exprs formals));
+                env  
         | _ -> env         
 
 (* Changes the environment according to the instruction *)
-let do_instr env instr cond_taint =
+let do_instr env instr cond_taint func func_envs =
     match instr with
         | (Set (lvalue, expr, _))
             -> do_assign env lvalue expr cond_taint
         | (Call (null_lval, cast_expr, param_exprs, _))
             (* Make the assumption that all the functions return a single value. *)
-            -> do_call env null_lval param_exprs cond_taint
+            -> do_call env null_lval param_exprs cond_taint func func_envs
         | _ -> env
     
 (* Changes the return value in the environment according to the return expression *)

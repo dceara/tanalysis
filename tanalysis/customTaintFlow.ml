@@ -3,10 +3,11 @@ open TaintTyping
 open TaintGamma
 
 module TaintComputer(Param:sig
-                        (* The int key hashtable that holds the environment *)
+                        (* The int key hash table that holds the environment *)
                         (* for each statement in the function. *)
                         val stmt_envs : statementsEnvironment 
-                        val func : fundec                       
+                        val func : fundec         
+                        val func_envs : functionEnvironment              
 	                 end) = struct
 
 
@@ -28,11 +29,13 @@ module TaintComputer(Param:sig
         match stmt.skind with
             | (Instr instr) 
                 -> 
-                    let ret_env = SC.do_instr new_env instr current_cond_taint in
+                    let ret_env = 
+                        SC.do_instr new_env instr current_cond_taint Param.func Param.func_envs in
                     (ret_env, current_cond_taint)
             | (Return (null_expr, _))
                 -> 
-                    let ret_env = SC.do_return_instr new_env Param.func null_expr current_cond_taint in
+                    let ret_env = 
+                        SC.do_return_instr new_env Param.func null_expr current_cond_taint in
                     (ret_env, current_cond_taint)
             | (If (expr, true_block, false_block, _))
                 -> 
@@ -72,7 +75,7 @@ module TaintComputer(Param:sig
         | 0 -> ignore ()
         | _ ->
         let (current_stmt, cond_taint) = List.hd worklist in
-        (* Foreach predecessor, combine the results. If there aren't any preds *)
+        (* For each predecessor, combine the results. If there aren't any preds *)
         (* then the statements' environment is returned. *)
         let new_env = 
             match List.length current_stmt.preds with
