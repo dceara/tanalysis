@@ -5,7 +5,7 @@ open TaintGamma
 module TaintComputer(Param:sig
                         (* The int key hashtable that holds the environment *)
                         (* for each statement in the function. *)
-	                    val stmt_envs : statementsEnvironment 
+                        val stmt_envs : statementsEnvironment 
                         val func : fundec                       
 	                 end) = struct
 
