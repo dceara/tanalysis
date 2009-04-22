@@ -3,10 +3,9 @@ open Cilutil
 open Cil
 open Visitor
 open ScopeBuilder
-open TaintFlow
 open SccCallgraph 
 open Callgraph
-
+open CustomTaintFlow
 
 let option_enabled () = "taint-analysis.enabled"
 let option_config_file () = "taint-analysis.config_file"
@@ -26,50 +25,11 @@ let get_config_name () =
          else
             "default.cfg"
 
-(* let print_scopes globals =
-    Printf.printf "%s\n" "Listing global variables:";
-    Scope.iter_current_scope globals (fun v -> Printf.printf "\t%s\n" v.vname);
-    Printf.printf "%s" "=============\n";
-    
-    Scope.iter_children_scopes globals 
-        (fun s -> 
-          match s.func with
-	            | Some f
-	            ->
-                Printf.printf "Listing variables in function %s:\n" f.svar.vname;
-                Scope.iter_current_scope s (fun v -> Printf.printf "\t%s\n" v.vname);
-                Printf.printf "%s" "=============\n"
-            | _ 
-            -> ignore ())
-
-let run_scc_cg () =
-    let (mappings, nodes, components) = scc (computeGraph (Cil_state.file ())) in
-    Array.iter 
-        (fun c -> 
-            Printf.printf "%s\n" "============================";
-            Printf.printf "%s\n" "Strongly connected component";
-            List.iter
-                (fun n ->
-                    let c = Hashtbl.find mappings n in
-                    Printf.printf "\t%s\n" c.fname
-                    )
-            c     
-            )
-        components
-        
-let test () =
-    top_iter (computeGraph (Cil_state.file ()))
-*) 
-
 let run_taint globals =
     let fs = List.hd (globals.children) in
     match fs.func with
         | None -> ignore ()
-        | Some funcdec 
-        -> 
-            (* TODO initialize lattice values for function *)
-            compute_taint funcdec (Hashtbl.create 1000)
-
+        | Some func -> run_custom_taint func (Inthash.create 1024)
                                                                                                                 					                                    
 let run fmt =
     if Enabled.get () then 

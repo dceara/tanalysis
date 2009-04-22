@@ -115,10 +115,35 @@ module TaintComputer(Param:sig
                                 (fun s -> (s, new_cond_taint::cond_taint)) 
                                 current_stmt.succs])
 
+    let init_environments () =
+        let initial_env = Gamma.create_env () in
+        (List.iter
+            (fun formal ->
+                ignore (Typing.process_formal initial_env formal))
+            Param.func.sformals);  
+        (List.iter 
+            (fun local ->
+                ignore (Typing.process_local initial_env local))
+            Param.func.slocals);
+        List.iter
+            (fun stmt ->
+                Inthash.add Param.stmt_envs stmt.sid (Hashtbl.copy initial_env))
+            Param.func.sallstmts            
+
     (* This is the main entry point of the analysis. *)
     (* Params: *)
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
+        init_environments ();
         compute (List.map (fun s -> (s, [U])) worklist)   
 end
+
+let run_custom_taint f f_envs =
+    let module TaintComputer = TaintComputer(struct
+                                                let stmt_envs = (Inthash.create 1024)
+                                                let func = f
+                                                let func_envs = f_envs
+                                            end) in
+    let start_stmt = List.hd f.sallstmts in
+    TaintComputer.start [start_stmt]

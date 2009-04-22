@@ -4,45 +4,7 @@ open Db_types
 open Db
 open Cilutil
 open TaintGamma
-open TaintTyping
-
-(* obsolete *)
-(*
-type dependencyList = string list (* TODO add real dependency list types *)
-*)
-
-(* obsolete *)
-(*
-type taintLatticeValue = T | U | G of dependencyList 
-*)
-
-(* obsolete *)
-(*
-type taintLattice = Value of taintLatticeValue Inthash.t
-*)
-
-(* obsolete *)
-(*
-type statementsHash = SH of taintLattice Inthash.t
-*)
-
-(* obsolete *)
-(*
-(* TODO must combine dependencies for real and remove duplicates *)
-let combine_dependency_lists d1 d2 =
-    List.append d1 d2 
-*)
-
-(* obsolete *)
-(* let compute_new_taint v1 v2 =
-    match (v1, v2) with 
-        | T, _
-        | _, T -> T
-        | (G deps) , U -> (G deps) 
-        | U, (G deps) -> (G deps)
-        | U, U -> U
-        | (G deps1), (G deps2) -> (G (combine_dependency_lists deps1 deps2)) *)
-             
+open TaintTyping      
 
 let compute_initial_taint func =
     let env = Gamma.create_env () in
@@ -59,20 +21,6 @@ let compute_initial_taint func =
 (* TODO: implement this function *)
 let test_and_compute_new_taint old new_ =
     (false, new_)
-
-(* returns true if the values are new *)
-(* obsolete *)    
-(* let test_and_compute_new_taint (Value old) (Value new_) =
-    (Inthash.fold 
-        (fun id v result ->
-            let v2 = Inthash.find new_ id in
-            let new_val = compute_new_taint v v2 in
-            Inthash.replace new_ id new_val;
-            if (v2 != v) then
-                true
-            else
-                result)
-        old false, new_) *)
   
 (* obsolete *)  
 module TaintComputer(Param:sig
