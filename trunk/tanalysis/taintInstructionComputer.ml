@@ -56,11 +56,11 @@ let do_call env null_lval param_exprs cond_taint func func_envs =
     (* formal one. *)
     let find_binding actuals formals dep =
         let i = List.fold_left
-		            (fun idx f ->
-		                if dep = f then idx
-		                else idx + 1)
+                    (fun idx f ->
+                        if dep = f then idx
+                        else idx + 1)
                     0
-		            formals in
+                    formals in
         List.nth actuals i
     in
     (* Local function used for instantiating all the formal parameter taints *)
