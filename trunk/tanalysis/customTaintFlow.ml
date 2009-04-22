@@ -5,7 +5,8 @@ open TaintGamma
 module TaintComputer(Param:sig
                         (* The int key hashtable that holds the environment *)
                         (* for each statement in the function. *)
-	                    val stmt_envs : statementsEnvironment                        
+	                    val stmt_envs : statementsEnvironment 
+                        val func : fundec                       
 	                 end) = struct
 
 
@@ -30,7 +31,7 @@ module TaintComputer(Param:sig
                     (ret_env, false)
             | (Return (null_expr, _))
                 -> 
-                    let ret_env = SC.do_return_instr new_env null_expr is_cond_tainted in
+                    let ret_env = SC.do_return_instr new_env Param.func null_expr is_cond_tainted in
                     (ret_env, false)
             | (If (expr, true_block, false_block, _))
                 -> 
