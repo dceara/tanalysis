@@ -24,7 +24,7 @@ module TaintComputer(Param:sig
     (* cond_taint - the current condition taintedness stack *)
     (* Returns the new environment. *)
     let rec do_stmt stmt new_env cond_taint =
-        let module SC = TaintStatementComputer in
+        let module SC = TaintInstructionComputer in
         let current_cond_taint = List.hd cond_taint in
         match stmt.skind with
             | (Instr instr) 
