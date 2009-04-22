@@ -7,7 +7,9 @@ module TaintComputer(Param:sig
                         (* for each statement in the function. *)
                         val stmt_envs : statementsEnvironment 
                         val func : fundec         
-                        val func_envs : functionEnvironment              
+                        val func_envs : functionEnvironment  
+                        val format : Format.formatter
+                        val debug : bool           
 	                 end) = struct
 
 
@@ -139,11 +141,13 @@ module TaintComputer(Param:sig
         compute (List.map (fun s -> (s, [U])) worklist)   
 end
 
-let run_custom_taint f f_envs =
+let run_custom_taint fmt f f_envs =
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
                                                 let func = f
                                                 let func_envs = f_envs
+                                                let format = fmt
+                                                let debug = false
                                             end) in
     let start_stmt = List.hd f.sallstmts in
     TaintComputer.start [start_stmt]

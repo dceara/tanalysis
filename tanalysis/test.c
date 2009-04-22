@@ -1,4 +1,4 @@
-typedef struct {
+/* typedef struct {
   int x;
   int y;
 } Node;
@@ -59,6 +59,7 @@ int test(int n)
 	if (n > 0)
 		test(n-1);
 }
+*/
 
 int main (int argc, char** argv)
 {
@@ -68,8 +69,7 @@ int main (int argc, char** argv)
 	c = a + b;
 	if (a > 2)
 		return c;
-	else
-		return c+1;
+	return c+1;
 	/* int a;
 	
 	a = 2;
