@@ -62,7 +62,14 @@ int test(int n)
 
 int main (int argc, char** argv)
 {
-	return test(argc);
+	int a, b, c;
+	a = 2;
+	b = 3;
+	c = a + b;
+	if (a > 2)
+		return c;
+	else
+		return c+1;
 	/* int a;
 	
 	a = 2;
