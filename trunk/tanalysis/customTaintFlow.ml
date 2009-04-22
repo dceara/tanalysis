@@ -21,16 +21,51 @@ module TaintComputer(Param:sig
     (* new_env - the environment before the statement is analyzed *)
     (* is_cond_tainted - taints all the assignments if true *)
     (* Returns the new environment. *)
-    (* TODO *)
-    let do_stmt stmt new_env is_cond_tainted =
-        (new_env, false)
+    let rec do_stmt stmt new_env is_cond_tainted =
+        let module SC = TaintStatementComputer in
+        match stmt.skind with
+            | (Instr instr) 
+                -> 
+                    let ret_env = SC.do_instr new_env instr is_cond_tainted in
+                    (ret_env, false)
+            | (Return (null_expr, _))
+                -> 
+                    let ret_env = SC.do_return_instr new_env null_expr is_cond_tainted in
+                    (ret_env, false)
+            | (If (expr, true_block, false_block, _))
+                -> 
+                    let (ret_env, new_is_cond_tainted) = 
+                        SC.do_if_instr new_env expr true_block false_block is_cond_tainted in
+                    (ret_env, new_is_cond_tainted)
+            | (Switch (expr, _, _, _))
+                -> 
+                    let (ret_env, new_is_cond_tainted) = 
+                        SC.do_switch_instr new_env expr is_cond_tainted in
+                    (ret_env, new_is_cond_tainted)
+            | (Loop (_, stmt_block, _, stmt_continue, stmt_break))
+                -> 
+                    let (ret_env, new_is_cond_tainted) = 
+                        SC.do_loop_instr new_env stmt_block stmt_continue stmt_break is_cond_tainted in
+                    (ret_env, new_is_cond_tainted)
+            | (Block stmt_block)
+                -> 
+                    let ret_env = List.fold_left
+                                    (fun env s 
+                                        -> 
+                                            let (new_env, _) = do_stmt s env is_cond_tainted in 
+                                            new_env)
+                                    new_env
+                                    stmt_block.bstmts in
+                    (ret_env, false) 
+            | _ -> 
+                    (new_env, false)
      
     (* Params: *)
-    (* worklist - the list of statements that will be computed. *)
-    (* is_cond_tainted - if true all the assignments in the block must become *)
-    (* tainted so that implicit data flows are covered. *)
-    let rec compute worklist is_cond_tainted =
-        let current_stmt = List.hd worklist in
+    (* worklist - the list of pairs (statement, is_cond_tainted) that will be *)
+    (* computed. is_cond_tainted - if true all the assignments in the block *)
+    (* must become tainted so that implicit data flows are covered. *)
+    let rec compute worklist =
+        let (current_stmt, is_cond_tainted) = List.hd worklist in
         (* Foreach predecessor, combine the results. If there aren't any preds *)
         (* then the statements' environment is returned. *)
         let new_env = 
@@ -59,20 +94,22 @@ module TaintComputer(Param:sig
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     compute 
                         (List.tl worklist) 
-                        new_is_cond_tainted
             | (true, _)
                 -> 
                     (* We still haven't reached a fixed point for the statement. *)
                     (* Add the successors to the worklist. *)
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     compute 
-                        (List.concat [List.tl worklist;current_stmt.succs]) 
-                        new_is_cond_tainted
+                        (List.concat 
+                            [List.tl worklist;
+                             List.map 
+                                (fun s -> (s, new_is_cond_tainted)) 
+                                current_stmt.succs]) 
 
     (* This is the main entry point of the analysis. *)
     (* Params: *)
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
-        compute worklist false                              
+        compute (List.map (fun s -> (s, false)) worklist)   
 end
