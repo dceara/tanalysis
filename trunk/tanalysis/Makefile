@@ -9,8 +9,9 @@ RM=rm -f
 
 build: pack
 
-pack: sccCallgraph taintFlow scopeBuilder utils taintGamma taintTyping taint 
-	$(CC) $(PACKFLAGS) sccCallgraph.cmo taintFlow.cmo scopeBuilder.cmo taint.cmo 
+pack: utils taintGamma taintTyping customTaintFlow sccCallgraph taintFlow scopeBuilder taint 
+	$(CC) $(PACKFLAGS) utils.cmo taintGamma.cmo taintTyping.cmo customTaintFlow.cmo \
+	sccCallgraph.cmo taintFlow.cmo scopeBuilder.cmo taint.cmo  
 
 sccCallgraph: sccCallgraph.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
@@ -28,6 +29,9 @@ taintGamma: taintGamma.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
   
 taintTyping: taintTyping.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^  
+	
+customTaintFlow: customTaintFlow.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
   
 taint: taint.ml
