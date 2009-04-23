@@ -68,13 +68,7 @@ typedef struct {
 
 int main (int argc, char** argv)
 {
-	int a, b, c;
-	s_type s;
-	s.a = 2;
-	
-	if (s.a = 3)
-		b = s.a;
-	else
-		b = argc + 15 * s.a;
-	return b;
+	int a;
+	a = (int)((float*)argv[1]);
+	return 0;
 }   
