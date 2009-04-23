@@ -8,17 +8,37 @@ module TaintComputer(Param:sig
                         val stmt_envs : statementsEnvironment 
                         val func : fundec         
                         val func_envs : functionEnvironment  
-                        val format : Format.formatter
-                        val debug : bool           
+                        val fmt : Format.formatter
+                        val debug : bool      
+                        val info : bool     
 	                 end) = struct
 
 
+    module SC = TaintInstructionComputer.InstrComputer(struct
+			                                                let fmt = Param.fmt
+			                                                let debug = Param.debug
+			                                                let info = Param.info
+			                                            end)
+
     (* Tests if the old environment and the new environment are the same. *)
     let test_for_change old_ (new_, cond_taint) =
+        if Param.debug then (
+            SC.print () "[DEBUG] Testing for change %s" "\n";
+            SC.print () "[DEBUG] Old environment: %s" "\n";
+            SC.print_env () old_;
+            SC.print () "[DEBUG] New environment: %s" "\n";
+            SC.print_env () new_
+        );
         match Gamma.compare old_ new_ with
-            | true -> (true, old_, cond_taint)
-            | false -> (false, new_, cond_taint)
-
+            | true -> 
+                (if (Param.debug) then
+                    SC.print () "[DEBUG] Envs equal %s" "\n");
+                (false, old_, cond_taint)
+            | false -> 
+                (if (Param.debug) then
+                    SC.print () "[DEBUG] Envs not equal %s" "\n");
+                (true, new_, cond_taint)
+    
     (* Applies the transformations done by a statement to a given environment. *)
     (* Params: *)
     (* stmt - the statement being analyzed *)
@@ -26,13 +46,17 @@ module TaintComputer(Param:sig
     (* cond_taint - the current condition taintedness stack *)
     (* Returns the new environment. *)
     let rec do_stmt stmt new_env cond_taint =
-        let module SC = TaintInstructionComputer in
         let current_cond_taint = List.hd cond_taint in
         match stmt.skind with
             | (Instr instr) 
                 -> 
                     let ret_env = 
                         SC.do_instr new_env instr current_cond_taint Param.func Param.func_envs in
+                    if (Param.debug) then
+                    (
+                        SC.print () "[DEBUG] Instruction reached %s" "\n";
+                        SC.print_env () ret_env
+                    );
                     (ret_env, current_cond_taint)
             | (Return (null_expr, _))
                 -> 
@@ -77,6 +101,8 @@ module TaintComputer(Param:sig
         | 0 -> ignore ()
         | _ ->
         let (current_stmt, cond_taint) = List.hd worklist in
+        (if (Param.info) then
+            SC.print () "[INFO] Processing instruction %d from worklist\n" current_stmt.sid);
         (* For each predecessor, combine the results. If there aren't any preds *)
         (* then the statements' environment is returned. *)
         let new_env = 
@@ -95,13 +121,16 @@ module TaintComputer(Param:sig
 		                current_stmt.preds
         in
         let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
+        (* TODO here is the problem!!! the new environment isn't saved *)
         let (changed, env, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
         match (changed, env) with
             | (false, _) 
                 -> 
-                    (* Fix point reached for current statement. The successors *)
+                    (* Fixed point reached for current statement. The successors *)
                     (* aren't added to the worklist. *)
+                    (if (Param.debug) then
+                        Printf.printf "[DEBUG] Fixed point reached for sid %d\n" current_stmt.sid);
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     compute 
                         (List.tl worklist) 
@@ -117,6 +146,8 @@ module TaintComputer(Param:sig
                                 (fun s -> (s, new_cond_taint::cond_taint)) 
                                 current_stmt.succs])
 
+    (* Initialized the locals and formals in all the environments associated *)
+    (* to the statements *)
     let init_environments () =
         let initial_env = Gamma.create_env () in
         (List.iter
@@ -132,22 +163,43 @@ module TaintComputer(Param:sig
                 Inthash.add Param.stmt_envs stmt.sid (Hashtbl.copy initial_env))
             Param.func.sallstmts            
 
+    (* Prints all the environments associated to return statements *)
+    let print_return_envs () =
+        let is_return stmt = 
+            match stmt.skind with 
+                | Return _ -> true 
+                | _ -> false
+        in 
+        List.iter
+            (fun stmt ->
+                match is_return stmt with
+                    | true 
+                        ->
+                            SC.print () "Printing environment at sid: %d:\n" stmt.sid;
+                            SC.print_env () (Inthash.find Param.stmt_envs stmt.sid)
+                    | _ -> 
+                            ignore()) 
+            Param.func.sallstmts
+         
+
     (* This is the main entry point of the analysis. *)
     (* Params: *)
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
         init_environments ();
-        compute (List.map (fun s -> (s, [U])) worklist)   
+        compute (List.map (fun s -> (s, [U])) worklist);
+        print_return_envs ()
 end
 
-let run_custom_taint fmt f f_envs =
+let run_custom_taint format f f_envs =
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
                                                 let func = f
                                                 let func_envs = f_envs
-                                                let format = fmt
+                                                let fmt = format
                                                 let debug = false
+                                                let info = true
                                             end) in
     let start_stmt = List.hd f.sallstmts in
     TaintComputer.start [start_stmt]

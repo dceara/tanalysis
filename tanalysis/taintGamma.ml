@@ -1,4 +1,5 @@
 open Cil_types
+open Cil
 
 type taintValue = T | U | G of varinfo list
 
@@ -48,7 +49,8 @@ module Gamma = struct
                             List.mem vinfo1 g2)
                         g1  
             | _ -> false     
-        
+    
+    (* Compares two environments. Returns true if envs are equal. *)    
     let compare env1 env2 = 
         Hashtbl.fold
             (fun id t1 eq ->
@@ -76,9 +78,17 @@ module Gamma = struct
         Format.fprintf fmt "%s\n" "========================================";
         Hashtbl.iter 
             (fun vid taint ->
-                Format.fprintf fmt "\tSymname: %d\n" vid;
+                let vinfo = varinfo_from_vid vid in
+                Format.fprintf fmt "\tSymname: %s\n" vinfo.vname;
                 pretty_print_taint taint;
                 Format.fprintf fmt "%s" "\n")
             env;
-        Format.fprintf fmt "%s\n" "========================================";
+        Format.fprintf fmt "%s\n" "========================================"
+    
+    let pretty_print_taint fmt taint =
+        match taint with
+            | T -> Format.fprintf fmt "%s" "Tainted\n"
+            | U -> Format.fprintf fmt "%s" "Untainted\n"
+            | (G _) -> Format.fprintf fmt "%s" "Generic\n"
+
 end

@@ -7,13 +7,16 @@ module Typing = struct
     
     (* Applies the oplus operator between taint values. *)
     let combine_taint t1 t2 =
+        let taint_comparator g1 g2 =
+            g1.vid = g2.vid
+        in
         match (t1, t2) with
             | (T, _) 
             | (_, T) -> T
             | ((G g), U) -> (G g)
             | (U, (G g)) -> (G g)
             | (U, U) -> U
-            | ((G g1), (G g2)) -> (G (List.concat [g1; g2]))
+            | ((G g1), (G g2)) -> (G (reunite taint_comparator g1 g2))
     
     (* Combines two environments. Stores the result in the first parameter and *)
     (* returns it. *)
