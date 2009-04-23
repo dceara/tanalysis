@@ -61,32 +61,20 @@ int test(int n)
 }
 */
 
+typedef struct {
+	int a;
+	int b;
+} s_type;
+
 int main (int argc, char** argv)
 {
 	int a, b, c;
-	a = 2;
-	b = 3;
-	c = a + b;
-	if (a > 2)
-		return c;
-	return c+1;
-	/* int a;
+	s_type s;
+	s.a = 2;
 	
-	a = 2;
-	return 0;
-	*/
-	/*
-	int a = 2, c =5;
-	int* p = buf;
-
-	*(p + 15) = 20;
-	++p;
-	if (c == 2)
-		p[14] = a * 25 + 13;
-	else 
-		a = 512;
-	--p;
-	c = a + p[15];
-	return c;
-	*/ 
+	if (s.a = 3)
+		b = s.a;
+	else
+		b = argc + 15 * s.a;
+	return b;
 }   
