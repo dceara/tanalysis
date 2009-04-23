@@ -24,25 +24,25 @@ let test_and_compute_new_taint old new_ =
   
 (* obsolete *)  
 module TaintComputer(Param:sig
-	                    val current_values : statementsEnvironment
+                        val current_values : statementsEnvironment
                         val idom_states_stack : environmentStack
-	                 end) = struct
+                     end) = struct
 
     let name = "taint-computer"
     let debug = ref true
     type t = environment
     module StmtStartData = struct
         type data = environment
-	    
-	    let values = 
+        
+        let values = 
             Param.current_values
         
         let clear () = Inthash.clear values
-	    let mem = Inthash.mem values 
+        let mem = Inthash.mem values 
         let find = Inthash.find values
-	    let replace = Inthash.replace values
-	    let add = Inthash.add values
-	    let iter f = Inthash.iter f values            
+        let replace = Inthash.replace values
+        let add = Inthash.add values
+        let iter f = Inthash.iter f values            
     end 
 
     let pretty fmt state = 

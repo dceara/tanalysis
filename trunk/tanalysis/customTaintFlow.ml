@@ -11,14 +11,14 @@ module TaintComputer(Param:sig
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
-	                 end) = struct
+                     end) = struct
 
 
     module SC = TaintInstructionComputer.InstrComputer(struct
-			                                                let fmt = Param.fmt
-			                                                let debug = Param.debug
-			                                                let info = Param.info
-			                                            end)
+                                                            let fmt = Param.fmt
+                                                            let debug = Param.debug
+                                                            let info = Param.info
+                                                        end)
 
     (* Tests if the old environment and the new environment are the same. *)
     let test_for_change old_ (new_, cond_taint) =
@@ -113,12 +113,12 @@ module TaintComputer(Param:sig
                     ->
                     let first_pred = List.hd current_stmt.preds in
                     let first_pred_id = first_pred.sid in 
-		            List.fold_left
-		                (fun env pred_stmt ->
-		                    let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
-		                    Typing.combine env pred_env)
+                    List.fold_left
+                        (fun env pred_stmt ->
+                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
+                            Typing.combine env pred_env)
                         (Inthash.find Param.stmt_envs first_pred_id)    
-		                current_stmt.preds
+                        current_stmt.preds
         in
         let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         (* TODO here is the problem!!! the new environment isn't saved *)

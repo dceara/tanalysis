@@ -16,8 +16,8 @@ let init_g cg =
         Hashtbl.fold
             (fun key cn (result_m, result_n) ->
                 let n = {fname = nodeName cn.cnInfo;} in
-	            let v = G.V.create n in
-	            G.add_vertex g v;
+                let v = G.V.create n in
+                G.add_vertex g v;
                 Hashtbl.add result_n n.fname v;
                 Hashtbl.add result_m v n;
                 (result_m, result_n))    

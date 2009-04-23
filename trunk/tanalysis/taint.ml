@@ -13,7 +13,7 @@ let option_config_file () = "taint-analysis.config_file"
 (* Register a new Frama-C option. *)
 module Enabled =
     Cmdline.Dynamic.Register.False(struct let name = option_enabled () end)
-		
+        
 (* Register config file sub option. *)
 module ConfigFile =
     Cmdline.Dynamic.Register.EmptyString(struct let name = option_config_file () end)    
@@ -30,7 +30,7 @@ let run_taint fmt globals =
     match fs.func with
         | None -> ignore ()
         | Some func -> run_custom_taint fmt func (Inthash.create 1024)
-                                                                                                                					                                    
+                                                                                                                                                                        
 let run fmt =
     if Enabled.get () then 
         let v = (new ScopeBuilder.visitor ()) in
