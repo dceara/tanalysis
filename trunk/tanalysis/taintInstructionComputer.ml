@@ -9,6 +9,7 @@ module InstrComputer(Param:sig
                         val debug : bool      
                         val info : bool     
                      end) = struct
+                        
     let print () = Format.fprintf Param.fmt
     
     let print_taint () = Gamma.pretty_print_taint Param.fmt

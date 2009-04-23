@@ -2,6 +2,9 @@ open Cil_types
 open TaintTyping
 open TaintGamma
 
+(* TODO: add a boolean to each state so that we can mark if the state has been *)
+(* reached at least once. Now the analysis stops when the environment isn't *)
+(* changed but the next blocks haven't been touched!!! WRONG!!!! *)
 module TaintComputer(Param:sig
                         (* The int key hash table that holds the environment *)
                         (* for each statement in the function. *)
@@ -22,22 +25,9 @@ module TaintComputer(Param:sig
 
     (* Tests if the old environment and the new environment are the same. *)
     let test_for_change old_ (new_, cond_taint) =
-        if Param.debug then (
-            SC.print () "[DEBUG] Testing for change %s" "\n";
-            SC.print () "[DEBUG] Old environment: %s" "\n";
-            SC.print_env () old_;
-            SC.print () "[DEBUG] New environment: %s" "\n";
-            SC.print_env () new_
-        );
         match Gamma.compare old_ new_ with
-            | true -> 
-                (if (Param.debug) then
-                    SC.print () "[DEBUG] Envs equal %s" "\n");
-                (false, old_, cond_taint)
-            | false -> 
-                (if (Param.debug) then
-                    SC.print () "[DEBUG] Envs not equal %s" "\n");
-                (true, new_, cond_taint)
+            | true -> (false, old_, cond_taint)
+            | false -> (true, new_, cond_taint)
     
     (* Applies the transformations done by a statement to a given environment. *)
     (* Params: *)
@@ -105,23 +95,23 @@ module TaintComputer(Param:sig
             SC.print () "[INFO] Processing instruction %d from worklist\n" current_stmt.sid);
         (* For each predecessor, combine the results. If there aren't any preds *)
         (* then the statements' environment is returned. *)
-        let new_env = 
+        let (new_env, cond_taint) = 
             match List.length current_stmt.preds with
                 | 0 ->
-                    Inthash.find Param.stmt_envs current_stmt.sid
+                    (Inthash.find Param.stmt_envs current_stmt.sid, cond_taint)
                 | _ 
                     ->
                     let first_pred = List.hd current_stmt.preds in
                     let first_pred_id = first_pred.sid in 
-                    List.fold_left
+                    (List.fold_left
                         (fun env pred_stmt ->
                             let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
                             Typing.combine env pred_env)
                         (Inthash.find Param.stmt_envs first_pred_id)    
-                        current_stmt.preds
+                        current_stmt.preds,
+                    List.tl cond_taint)
         in
         let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
-        (* TODO here is the problem!!! the new environment isn't saved *)
         let (changed, env, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
         match (changed, env) with
@@ -198,7 +188,7 @@ let run_custom_taint format f f_envs =
                                                 let func = f
                                                 let func_envs = f_envs
                                                 let fmt = format
-                                                let debug = false
+                                                let debug = true
                                                 let info = true
                                             end) in
     let start_stmt = List.hd f.sallstmts in

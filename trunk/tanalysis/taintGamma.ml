@@ -73,7 +73,8 @@ module Gamma = struct
                         Format.fprintf fmt "\t%s" "Generic: ";
                         List.iter 
                             (fun el -> Format.fprintf fmt "Gamma(%s), " el.vname)
-                            g)
+                            g;
+                        Format.fprintf fmt "%s" "\n";)
         in
         Format.fprintf fmt "%s\n" "========================================";
         Hashtbl.iter 
