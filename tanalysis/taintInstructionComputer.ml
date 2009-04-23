@@ -166,35 +166,35 @@ module InstrComputer(Param:sig
 	(* Changes the mapping for lvalue in the given environment according to cond_taint*)
 	(* and the assigned expression. *)
 	let do_assign env lvalue expr cond_taint =
-        let do_assign_lvalue_tainted vinfo =
-            (if Param.debug then
-                print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
-            Gamma.set_taint env vinfo.vid T;
-            env
-        in
-        let do_assign_lvalue vinfo expr =
-            let expr_taint = do_expr env expr in
-            if Param.debug then (
-                print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
-                print_taint () expr_taint
-            );
-            Gamma.set_taint env vinfo.vid (Typing.combine_taint expr_taint cond_taint);
-            env
-        in
-        (* TODO: For now we make the assumption that memory locations aren't used as lvalues. *)
-        let do_assign_default () =
-            if Param.debug then (
-                print () "[DEBUG] Assigning a value to a memory location%s" "\n"
-            );
-            env
-        in
-        
-        (if Param.info then
-            print () "[INFO] Processing assign instruction %s" "\n");
-	    match (lvalue, cond_taint) with
-	        | ((Var vinfo, _), T) -> do_assign_lvalue_tainted vinfo	                
-	        | ((Var vinfo, _), _) -> do_assign_lvalue vinfo expr 
-	        | _ ->  do_assign_default ()
+		let do_assign_lvalue_tainted vinfo =
+		    (if Param.debug then
+		        print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
+		    Gamma.set_taint env vinfo.vid T;
+		    env
+		in
+		let do_assign_lvalue vinfo expr =
+		    let expr_taint = do_expr env expr in
+		    if Param.debug then (
+		        print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
+		        print_taint () expr_taint
+		    );
+		    Gamma.set_taint env vinfo.vid (Typing.combine_taint expr_taint cond_taint);
+		    env
+		in
+		(* TODO: For now we make the assumption that memory locations aren't used as lvalues. *)
+		let do_assign_default () =
+		    if Param.debug then (
+		        print () "[DEBUG] Assigning a value to a memory location%s" "\n"
+		    );
+		    env
+		in
+		
+		(if Param.info then
+		    print () "[INFO] Processing assign instruction %s" "\n");
+		match (lvalue, cond_taint) with
+		    | ((Var vinfo, _), T) -> do_assign_lvalue_tainted vinfo	                
+		    | ((Var vinfo, _), _) -> do_assign_lvalue vinfo expr 
+            | _ ->  do_assign_default ()
 	        
 	(* Make the assumption that all the functions return a single value and have no*)
 	(* side effects. *)
