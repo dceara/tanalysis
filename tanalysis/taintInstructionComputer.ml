@@ -18,21 +18,25 @@ module InstrComputer(Param:sig
     (* Returns the taintedness for a lvalue. *)
     (* TODO: For now we make the assumption that memory locations aren't used as lvalues. *)
     let get_lvalue_taint env lvalue =
+        let get_lvalue_taint_vinfo vinfo =
+            let taint = Gamma.get_taint env vinfo.vid in
+            if Param.debug then (
+                print () "[DEBUG] Taint for lvalue %s: " vinfo.vname;
+                print_taint () taint);
+            taint
+        in
+        let get_lvalue_taint_default () =
+            if Param.debug then (
+                print () "[DEBUG] Taint for memory lvalue: %s" "\n";
+                print_taint () U);
+            U
+        in
+        
         (if Param.info then
             print () "[INFO] Getting lvalue taint %s" "\n"); 
         match lvalue with
-            | ((Var vinfo), _) 
-                -> 
-                    let taint = Gamma.get_taint env vinfo.vid in
-                    if Param.debug then (
-                        print () "[DEBUG] Taint for lvalue %s: " vinfo.vname;
-                        print_taint () taint);
-                    taint 
-            | _ -> 
-                    if Param.debug then (
-                        print () "[DEBUG] Taint for memory lvalue: %s" "\n";
-                        print_taint () U);
-                    U
+            | ((Var vinfo), _) -> get_lvalue_taint_vinfo vinfo
+            | _ -> get_lvalue_taint_default ()            
     
     (* Returns the taintedness of an expression according to the environment. *)
     let rec do_expr env expr =
@@ -142,6 +146,8 @@ module InstrComputer(Param:sig
             | StartOf lvalue -> do_startOf lvalue
             | Info _ -> do_info ()
     
+    (* Processes a nullable expression. If the expression is null U is returned, *)
+    (* otherwise the taintedness of the expression is returned. *)
     let do_null_expr env null_expr =
         let do_null () =
             if Param.debug then (
@@ -304,10 +310,21 @@ module InstrComputer(Param:sig
     (* Only return the taintedness of the expression. The successors will be computed*)
     (* later. *)
     let do_switch_instr env expr cond_taint =
+        (if Param.info then
+            print () "[INFO] Processing switch instruction %s" "\n");
         let expr_taint = do_expr env expr in 
-        Typing.combine_taint expr_taint cond_taint
+        let new_cond_taint = Typing.combine_taint expr_taint cond_taint in
+        if Param.debug then (
+            print () "%s" "[DEBUG] Condition taint for if instruction:";
+            print_taint () cond_taint;
+            print () "%s" "[DEBUG] New condition taint for if instruction:";
+            print_taint () new_cond_taint;
+        );
+        new_cond_taint
         
     (* TODO *)
     let do_loop_instr env stmt_block stmt_continue stmt_break cond_taint =
+         (if Param.info then
+            print () "[INFO] Processing loop instruction %s" "\n");
         (env, cond_taint)
 end
