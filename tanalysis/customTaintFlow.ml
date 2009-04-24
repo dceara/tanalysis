@@ -2,9 +2,6 @@ open Cil_types
 open TaintTyping
 open TaintGamma
 
-(* TODO: add a boolean to each state so that we can mark if the state has been *)
-(* reached at least once. Now the analysis stops when the environment isn't *)
-(* changed but the next blocks haven't been touched!!! WRONG!!!! *)
 module TaintComputer(Param:sig
                         (* The int key hash table that holds the environment *)
                         (* for each statement in the function. *)
