@@ -9,11 +9,27 @@ RM=rm -f
 
 build: pack
 
-pack: utils taintGamma taintTyping taintInstructionComputer customTaintFlow \
-	sccCallgraph taintFlow scopeBuilder taint 
-	$(CC) $(PACKFLAGS) utils.cmo taintGamma.cmo taintTyping.cmo \
-	taintInstructionComputer.cmo customTaintFlow.cmo \
-	sccCallgraph.cmo taintFlow.cmo scopeBuilder.cmo taint.cmo  
+pack: utils \
+	taintGamma \
+	taintTyping \
+	taintPrinter \
+	taintCFGPrinter \
+	taintInstructionComputer \
+	customTaintFlow sccCallgraph \
+	taintFlow \
+	scopeBuilder \
+	taint 
+	$(CC) $(PACKFLAGS) utils.cmo \
+					   taintGamma.cmo \
+					   taintTyping.cmo \
+					   taintPrinter.cmo \
+					   taintCFGPrinter.cmo \
+					   taintInstructionComputer.cmo \
+					   customTaintFlow.cmo \
+					   sccCallgraph.cmo \
+					   taintFlow.cmo \
+					   scopeBuilder.cmo \
+					   taint.cmo  
 
 sccCallgraph: sccCallgraph.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
@@ -32,6 +48,12 @@ taintGamma: taintGamma.ml
   
 taintTyping: taintTyping.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
+
+taintPrinter: taintPrinter.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+
+taintCFGPrinter: taintCFGPrinter.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
 taintInstructionComputer: taintInstructionComputer.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
