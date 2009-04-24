@@ -18,6 +18,12 @@ module Typing = struct
             | (U, U) -> U
             | ((G g1), (G g2)) -> (G (reunite taint_comparator g1 g2))
     
+    let combine_taint_list taints =
+        List.fold_left
+            (fun t taint -> combine_taint t taint)
+            U
+            taints
+    
     (* Combines two environments. Stores the result in the first parameter and *)
     (* returns it. *)
     let combine env1 env2 =

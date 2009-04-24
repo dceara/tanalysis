@@ -1,9 +1,11 @@
-(* Frama-C journal generated at 09:47 the 24/04/2009 *)
+(* Frama-C journal generated at 10:27 the 24/04/2009 *)
 
 (* Running *)
 let start () =
  let () = Journal.run () in
- let () = Cmdline.PrintShare.set true in
+ let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
+ let () = Cmdline.Files.add "tests/8.ta_inner_if.c" in
+ let () = File.init_from_cmdline () in
  (* Finished *)
  Journal.finished ()
 

@@ -37,7 +37,7 @@ module TaintComputer(Param:sig
             | false -> (true, new_, cond_taint)
             | true 
                 -> 
-                    match new_ with
+                    match old_ with
                         | (true, _) -> (false, old_, cond_taint)
                         | (false, _) -> (true, new_, cond_taint)
     
@@ -48,7 +48,8 @@ module TaintComputer(Param:sig
     (* cond_taint - the current condition taintedness stack *)
     (* Returns the new environment. *)
     let rec do_stmt stmt new_env cond_taint =
-        let current_cond_taint = List.hd cond_taint in
+        let current_cond_taint = Typing.combine_taint_list cond_taint in
+        (* let current_cond_taint = List.hd cond_taint in *)
         match stmt.skind with
             | (Instr instr) 
                 -> 
@@ -57,9 +58,6 @@ module TaintComputer(Param:sig
                     );
                     let ret_env = 
                         SC.do_instr new_env instr current_cond_taint Param.func Param.func_envs in
-                    if (Param.debug) then (
-                        SC.print_env () ret_env
-                    );
                     (ret_env, current_cond_taint)
             | (Return (null_expr, _))
                 -> 
@@ -131,8 +129,6 @@ module TaintComputer(Param:sig
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         let (changed, env, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
-        (* SC.print () "%s" "[DEBUG] [COMPUTE] New cond_taint: ";
-        SC.print_taint () new_cond_taint; *)
         match (changed, env) with
             | (false, _) 
                 -> 
