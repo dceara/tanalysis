@@ -8,5 +8,5 @@ int main(int argc, char** argv) //argc = G, argv = G
     e = __alignof__(int);// T(e) = U 
     f = __alignof__ (a); // T(f) = U
     g = __alignof__ (b); // T(g) = U
-    return a + b + c + d + e + f + g;
+    return a + b + c + d + e + f + g; // T(main) = T
 }

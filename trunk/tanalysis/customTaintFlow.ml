@@ -23,6 +23,17 @@ module TaintComputer(Param:sig
                                                             let info = Param.info
                                                         end)
 
+    (* This function should be removed. It's used only for debugging purposes. *)
+    let print_envs () =
+        SC.print () "\n\n%s\n" "[DEBUG] Printing all the envs:";
+        Inthash.iter
+            (fun key env ->
+                SC.print () "Environmnet for sid: %d\n" key;
+                SC.print_env () env;
+                SC.print () "%s" "\n")
+            Param.stmt_envs;
+        SC.print () "%s" "\n\n"
+
     (* Tests if the old environment and the new environment are the same. *)
     let test_for_change old_ (new_, cond_taint) =
         match Gamma.compare old_ new_ with
@@ -106,16 +117,16 @@ module TaintComputer(Param:sig
                 | _ 
                     ->
                     let first_pred = List.hd current_stmt.preds in
-                    let first_pred_id = first_pred.sid in 
-                    (List.fold_left
-                        (fun env pred_stmt ->
-                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
-                            Typing.combine env pred_env)
-                        (Inthash.find Param.stmt_envs first_pred_id)    
-                        current_stmt.preds,
+                    let first_pred_id = first_pred.sid in  
+                    (Gamma.copy
+                        (List.fold_left
+	                        (fun env pred_stmt ->
+	                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
+	                            Typing.combine env pred_env)
+	                        (Inthash.find Param.stmt_envs first_pred_id)    
+	                        current_stmt.preds),
                     List.tl cond_taint)
         in
-        (* let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in *)
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         let (changed, env, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
@@ -161,21 +172,29 @@ module TaintComputer(Param:sig
                 Inthash.add Param.stmt_envs stmt.sid (Gamma.copy initial_env))
             Param.func.sallstmts            
 
-    (* Prints all the environments associated to return statements *)
+    (* Combines all the environments associated to return statements *)
     let combine_return_envs initial_env =
         let is_return stmt = 
             match stmt.skind with 
                 | Return _ -> true 
                 | _ -> false
-        in        
-        List.fold_left
-            (fun env stmt ->
-                match is_return stmt with
-                    | true -> Typing.combine env (Inthash.find Param.stmt_envs stmt.sid)
-                    | false -> env)
-            initial_env
-            Param.func.sallstmts
-         
+        in    
+        let stmts = Param.func.sallstmts in
+        let ret_stmts = List.filter (fun stmt -> is_return stmt) stmts in
+        match List.length ret_stmts with
+            | 0 
+                -> 
+                    SC.print () "%s" "[WARNING] Function without return found!\n"; 
+                    initial_env
+            | _
+                -> 
+                    let first_ret_stmt = List.hd ret_stmts in
+                    let first_env = Inthash.find Param.stmt_envs first_ret_stmt.sid in
+                    List.fold_left 
+                        (fun env stmt ->
+                            Typing.combine env (Inthash.find Param.stmt_envs stmt.sid))
+                    first_env
+                    ret_stmts         
 
     (* This is the main entry point of the analysis. *)
     (* Params: *)
