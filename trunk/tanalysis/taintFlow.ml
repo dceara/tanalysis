@@ -1,4 +1,4 @@
-open Cil_types
+(* open Cil_types
 open Cil
 open Db_types
 open Db
@@ -106,4 +106,4 @@ let compute_taint func envs =
             stmts;
         TaintCompute.compute [start];
         Printf.printf "[taint-analysis] done for function %s\n" func.svar.vname
-
+*)

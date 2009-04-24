@@ -10,7 +10,7 @@ type actualParam = Actual of varinfo
 type paramBinding = Param of formalParam * actualParam
 
 (* The environment is a mapping between symbol ids and taint values. *)
-type environment = (int, taintValue) Hashtbl.t
+type environment = bool * ((int, taintValue) Hashtbl.t)
 
 type statementsEnvironment = environment Inthash.t
 
@@ -24,13 +24,15 @@ type functionEnvironment = environment Inthash.t
 module Gamma = struct
     
     let create_env () = 
-        Hashtbl.create 1024
+        (false, Hashtbl.create 1024)
     
     (* Returns the taint value or the delayed taint value if found, raises Not_found otherwise *)
     let get_taint env vid =
+        let env = match env with (_, _env) -> _env in
         Hashtbl.find env vid
             
     let set_taint env vid taint =
+        let env = match env with (_, _env) -> _env in
         (try 
             ignore (Hashtbl.find env vid);
             Hashtbl.remove env vid
@@ -52,6 +54,8 @@ module Gamma = struct
     
     (* Compares two environments. Returns true if envs are equal. *)    
     let compare env1 env2 = 
+        let env1 = match env1 with (_, _env) -> _env in
+        let env2 = match env2 with (_, _env) -> _env in
         Hashtbl.fold
             (fun id t1 eq ->
                 let t2 = Hashtbl.find env2 id in
@@ -60,10 +64,14 @@ module Gamma = struct
                     | _ -> compare t1 t2)
             env1
             true
+            
+    let copy env =
+        match env with (visited, _env) -> (visited, Hashtbl.copy _env)
 
     (* Function for pretty printing an environment. Should be used for debugging *)
     (* purposes only. *)
     let pretty_print fmt env =
+        let env = match env with (_, _env) -> _env in
         let pretty_print_taint taint = 
             (match taint with
                 | T -> Format.fprintf fmt "\t%s\n" "Tainted"

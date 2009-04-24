@@ -26,8 +26,12 @@ module TaintComputer(Param:sig
     (* Tests if the old environment and the new environment are the same. *)
     let test_for_change old_ (new_, cond_taint) =
         match Gamma.compare old_ new_ with
-            | true -> (false, old_, cond_taint)
             | false -> (true, new_, cond_taint)
+            | true 
+                -> 
+                    match new_ with
+                        | (true, _) -> (false, old_, cond_taint)
+                        | (false, _) -> (true, new_, cond_taint)
     
     (* Applies the transformations done by a statement to a given environment. *)
     (* Params: *)
@@ -111,7 +115,8 @@ module TaintComputer(Param:sig
                         current_stmt.preds,
                     List.tl cond_taint)
         in
-        let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
+        (* let old_env = Hashtbl.copy (Inthash.find Param.stmt_envs current_stmt.sid) in *)
+        let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         let (changed, env, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
         match (changed, env) with
@@ -136,9 +141,7 @@ module TaintComputer(Param:sig
                                 (fun s -> (s, new_cond_taint::cond_taint)) 
                                 current_stmt.succs])
 
-    (* Initialized the locals and formals in all the environments associated *)
-    (* to the statements *)
-    let init_environments () =
+    let create_initial_env () = 
         let initial_env = Gamma.create_env () in
         (List.iter
             (fun formal ->
@@ -148,27 +151,29 @@ module TaintComputer(Param:sig
             (fun local ->
                 ignore (Typing.process_local initial_env local))
             Param.func.slocals);
+        initial_env
+        
+    (* Initialized the locals and formals in all the environments associated *)
+    (* to the statements *)
+    let init_environments initial_env =
         List.iter
             (fun stmt ->
-                Inthash.add Param.stmt_envs stmt.sid (Hashtbl.copy initial_env))
+                Inthash.add Param.stmt_envs stmt.sid (Gamma.copy initial_env))
             Param.func.sallstmts            
 
     (* Prints all the environments associated to return statements *)
-    let print_return_envs () =
+    let combine_return_envs initial_env =
         let is_return stmt = 
             match stmt.skind with 
                 | Return _ -> true 
                 | _ -> false
-        in 
-        List.iter
-            (fun stmt ->
+        in        
+        List.fold_left
+            (fun env stmt ->
                 match is_return stmt with
-                    | true 
-                        ->
-                            SC.print () "Printing environment at sid: %d:\n" stmt.sid;
-                            SC.print_env () (Inthash.find Param.stmt_envs stmt.sid)
-                    | _ -> 
-                            ignore()) 
+                    | true -> Typing.combine env (Inthash.find Param.stmt_envs stmt.sid)
+                    | false -> env)
+            initial_env
             Param.func.sallstmts
          
 
@@ -177,9 +182,11 @@ module TaintComputer(Param:sig
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
-        init_environments ();
+        let initial_env = create_initial_env () in
+        init_environments initial_env;
         compute (List.map (fun s -> (s, [U])) worklist);
-        print_return_envs ()
+        let final = combine_return_envs initial_env in
+        SC.print_env () final
 end
 
 let run_custom_taint format f f_envs =
