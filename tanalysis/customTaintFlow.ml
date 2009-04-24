@@ -52,11 +52,12 @@ module TaintComputer(Param:sig
         match stmt.skind with
             | (Instr instr) 
                 -> 
+                    if (Param.debug) then (
+                        SC.print () "[DEBUG] Instruction reached%s" "\n";
+                    );
                     let ret_env = 
                         SC.do_instr new_env instr current_cond_taint Param.func Param.func_envs in
-                    if (Param.debug) then
-                    (
-                        SC.print () "[DEBUG] Instruction reached %s" "\n";
+                    if (Param.debug) then (
                         SC.print_env () ret_env
                     );
                     (ret_env, current_cond_taint)
@@ -98,6 +99,7 @@ module TaintComputer(Param:sig
     (* computed. cond_taint - the taintedness of the condition. Must be combined *)
     (* with all the assignments so that implicit data flows are covered. *)
     let rec compute worklist =
+        (* print_envs (); *)
         match List.length worklist with
         (* Stop when the worklist is empty. *)
         | 0 -> ignore ()
@@ -122,11 +124,15 @@ module TaintComputer(Param:sig
 	                            Typing.combine env pred_env)
 	                        (Inthash.find Param.stmt_envs first_pred_id)    
 	                        current_stmt.preds),
-                    List.tl cond_taint)
+                    match List.length current_stmt.preds with
+                        | 1 -> cond_taint
+                        | _ -> List.tl cond_taint)
         in
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         let (changed, env, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
+        (* SC.print () "%s" "[DEBUG] [COMPUTE] New cond_taint: ";
+        SC.print_taint () new_cond_taint; *)
         match (changed, env) with
             | (false, _) 
                 -> 
@@ -142,12 +148,13 @@ module TaintComputer(Param:sig
                     (* We still haven't reached a fixed point for the statement. *)
                     (* Add the successors to the worklist. *)
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
-                    compute 
-                        (List.concat 
-                            [List.tl worklist;
-                             List.map 
-                                (fun s -> (s, new_cond_taint::cond_taint)) 
-                                current_stmt.succs])
+                    let new_list = (List.concat 
+			                            [List.tl worklist;
+			                             List.map 
+			                                (fun s -> (s, new_cond_taint::cond_taint)) 
+			                                current_stmt.succs]) in
+                    compute new_list
+                        
 
     let create_initial_env () = 
         let initial_env = Gamma.create_env () in
