@@ -21,13 +21,16 @@ module Typing = struct
     (* Combines two environments. Stores the result in the first parameter and *)
     (* returns it. *)
     let combine env1 env2 =
+        let _env1 = match env1 with (_, _env) -> _env in
+        let _env2 = match env2 with (_, _env) -> _env in
         Hashtbl.iter
             (fun id t1 ->
-                let t2 = Hashtbl.find env2 id in
+                let t2 = Hashtbl.find _env2 id in
                 Gamma.set_taint env1 id (combine_taint t1 t2)
             )
-            env1;
-        env1
+            _env1;
+        (* TODO: check this *)
+        (true, _env1)
     
     (* Locals are initialized to tainted. *)
     let process_local env vinfo =
