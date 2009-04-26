@@ -38,14 +38,14 @@ module TaintComputer(Param:sig
         P.print () "%s" "\n\n"
 
     (* Tests if the old environment and the new environment are the same. *)
-    let test_for_change old_ (new_, use_cond_taint, cond_taint) =
+    let test_for_change old_ (new_, cond_stack) =
         match Gamma.compare old_ new_ with
-            | false -> (true, new_, use_cond_taint, cond_taint)
+            | false -> (true, new_, cond_stack)
             | true 
                 -> 
                     match old_ with
-                        | (true, _) -> (false, old_, use_cond_taint, cond_taint)
-                        | (false, _) -> (true, new_, use_cond_taint, cond_taint)
+                        | (true, _) -> (false, old_, cond_stack)
+                        | (false, _) -> (true, new_, cond_stack)
     
     (* Applies the transformations done by a statement to a given environment. *)
     (* Params: *)
@@ -65,42 +65,42 @@ module TaintComputer(Param:sig
                     );
                     let ret_env = 
                         SC.do_instr new_env instr current_cond_taint Param.func Param.func_envs in
-                    (ret_env, true, current_cond_taint)
+                    (ret_env, Same)
             | (Return (null_expr, _))
                 -> 
                     let ret_env = 
                         SC.do_return_instr new_env Param.func null_expr current_cond_taint in
-                    (ret_env, true, current_cond_taint)
+                    (ret_env, Same)
             | (If (expr, true_block, false_block, _))
                 -> 
                     let new_cond_taint = 
                         SC.do_if_instr new_env expr true_block false_block current_cond_taint in
-                    (new_env, true, new_cond_taint)
+                    (new_env, Push (stmt.sid, new_cond_taint))
             | (Switch (expr, _, _, _))
                 -> 
                     let new_cond_taint = 
                         SC.do_switch_instr new_env expr current_cond_taint in
-                    (new_env, true, new_cond_taint)
+                    (new_env, Push (stmt.sid, new_cond_taint))
             | (Loop (_, stmt_block, _, stmt_continue, stmt_break))
                 -> 
                     let (ret_env, new_cond_taint) = 
                         SC.do_loop_instr new_env stmt_block stmt_continue stmt_break current_cond_taint in
-                    (ret_env, true, new_cond_taint)
+                    (ret_env, Same)
             | (Block stmt_block)
                 -> 
                     let ret_env = List.fold_left
                                     (fun env s 
                                         -> 
-                                            let (new_env, _, _) = do_stmt s env cond_taint in 
+                                            let (new_env, _) = do_stmt s env cond_taint in 
                                             new_env)
                                     new_env
                                     stmt_block.bstmts in
-                    (ret_env, true, current_cond_taint) 
+                    (ret_env, Same) 
             | (Break _)
                 ->  
-                    (new_env, false, current_cond_taint)
+                    (new_env, Pop)
             | _ -> 
-                    (new_env, true, current_cond_taint)
+                    (new_env, Same)
      
     (* Params: *)
     (* worklist - the list of pairs (statement, is_cond_tainted) that will be *)
@@ -127,22 +127,28 @@ module TaintComputer(Param:sig
                     ->
                     let first_pred = List.hd current_stmt.preds in
                     let first_pred_id = first_pred.sid in  
+                    P.print () "[DEBUG] Combining preds for sid: %d\n" current_stmt.sid;
                     (Gamma.copy
                         (List.fold_left
 	                        (fun env pred_stmt ->
+                                P.print () "[DEBUG] Combining sid: %d\n" pred_stmt.sid;
 	                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
 	                            Typing.combine env pred_env)
 	                        (Inthash.find Param.stmt_envs first_pred_id)    
 	                        (List.tl current_stmt.preds)),
-                    match List.length current_stmt.preds with
+                    (* TODO: check this *)
+                    (* match List.length current_stmt.preds with
                         | 1 -> cond_taint
-                        | _ -> List.tl cond_taint)
-        in  
+                        | _ -> List.tl cond_taint *) 
+                    cond_taint)
+        in
+        P.print () "[INFO] Cond taint for instruction %d is: " current_stmt.sid;
+        P.print_taint_list () cond_taint;  
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
-        let (changed, env, use_cond_taint, new_cond_taint) = 
+        let (changed, env, cond_stack) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
-        match (changed, env) with
-            | (false, _) 
+        match changed with
+            | false 
                 -> 
                     (* Fixed point reached for current statement. The successors *)
                     (* aren't added to the worklist. *)
@@ -151,15 +157,16 @@ module TaintComputer(Param:sig
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     compute 
                         (List.tl worklist) 
-            | (true, _)
+            | true
                 -> 
                     (* We still haven't reached a fixed point for the statement. *)
                     (* Add the successors to the worklist. *)
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     let mfun s =
-                        match use_cond_taint with
-                            | true -> (s, new_cond_taint::cond_taint)
-                            | false -> (s, (List.tl cond_taint))
+                        match cond_stack with
+                            | Same -> (s, cond_taint)
+                            | Push (tsid, tt) -> (s, Typing.add_to_taint_list (tsid, tt) cond_taint)
+                            | Pop -> (s, List.tl cond_taint)
                     in
                     let new_list = (List.concat 
 			                            [List.tl worklist;
@@ -221,7 +228,7 @@ module TaintComputer(Param:sig
         (* CFGP.print_cfg Param.func *)
         let initial_env = create_initial_env () in
         init_environments initial_env;
-        compute (List.map (fun s -> (s, [U])) worklist);
+        compute (List.map (fun s -> (s, [(0, U)])) worklist);
         let final = combine_return_envs initial_env in
         P.print_env () final
 end

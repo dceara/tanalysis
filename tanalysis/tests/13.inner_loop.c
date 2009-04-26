@@ -9,7 +9,7 @@ int main(int argc, char** argv) //argc = G, argv = G
             b++;
         }
         a++;
-    }
+    } 
     
     a1 = 0;
     while (a1 < 10) {
