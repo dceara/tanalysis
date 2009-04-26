@@ -2,6 +2,7 @@ open Cil_types
 open Cil
 
 module Printer(Param:sig
+                    val dom_tree : stmt option Inthash.t 
                     val fmt : Format.formatter
                  end) = struct
                    
@@ -37,7 +38,14 @@ module Printer(Param:sig
                 ->
                     print_stmt stmt;
                     print_sid_list "SUCCESSORS" stmt.succs;
-                    print_sid_list "PREDECESSORS" stmt.preds)
+                    print_sid_list "PREDECESSORS" stmt.preds;
+                    P.print () "\n%s" "DOMINATES:";
+                    List.iter 
+                        (fun s -> P.print () "%d, " s.sid)
+                        (List.filter 
+                            (fun s1 -> Dominators.dominates Param.dom_tree stmt s1)
+                            stmts); 
+                    P.print () "%s" "\n")
             stmts
 end 
      
