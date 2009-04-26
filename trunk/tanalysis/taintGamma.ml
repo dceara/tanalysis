@@ -20,6 +20,8 @@ type environmentStack = environment list
 (* computed environment. *)
 type functionEnvironment = environment Inthash.t
 
+type taintStack = Same | Push of int * taintValue | Pop
+
 (* Gamma mapping *)
 module Gamma = struct
     
@@ -104,9 +106,9 @@ module Gamma = struct
         let rec print_taint_list fmt l =
 	        match l with
 	            | [] -> ignore()
-	            | (hd::tl) 
+	            | ((hsid, htaint)::tl) 
                     -> 
-                        pretty_print_taint fmt hd;
+                        pretty_print_taint fmt htaint;
                         Format.fprintf fmt "%s" ",";
                         print_taint_list fmt tl                    
         in

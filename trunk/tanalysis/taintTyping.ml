@@ -18,11 +18,16 @@ module Typing = struct
             | (U, U) -> U
             | ((G g1), (G g2)) -> (G (reunite taint_comparator g1 g2))
     
-    let combine_taint_list taints =
+    let combine_taint_list taint_list =
         List.fold_left
-            (fun t taint -> combine_taint t taint)
+            (fun t (_, taint) -> combine_taint t taint)
             U
-            taints
+            taint_list
+            
+    let add_to_taint_list (sid, t) l =
+        match List.filter (fun (id, _) -> id == sid) l with
+            | [] -> (sid, t)::l
+            | _ -> l
     
     (* Combines two environments. Stores the result in the first parameter and *)
     (* returns it. *)
