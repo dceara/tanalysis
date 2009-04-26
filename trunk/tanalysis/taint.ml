@@ -30,7 +30,7 @@ let run_taint fmt globals =
     match fs.func with
         | None -> ignore ()
         | Some func -> run_custom_taint fmt func (Inthash.create 1024)
-                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 let run fmt =
     if Enabled.get () then 
         let v = (new ScopeBuilder.visitor ()) in
