@@ -100,4 +100,16 @@ module Gamma = struct
             | U -> Format.fprintf fmt "%s" "Untainted\n"
             | (G _) -> Format.fprintf fmt "%s" "Generic\n"
 
+    let pretty_print_taint_list fmt l =
+        let rec print_taint_list fmt l =
+	        match l with
+	            | [] -> ignore()
+	            | (hd::tl) 
+                    -> 
+                        pretty_print_taint fmt hd;
+                        Format.fprintf fmt "%s" ",";
+                        print_taint_list fmt tl                    
+        in
+        print_taint_list fmt l;
+        Format.fprintf fmt "%s" "\n"
 end
