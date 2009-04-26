@@ -4,19 +4,19 @@ int main(int argc, char** argv) //argc = G, argv = G
     int a1, b1;
     a = b = 0;
     
-    while (a < 10) {
-        while (b < 20) {
-            b++;
+while (a < 10) {            // T(cond) = U
+        while (b < 20) {    // T(cond) = U + U = U
+            b++;            // T(b) = U
         }
-        a++;
+        a++;                // T(a) = U
     } 
     
-    a1 = 0;
-    while (a1 < 10) {
-        while (b1 < argc) {
-            b1++;
+    a1 = 0;                 // T(a1) = U
+    while (a1 < 10) {       // T(cond) = U
+        while (b1 < argc) { // T(cond) = U + G(argc) + T = T
+            b1++;           // T(b1) = T
         }
-        a1++;
+        a1++;               // T(a1) = U
     }
     
     return 0;               // T(main) = U

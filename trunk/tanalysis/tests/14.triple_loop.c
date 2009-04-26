@@ -34,7 +34,7 @@ int main(int argc, char** argv) //argc = G, argv = G
             }
             b2++;
         }
-        a2 = b;                     // !!!! a1 becomes tainted -> first cond becomes
+        a2 = b;                     // !!!! a2 becomes tainted -> first cond becomes
                                     // tainted -> b2 and c2 become tainted
     }
     

@@ -7,7 +7,8 @@ module TaintComputer(Param:sig
                         (* for each statement in the function. *)
                         val stmt_envs : statementsEnvironment 
                         val func : fundec         
-                        val func_envs : functionEnvironment  
+                        val func_envs : functionEnvironment 
+                        val dom_tree : stmt option Inthash.t 
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
@@ -23,6 +24,7 @@ module TaintComputer(Param:sig
                                         let fmt = Param.fmt
                                     end)      
     module CFGP = TaintCFGPrinter.Printer(struct
+                                            let dom_tree = Param.dom_tree
                                             let fmt = Param.fmt
                                           end)
 
@@ -102,6 +104,28 @@ module TaintComputer(Param:sig
             | _ -> 
                     (new_env, Same)
      
+    let combine_cond_taint stmt nullable_old_stmt cond_taint =
+        match List.length stmt.preds with
+            | 1 -> cond_taint
+            | _ ->
+	        match nullable_old_stmt with
+	            | None -> List.tl cond_taint
+	            | Some old_stmt ->
+                P.print () "[DEBUG] Some sid: %d old_id: %d\n" stmt.sid old_stmt.sid;
+                match old_stmt.skind with 
+                    | Break _ -> cond_taint
+                    | _ ->
+			        match stmt.skind with
+	                    | Loop _ -> 
+				            (match Dominators.dominates Param.dom_tree stmt old_stmt with
+				                | false -> 
+				                    P.print () "%s\n" "[DEBUG] not dominates";
+				                    cond_taint
+				                | true -> 
+				                    P.print () "%s\n" "[DEBUG] dominates";
+				                    List.tl cond_taint)
+	                    | _ -> List.tl cond_taint
+        
     (* Params: *)
     (* worklist - the list of pairs (statement, is_cond_tainted) that will be *)
     (* computed. cond_taint - the taintedness of the condition. Must be combined *)
@@ -112,7 +136,7 @@ module TaintComputer(Param:sig
         (* Stop when the worklist is empty. *)
         | 0 -> ignore ()
         | _ ->
-        let (current_stmt, cond_taint) = List.hd worklist in
+        let (current_stmt, nullable_old_stmt, cond_taint) = List.hd worklist in
         if (Param.info) then (
             P.print () "[INFO] Processing instruction %d from worklist\n" current_stmt.sid;
         );
@@ -136,11 +160,12 @@ module TaintComputer(Param:sig
 	                            Typing.combine env pred_env)
 	                        (Inthash.find Param.stmt_envs first_pred_id)    
 	                        (List.tl current_stmt.preds)),
+                    combine_cond_taint current_stmt nullable_old_stmt cond_taint
                     (* TODO: check this *)
                     (* match List.length current_stmt.preds with
                         | 1 -> cond_taint
                         | _ -> List.tl cond_taint *) 
-                    cond_taint)
+                    )
         in
         P.print () "[INFO] Cond taint for instruction %d is: " current_stmt.sid;
         P.print_taint_list () cond_taint;  
@@ -155,8 +180,7 @@ module TaintComputer(Param:sig
                     (if (Param.debug) then
                         Printf.printf "[DEBUG] Fixed point reached for sid %d\n" current_stmt.sid);
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
-                    compute 
-                        (List.tl worklist) 
+                    compute (List.tl worklist)
             | true
                 -> 
                     (* We still haven't reached a fixed point for the statement. *)
@@ -164,9 +188,12 @@ module TaintComputer(Param:sig
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     let mfun s =
                         match cond_stack with
-                            | Same -> (s, cond_taint)
-                            | Push (tsid, tt) -> (s, Typing.add_to_taint_list (tsid, tt) cond_taint)
-                            | Pop -> (s, List.tl cond_taint)
+                            | Same -> 
+                                (s, (Some current_stmt), cond_taint)
+                            | Push (tsid, tt) -> 
+                                (s, (Some current_stmt), Typing.add_to_taint_list (tsid, tt) cond_taint)
+                            | Pop -> 
+                                (s, (Some current_stmt), List.tl cond_taint)
                     in
                     let new_list = (List.concat 
 			                            [List.tl worklist;
@@ -228,16 +255,18 @@ module TaintComputer(Param:sig
         (* CFGP.print_cfg Param.func *)
         let initial_env = create_initial_env () in
         init_environments initial_env;
-        compute (List.map (fun s -> (s, [(0, U)])) worklist);
+        compute (List.map (fun s -> (s, None, [(0, U)])) worklist);
         let final = combine_return_envs initial_env in
         P.print_env () final
 end
 
 let run_custom_taint format f f_envs =
+    let tree = Dominators.computeIDom f in 
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
                                                 let func = f
                                                 let func_envs = f_envs
+                                                let dom_tree = tree
                                                 let fmt = format
                                                 let debug = true
                                                 let info = true
