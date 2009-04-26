@@ -19,6 +19,8 @@ int main(int argc, char** argv) //argc = G, argv = G
         a1++;
     }
     
-    return 0;
+    return 0;               // T(main) = U
+                            // T(a) = T(b) = T(a1) = U
+                            // T(b1) = T
 }
  

@@ -127,11 +127,9 @@ module TaintComputer(Param:sig
                     ->
                     let first_pred = List.hd current_stmt.preds in
                     let first_pred_id = first_pred.sid in  
-                    P.print () "[DEBUG] Combining preds for sid: %d\n" current_stmt.sid;
                     (Gamma.copy
                         (List.fold_left
 	                        (fun env pred_stmt ->
-                                P.print () "[DEBUG] Combining sid: %d\n" pred_stmt.sid;
 	                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
 	                            Typing.combine env pred_env)
 	                        (Inthash.find Param.stmt_envs first_pred_id)    
@@ -139,9 +137,7 @@ module TaintComputer(Param:sig
                     match List.length current_stmt.preds with
                         | 1 -> cond_taint
                         | _ -> List.tl cond_taint)
-        in
-        P.print () "[INFO] Cond taint for instruction %d is: " current_stmt.sid;
-        P.print_taint () (List.hd cond_taint);  
+        in  
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         let (changed, env, use_cond_taint, new_cond_taint) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
@@ -160,17 +156,10 @@ module TaintComputer(Param:sig
                     (* We still haven't reached a fixed point for the statement. *)
                     (* Add the successors to the worklist. *)
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
-                    P.print () "[DEBUG] SID: %d USE_COND_TAINT: %B\n" current_stmt.sid use_cond_taint;
                     let mfun s =
                         match use_cond_taint with
-                            | true -> 
-                                P.print () "[DEBUG] SID: %d\n" s.sid;
-                                P.print_taint_list () (new_cond_taint::cond_taint);
-                                (s, new_cond_taint::cond_taint)
-                            | false -> 
-                                P.print () "[DEBUG] SID: %d\n" s.sid;
-                                P.print_taint_list () (List.tl cond_taint);
-                                (s, (List.tl cond_taint))
+                            | true -> (s, new_cond_taint::cond_taint)
+                            | false -> (s, (List.tl cond_taint))
                     in
                     let new_list = (List.concat 
 			                            [List.tl worklist;
