@@ -27,7 +27,44 @@ module InstrComputer(Param:sig
                                 Param.globals in
         func             
     
+    let extract_vinfo_from_ptr_expr expr =
+        let rec _extract_vinfo_from_lval lvl =
+            match lvl with
+                | (Var vinfo, _) -> Some vinfo
+                | (Mem exp, _) -> _extract_vinfo_from_ptr_expr exp
+        and 
+        _extract_vinfo_from_ptr_expr expr =
+	        match expr with
+	            | Const _ -> None
+                | SizeOf _ -> None
+                | SizeOfE _ -> None
+                | SizeOfStr _ -> None
+                | AlignOf _ -> None
+                | AddrOf lvl -> _extract_vinfo_from_lval lvl
+                | StartOf _ -> None
+                | Lval lvl -> _extract_vinfo_from_lval lvl
+                | UnOp (_, unop_expr, _) -> _extract_vinfo_from_ptr_expr unop_expr 
+                | BinOp (_, expr1, expr2, _) 
+                    -> 
+                        let null_vinfo1 = _extract_vinfo_from_ptr_expr expr1 in
+                        let null_vinfo2 = _extract_vinfo_from_ptr_expr expr2 in
+                        (match null_vinfo1 with
+                            | None -> null_vinfo2
+                            | _ -> null_vinfo1)
+                | _ -> None   
+        in
+        P.print () "%s[DEBUG!!!!!!]" "\n";
+        match _extract_vinfo_from_ptr_expr expr with
+            | None -> raise Not_found
+            | Some vinfo -> vinfo
+    
     (* Returns the taintedness for a lvalue. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* lvalue - the lvalue being analyzed *)
+    (* param_exprs - contains the list of param expressions in the case that *)
+    (* lvalue contains a function call *)
+    (* func_envs - the environments for already computed functions *)    
     let rec get_lvalue_taint env lvalue param_exprs func_envs =
         (* Local function used for finding the actual parameter passed for a *)
         (* formal one. *)
@@ -77,6 +114,7 @@ module InstrComputer(Param:sig
                 P.print_taint () taint);
             taint
         in
+        (* Gets the taint for a lvalue that is a memory location. I.e.: a pointer. *)
         let get_lvalue_taint_mem expr =
             let taint = do_expr env expr [] func_envs in
             if Param.debug then (
@@ -91,6 +129,12 @@ module InstrComputer(Param:sig
             | ((Mem exp), _) -> get_lvalue_taint_mem exp          
     and
     (* Returns the taintedness of an expression according to the environment. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* expr - the expression to be analyzed *)
+    (* param_exprs - contains the list of parameter expressions if the current *)
+    (* expression contains a function call *)
+    (* func_envs - the previously computed function environments *)
     do_expr env expr param_exprs func_envs =
         let do_const () =
             if Param.debug then (
@@ -200,6 +244,12 @@ module InstrComputer(Param:sig
     
     (* Processes a nullable expression. If the expression is null U is returned, *)
     (* otherwise the taintedness of the expression is returned. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* null_expr - a possibly null expression *)
+    (* param_exprs - contains the list of parameter expressions when the null_expr *)
+    (* has a function call *)
+    (* func_envs - the previously computed function environments *)
     let do_null_expr env null_expr param_exprs func_envs =
         let do_null () =
             if Param.debug then (
@@ -223,6 +273,13 @@ module InstrComputer(Param:sig
     
     (* Changes the mapping for lvalue in the given environment according to cond_taint*)
     (* and the assigned expression. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* expr - the rvalue expression *)
+    (* cond_taint - the current condition taint *)
+    (* param_exprs - contains the list of parameter expressions when expr has a *)
+    (* function call *)
+    (* func_env - the previously computed function environments *)
     let do_assign env lvalue expr cond_taint param_exprs func_env =
         let do_assign_lvalue_tainted vinfo =
             (if Param.debug then
@@ -239,11 +296,21 @@ module InstrComputer(Param:sig
             Gamma.set_taint env vinfo.vid (Typing.combine_taint expr_taint cond_taint);
             env
         in
-        (* TODO: For now we make the assumption that memory locations aren't used as lvalues. *)
-        let do_assign_default () =
+        let do_assign_lvalue_mem_tainted ptr_expr =
+            let vinfo = extract_vinfo_from_ptr_expr ptr_expr in
+            (if Param.debug then
+                P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
+            Gamma.set_taint env vinfo.vid T;
+            env
+        in
+        let do_assign_lvalue_mem ptr_expr expr =
+            let vinfo = extract_vinfo_from_ptr_expr ptr_expr in
+            let expr_taint = do_expr env expr param_exprs func_env in
             if Param.debug then (
-                P.print () "[DEBUG] Assigning a value to a memory location%s" "\n"
+                P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
+                P.print_taint () expr_taint
             );
+            Gamma.set_taint env vinfo.vid (Typing.combine_taint expr_taint cond_taint);
             env
         in
         
@@ -251,11 +318,18 @@ module InstrComputer(Param:sig
             P.print () "[INFO] Processing assign instruction %s" "\n");
         match (lvalue, cond_taint) with
             | ((Var vinfo, _), T) -> do_assign_lvalue_tainted vinfo                    
-            | ((Var vinfo, _), _) -> do_assign_lvalue vinfo expr 
-            | _ ->  do_assign_default ()
+            | ((Var vinfo, _), _) -> do_assign_lvalue vinfo expr
+            | ((Mem ptr_expr, _), T) -> do_assign_lvalue_mem_tainted ptr_expr 
+            | ((Mem ptr_expr, _), _) -> do_assign_lvalue_mem ptr_expr expr   
             
-    (* Make the assumption that all the functions return a single value and have no*)
+    (* TODO: Makes the assumption that all the functions return a single value and have no *)
     (* side effects. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* null_lval - the nullable lvalue *)
+    (* cast_expr - the expression containing the call *)
+    (* cond_taint - the current condition taint *)
+    (* func_envs - the previously computed environments *)
     let do_call env null_lval cast_expr param_exprs cond_taint func_envs =
         let do_call_lval vinfo =
             let taint = do_expr env cast_expr param_exprs func_envs in
