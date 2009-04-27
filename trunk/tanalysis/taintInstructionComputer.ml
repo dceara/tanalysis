@@ -19,12 +19,12 @@ module InstrComputer(Param:sig
     
     let find_fundec id =
         let GFun (func, _) = List.find
-					            (fun g ->
-					                match g with
-					                    | GFun (func, _) -> 
+                                (fun g ->
+                                    match g with
+                                        | GFun (func, _) -> 
                                             func.svar.vid = id
-					                    | _ -> false)
-					            Param.globals in
+                                        | _ -> false)
+                                Param.globals in
         func             
     
     (* Returns the taintedness for a lvalue. *)
@@ -37,8 +37,8 @@ module InstrComputer(Param:sig
                             match found with
                                 | true -> (idx, found)
                                 | false ->
-		                            if dep.vname == f.vname then (idx, true)
-		                            else (idx + 1, false))
+                                    if dep.vname == f.vname then (idx, true)
+                                    else (idx + 1, false))
                         (0, false)
                         formals in
             List.nth actuals i
