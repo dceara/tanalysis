@@ -50,7 +50,6 @@ let run_taint fmt globals =
 		            | None -> next_func remaining
 		            | Some func ->
                         let env = run_custom_taint fmt func computed_function_envs globals in
-                            Printf.printf "Adding environment for %s with id %d\n" func.svar.vname func.svar.vid; 
 			                Inthash.add 
 			                    computed_function_envs 
 			                    func.svar.vid
