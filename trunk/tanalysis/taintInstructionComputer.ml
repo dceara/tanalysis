@@ -53,7 +53,6 @@ module InstrComputer(Param:sig
                             | _ -> null_vinfo1)
                 | _ -> None   
         in
-        P.print () "%s[DEBUG!!!!!!]" "\n";
         match _extract_vinfo_from_ptr_expr expr with
             | None -> raise Not_found
             | Some vinfo -> vinfo
