@@ -33,11 +33,14 @@ module InstrComputer(Param:sig
         (* Local function used for finding the actual parameter passed for a *)
         (* formal one. *)
         let find_binding actuals formals dep =
-            let i = List.fold_left
-                        (fun idx f ->
-                            if dep = f then idx
-                            else idx + 1)
-                        0
+            let (i, _) = List.fold_left
+                        (fun (idx, found) f ->
+                            match found with
+                                | true -> (idx, found)
+                                | false ->
+		                            if dep.vname == f.vname then (idx, true)
+		                            else (idx + 1, false))
+                        (0, false)
                         formals in
             List.nth actuals i
         in
@@ -48,6 +51,8 @@ module InstrComputer(Param:sig
                 (fun t dep -> 
                     let param_expr = find_binding actuals formals dep in
                     let param_taint = do_expr env param_expr [] func_envs in
+                    (* P.print() "%s" "[DEBUG] Param_taint: ";
+                    P.print_taint () param_taint; *) 
                     Typing.combine_taint t param_taint)
                 U
                 ret_taint
