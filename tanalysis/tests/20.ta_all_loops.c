@@ -12,7 +12,10 @@ int main(int argc, int argc2, char** argv) //argc = G, argv = G
         }
         b+=tainted;
     }
-    
+                                    // T(a) = G(argc)
+                                    // T(b) = T
+                                    // T(c) = T
+                                    // T(i) = G(argc)
     
     a1 = b1 = c1 = d1 = 0;
     for (i1 = 0; i1 < argc; ++ i1) {
@@ -24,6 +27,9 @@ int main(int argc, int argc2, char** argv) //argc = G, argv = G
         }
         b1+=2;
     }
+                                    // T(a1) = G(argc)
+                                    // T(b1) = G(argc)
+                                    // T(c1) = G(argc)
     
     return 0;
 }
