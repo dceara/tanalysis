@@ -74,17 +74,18 @@ module InstrComputer(Param:sig
                 P.print_taint () taint);
             taint
         in
-        let get_lvalue_taint_default () =
+        let get_lvalue_taint_default expr =
+            let taint = do_expr env expr [] func_envs in
             if Param.debug then (
                 P.print () "[DEBUG] Taint for memory lvalue: %s" "\n";
-                P.print_taint () U);
-            U
+                P.print_taint () taint);
+            taint
         in
         (if Param.info then
             P.print () "[INFO] Getting lvalue taint %s" "\n"); 
         match lvalue with
             | ((Var vinfo), _) -> get_lvalue_taint_vinfo vinfo
-            | _ -> get_lvalue_taint_default ()          
+            | ((Mem exp), _) -> get_lvalue_taint_default exp          
     and
     (* Returns the taintedness of an expression according to the environment. *)
     do_expr env expr param_exprs func_envs =

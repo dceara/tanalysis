@@ -1,4 +1,4 @@
-(* Frama-C journal generated at 20:52 the 26/04/2009 *)
+(* Frama-C journal generated at 21:05 the 26/04/2009 *)
 
 (* Running *)
 let start () =
