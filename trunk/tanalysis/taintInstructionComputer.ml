@@ -28,7 +28,6 @@ module InstrComputer(Param:sig
         func             
     
     (* Returns the taintedness for a lvalue. *)
-    (* TODO: For now we make the assumption that memory locations aren't used as lvalues. *)
     let rec get_lvalue_taint env lvalue param_exprs func_envs =
         (* Local function used for finding the actual parameter passed for a *)
         (* formal one. *)
@@ -51,8 +50,6 @@ module InstrComputer(Param:sig
                 (fun t dep -> 
                     let param_expr = find_binding actuals formals dep in
                     let param_taint = do_expr env param_expr [] func_envs in
-                    (* P.print() "%s" "[DEBUG] Param_taint: ";
-                    P.print_taint () param_taint; *) 
                     Typing.combine_taint t param_taint)
                 U
                 ret_taint
@@ -62,6 +59,7 @@ module InstrComputer(Param:sig
                 try
                     Gamma.get_taint env vinfo.vid 
                 with Not_found ->
+                    (* Then the lvalue is actually a function call.. Stupid CIL :P *)
                     let func = find_fundec vinfo.vid in
                     let callee_env = Inthash.find func_envs vinfo.vid in
                     let formals = func.sformals in
@@ -79,7 +77,7 @@ module InstrComputer(Param:sig
                 P.print_taint () taint);
             taint
         in
-        let get_lvalue_taint_default expr =
+        let get_lvalue_taint_mem expr =
             let taint = do_expr env expr [] func_envs in
             if Param.debug then (
                 P.print () "[DEBUG] Taint for memory lvalue: %s" "\n";
@@ -90,7 +88,7 @@ module InstrComputer(Param:sig
             P.print () "[INFO] Getting lvalue taint %s" "\n"); 
         match lvalue with
             | ((Var vinfo), _) -> get_lvalue_taint_vinfo vinfo
-            | ((Mem exp), _) -> get_lvalue_taint_default exp          
+            | ((Mem exp), _) -> get_lvalue_taint_mem exp          
     and
     (* Returns the taintedness of an expression according to the environment. *)
     do_expr env expr param_exprs func_envs =
@@ -268,26 +266,6 @@ module InstrComputer(Param:sig
                 P.print_taint () taint
             );
             env
-            
-            (*let func = find_fundec vinfo.vname in
-            P.print () "DEBUG looking for environment for name id : %d\n" vinfo.vid;
-            let callee_env = Inthash.find func_envs vinfo.vid in
-            P.print () "DEBUG found environment\n";
-            let formals = func.sformals in
-            let taint = 
-            (match Gamma.get_taint callee_env func.svar.vid with
-                | U -> Gamma.set_taint env vinfo.vid U; U
-                | T -> Gamma.set_taint env vinfo.vid T; T
-                | (G g) 
-                    ->
-                        let g_taint = (instantiate_call env g param_exprs formals) in 
-                        Gamma.set_taint env vinfo.vid g_taint;
-                        g_taint) in
-            if Param.debug then (
-                P.print () "[DEBUG] Assigning to %s taint value:" vinfo.vname;
-                P.print_taint () taint
-            );
-            env *)
         in  
         let do_call_default () = 
             env 
