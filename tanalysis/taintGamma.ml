@@ -100,7 +100,12 @@ module Gamma = struct
         match taint with
             | T -> Format.fprintf fmt "%s" "Tainted\n"
             | U -> Format.fprintf fmt "%s" "Untainted\n"
-            | (G _) -> Format.fprintf fmt "%s" "Generic\n"
+            | (G g) -> 
+                Format.fprintf fmt "%s" "Generic: ";
+                List.iter 
+                    (fun el -> Format.fprintf fmt "Gamma(%s), " el.vname)
+                    g;
+                Format.fprintf fmt "%s" "\n"
 
     let pretty_print_taint_list fmt l =
         let rec print_taint_list fmt l =

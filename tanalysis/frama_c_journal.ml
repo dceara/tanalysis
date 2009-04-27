@@ -1,10 +1,10 @@
-(* Frama-C journal generated at 21:05 the 26/04/2009 *)
+(* Frama-C journal generated at 07:51 the 27/04/2009 *)
 
 (* Running *)
 let start () =
  let () = Journal.run () in
  let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
- let () = Cmdline.Files.add "tests/22.simple_interprocedural.c" in
+ let () = Cmdline.Files.add "tests/23.simple_interproc_multiple_funcs.c" in
  let () = File.init_from_cmdline () in
  (* Finished *)
  Journal.finished ()
