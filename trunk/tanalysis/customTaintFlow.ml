@@ -8,6 +8,7 @@ module TaintComputer(Param:sig
                         val stmt_envs : statementsEnvironment 
                         val func : fundec         
                         val func_envs : functionEnvironment 
+                        val globals : global list
                         val dom_tree : stmt option Inthash.t 
                         val fmt : Format.formatter
                         val debug : bool      
@@ -16,6 +17,7 @@ module TaintComputer(Param:sig
 
 
     module SC = TaintInstructionComputer.InstrComputer(struct
+                                                            let globals = Param.globals
                                                             let fmt = Param.fmt
                                                             let debug = Param.debug
                                                             let info = Param.info
@@ -66,22 +68,22 @@ module TaintComputer(Param:sig
                         P.print () "[DEBUG] Instruction reached%s" "\n";
                     );
                     let ret_env = 
-                        SC.do_instr new_env instr current_cond_taint Param.func Param.func_envs in
+                        SC.do_instr new_env instr current_cond_taint Param.func_envs in
                     (ret_env, Same)
             | (Return (null_expr, _))
                 -> 
                     let ret_env = 
-                        SC.do_return_instr new_env Param.func null_expr current_cond_taint in
+                        SC.do_return_instr new_env Param.func null_expr current_cond_taint Param.func_envs in
                     (ret_env, Same)
             | (If (expr, true_block, false_block, _))
                 -> 
                     let new_cond_taint = 
-                        SC.do_if_instr new_env expr true_block false_block current_cond_taint in
+                        SC.do_if_instr new_env expr true_block false_block current_cond_taint Param.func_envs in
                     (new_env, Push (stmt.sid, new_cond_taint))
             | (Switch (expr, _, _, _))
                 -> 
                     let new_cond_taint = 
-                        SC.do_switch_instr new_env expr current_cond_taint in
+                        SC.do_switch_instr new_env expr current_cond_taint Param.func_envs in
                     (new_env, Push (stmt.sid, new_cond_taint))
             | (Loop (_, stmt_block, _, stmt_continue, stmt_break))
                 -> 
@@ -111,19 +113,14 @@ module TaintComputer(Param:sig
 	        match nullable_old_stmt with
 	            | None -> List.tl cond_taint
 	            | Some old_stmt ->
-                P.print () "[DEBUG] Some sid: %d old_id: %d\n" stmt.sid old_stmt.sid;
                 match old_stmt.skind with 
                     | Break _ -> cond_taint
                     | _ ->
 			        match stmt.skind with
 	                    | Loop _ -> 
 				            (match Dominators.dominates Param.dom_tree stmt old_stmt with
-				                | false -> 
-				                    P.print () "%s\n" "[DEBUG] not dominates";
-				                    cond_taint
-				                | true -> 
-				                    P.print () "%s\n" "[DEBUG] dominates";
-				                    List.tl cond_taint)
+				                | false -> cond_taint
+				                | true ->List.tl cond_taint)
 	                    | _ -> List.tl cond_taint
         
     (* Params: *)
@@ -151,24 +148,16 @@ module TaintComputer(Param:sig
                     ->
                     let first_pred = List.hd current_stmt.preds in
                     let first_pred_id = first_pred.sid in  
-                    P.print () "[DEBUG] Combining preds for sid: %d\n" current_stmt.sid;
                     (Gamma.copy
                         (List.fold_left
 	                        (fun env pred_stmt ->
-                                P.print () "[DEBUG] Combining sid: %d\n" pred_stmt.sid;
 	                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
 	                            Typing.combine env pred_env)
 	                        (Inthash.find Param.stmt_envs first_pred_id)    
 	                        (List.tl current_stmt.preds)),
                     combine_cond_taint current_stmt nullable_old_stmt cond_taint
-                    (* TODO: check this *)
-                    (* match List.length current_stmt.preds with
-                        | 1 -> cond_taint
-                        | _ -> List.tl cond_taint *) 
                     )
         in
-        P.print () "[INFO] Cond taint for instruction %d is: " current_stmt.sid;
-        P.print_taint_list () cond_taint;  
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         let (changed, env, cond_stack) = 
             test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
@@ -257,19 +246,22 @@ module TaintComputer(Param:sig
         init_environments initial_env;
         compute (List.map (fun s -> (s, None, [(0, U)])) worklist);
         let final = combine_return_envs initial_env in
-        P.print_env () final
+        P.print () "\nEnvironment for function %s:\n" Param.func.svar.vname;
+        P.print_env () final;
+        final
 end
 
-let run_custom_taint format f f_envs =
+let run_custom_taint format f f_envs gls =
     let tree = Dominators.computeIDom f in 
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
                                                 let func = f
                                                 let func_envs = f_envs
+                                                let globals = gls
                                                 let dom_tree = tree
                                                 let fmt = format
-                                                let debug = true
-                                                let info = true
+                                                let debug = false
+                                                let info = false
                                             end) in
     let start_stmt = List.hd f.sallstmts in
     TaintComputer.start [start_stmt]

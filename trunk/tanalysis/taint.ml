@@ -26,17 +26,50 @@ let get_config_name () =
             "default.cfg"
 
 let run_taint fmt globals =
-    let fs = List.hd (globals.children) in
+    let computed_function_envs = Inthash.create 1024 in
+    let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
+    let get_function node = 
+        let n = Hashtbl.find mappings node in
+        let fname = nodeName n.cnInfo in
+        try
+            let GFun (func, _) = (List.find 
+			                    (fun g -> 
+			                        match g with
+			                            | GFun (func, _) -> 
+                                            func.svar.vname == fname
+			                            | _ -> false)
+			                    globals) in
+            Some func
+        with Not_found -> None
+    in
+    let rec next_func component =
+        match SccCallgraph.get_next_call mappings nodes g component with
+            | None -> ignore ()
+            | Some (node, remaining) -> 
+		        match get_function node with
+		            | None -> next_func remaining
+		            | Some func ->
+                        let env = run_custom_taint fmt func computed_function_envs globals in
+                            Printf.printf "Adding environment for %s with id %d\n" func.svar.vname func.svar.vid; 
+			                Inthash.add 
+			                    computed_function_envs 
+			                    func.svar.vid
+                                env  
+		                    
+    in
+    List.iter next_func lst;
+    Format.fprintf fmt "%s\n" "Taint analysis done"             
+    
+    
+    (* let fs = List.hd (globals.children) in
     match fs.func with
         | None -> ignore ()
-        | Some func -> run_custom_taint fmt func (Inthash.create 1024)
+        | Some func -> run_custom_taint fmt func (Inthash.create 1024) *)
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 let run fmt =
-    if Enabled.get () then 
-        let v = (new ScopeBuilder.visitor ()) in
-        let scope_visitor = (v :> frama_c_visitor) in 
-        visitFramacFile scope_visitor (Cil_state.file ());
-        let globals = v#get_global in
+    if Enabled.get () then
+        let file = Cil_state.file () in
+        let globals = file.globals in 
         run_taint fmt globals
     
 (* Extend the Frama-C command line. *)

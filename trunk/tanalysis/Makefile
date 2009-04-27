@@ -16,7 +16,7 @@ pack: utils \
 	taintCFGPrinter \
 	taintInstructionComputer \
 	customTaintFlow sccCallgraph \
-	taintFlow \
+	sccCallgraph \
 	scopeBuilder \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
@@ -27,14 +27,10 @@ pack: utils \
 					   taintInstructionComputer.cmo \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
-					   taintFlow.cmo \
 					   scopeBuilder.cmo \
 					   taint.cmo  
 
 sccCallgraph: sccCallgraph.ml
-	$(CC) $(PREFLAGS) $(CFLAGS) $^
-
-taintFlow: taintFlow.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
 scopeBuilder: scopeBuilder.ml
@@ -60,7 +56,7 @@ taintInstructionComputer: taintInstructionComputer.ml
 	
 customTaintFlow: customTaintFlow.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
-  
+	  
 taint: taint.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
     
@@ -69,7 +65,7 @@ install: build
 
 uninstall:
 	$(RM) $(FRAMAC_SHARE)/plugins/$(PLUGIN_NAME).cmo
-    
+
 clean:
 	$(RM) *.cm* .depend frama_c_journal.ml
 
