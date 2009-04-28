@@ -2,7 +2,6 @@ open Cil_types
 open Cilutil
 open Cil
 open Visitor
-open ScopeBuilder
 open SccCallgraph 
 open Callgraph
 open CustomTaintFlow

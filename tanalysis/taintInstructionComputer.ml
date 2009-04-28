@@ -15,7 +15,12 @@ module InstrComputer(Param:sig
                                         let fmt = Param.fmt
                                         let debug = Param.debug
                                         let info = Param.info
-                                    end)      
+                                    end)    
+    module TH = TypeHelper.TypeComparer(struct
+	                                        let fmt = Param.fmt
+	                                        let debug = Param.debug
+	                                        let info = Param.info
+	                                    end)  
     
     let find_fundec id =
         let GFun (func, _) = List.find
