@@ -10,6 +10,7 @@ RM=rm -f
 build: pack
 
 pack: utils \
+	typeHelper \
 	taintGamma \
 	taintTyping \
 	taintPrinter \
@@ -17,9 +18,9 @@ pack: utils \
 	taintInstructionComputer \
 	customTaintFlow sccCallgraph \
 	sccCallgraph \
-	scopeBuilder \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
+					   typeHelper.cmo \
 					   taintGamma.cmo \
 					   taintTyping.cmo \
 					   taintPrinter.cmo \
@@ -27,18 +28,17 @@ pack: utils \
 					   taintInstructionComputer.cmo \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
-					   scopeBuilder.cmo \
 					   taint.cmo  
 
 sccCallgraph: sccCallgraph.ml
-	$(CC) $(PREFLAGS) $(CFLAGS) $^
-
-scopeBuilder: scopeBuilder.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
   
 utils: utils.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
+typeHelper: typeHelper.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^	
+	
 taintGamma: taintGamma.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
   
