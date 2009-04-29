@@ -256,7 +256,7 @@ let run_custom_taint format f f_envs gls =
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
                                                 let func = f
-                                                let func_envs = f_envs
+                                                let func_envs = !f_envs
                                                 let globals = gls
                                                 let dom_tree = tree
                                                 let fmt = format
@@ -265,3 +265,45 @@ let run_custom_taint format f f_envs gls =
                                             end) in
     let start_stmt = List.hd f.sallstmts in
     TaintComputer.start [start_stmt]
+
+let run_custom_taint_non_recursive format f f_envs gls =
+    let env = run_custom_taint format f f_envs gls in
+    Inthash.add !f_envs f.svar.vid env
+  
+let run_custom_taint_recursive format f_list f_envs gls =
+    let init_recursive_env f =
+        let env = Gamma.create_env () in
+        let taint = List.fold_left 
+                        (fun t formal ->
+                            Typing.combine_taint t (G [formal]))
+                        U
+                        f.sformals in
+        Gamma.set_taint env f.svar.vid taint; 
+        env 
+    in
+    let compare_recursive_env f old_env new_env =
+        let old_f_taint = Gamma.get_taint old_env f.svar.vid in
+        let new_f_taint = Gamma.get_taint new_env f.svar.vid in
+        Gamma.compare_taint old_f_taint new_f_taint
+    in
+    let rec iterate () =
+        Printf.printf "%s" "[DEBUG] iterating through recursive funcs\n"; 
+        match List.fold_left
+                (fun changed f ->
+                    let old_env = Inthash.find !f_envs f.svar.vid in
+                    let new_env = run_custom_taint format f f_envs gls in
+                    match compare_recursive_env f old_env new_env with
+                        | false -> 
+                            Inthash.replace !f_envs f.svar.vid new_env;
+                            true
+                        | true -> false)
+                false
+                f_list with
+            | false -> ignore ()
+            | true -> iterate () 
+    in    
+    
+    List.iter 
+        (fun f -> Inthash.add !f_envs f.svar.vid (init_recursive_env f)) 
+        f_list;
+    iterate ()

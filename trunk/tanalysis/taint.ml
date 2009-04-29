@@ -25,26 +25,34 @@ let get_config_name () =
             "default.cfg"
 
 let run_taint fmt globals =
-    let computed_function_envs = Inthash.create 1024 in
+    let computed_function_envs = ref (Inthash.create 1024) in
     let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
+    Printf.printf "%s\n" "[DEBUG] dbg1";
     let get_function node = 
         let n = Hashtbl.find mappings node in
         let fname = nodeName n.cnInfo in
         Utils.get_function_by_name globals fname
     in
     let rec next_func component =
+        Printf.printf "%s\n" "[DEBUG] dbg2";
         match SccCallgraph.get_next_call mappings nodes g component with
-            | None -> ignore ()
-            | Some (node, remaining) -> 
-		        match get_function node with
+            | FuncNone -> ignore ()
+            | FuncNonRecursive (node, remaining) -> 
+		        (match get_function node with
 		            | None -> next_func remaining
 		            | Some func ->
-                        let env = run_custom_taint fmt func computed_function_envs globals in
-			                Inthash.add 
-			                    computed_function_envs 
-			                    func.svar.vid
-                                env  
-		                    
+                        Printf.printf "[DEBUG] fname = %s\n" func.svar.vname;
+                        run_custom_taint_non_recursive fmt func computed_function_envs globals)
+            | FuncRecursive node_list -> 
+                let func_list = List.fold_left 
+                                    (fun res node 
+                                        -> 
+                                            match get_function node with
+                                                | None -> res
+                                                | Some func -> List.concat [res;[func]]) 
+                                    []
+                                    node_list in
+                run_custom_taint_recursive fmt func_list computed_function_envs globals
     in
     List.iter next_func lst;
     Format.fprintf fmt "%s\n" "Taint analysis done"
