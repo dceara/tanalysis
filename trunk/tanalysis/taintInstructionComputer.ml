@@ -22,16 +22,6 @@ module InstrComputer(Param:sig
 	                                        let info = Param.info
 	                                    end)  
     
-    let find_fundec id =
-        let GFun (func, _) = List.find
-                                (fun g ->
-                                    match g with
-                                        | GFun (func, _) -> 
-                                            func.svar.vid = id
-                                        | _ -> false)
-                                Param.globals in
-        func             
-    
     let extract_vinfo_from_ptr_expr expr =
         let rec _extract_vinfo_from_lval lvl =
             match lvl with
@@ -101,7 +91,7 @@ module InstrComputer(Param:sig
                     Gamma.get_taint env vinfo.vid 
                 with Not_found ->
                     (* Then the lvalue is actually a function call.. Stupid CIL :P *)
-                    let func = find_fundec vinfo.vid in
+                    let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
                     let callee_env = Inthash.find func_envs vinfo.vid in
                     let formals = func.sformals in
                     match Gamma.get_taint callee_env func.svar.vid with

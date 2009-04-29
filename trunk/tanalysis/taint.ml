@@ -30,16 +30,7 @@ let run_taint fmt globals =
     let get_function node = 
         let n = Hashtbl.find mappings node in
         let fname = nodeName n.cnInfo in
-        try
-            let GFun (func, _) = (List.find 
-			                    (fun g -> 
-			                        match g with
-			                            | GFun (func, _) -> 
-                                            func.svar.vname == fname
-			                            | _ -> false)
-			                    globals) in
-            Some func
-        with Not_found -> None
+        Utils.get_function_by_name globals fname
     in
     let rec next_func component =
         match SccCallgraph.get_next_call mappings nodes g component with
@@ -56,13 +47,7 @@ let run_taint fmt globals =
 		                    
     in
     List.iter next_func lst;
-    Format.fprintf fmt "%s\n" "Taint analysis done"             
-    
-    
-    (* let fs = List.hd (globals.children) in
-    match fs.func with
-        | None -> ignore ()
-        | Some func -> run_custom_taint fmt func (Inthash.create 1024) *)
+    Format.fprintf fmt "%s\n" "Taint analysis done"
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 let run fmt =
     if Enabled.get () then
