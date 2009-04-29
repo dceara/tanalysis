@@ -10,21 +10,21 @@ RM=rm -f
 build: pack
 
 pack: utils \
-	typeHelper \
 	taintGamma \
 	taintTyping \
 	taintPrinter \
 	taintCFGPrinter \
+	typeHelper \
 	taintInstructionComputer \
 	customTaintFlow sccCallgraph \
 	sccCallgraph \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
-					   typeHelper.cmo \
 					   taintGamma.cmo \
 					   taintTyping.cmo \
 					   taintPrinter.cmo \
 					   taintCFGPrinter.cmo \
+					   typeHelper.cmo \
 					   taintInstructionComputer.cmo \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \

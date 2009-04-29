@@ -202,11 +202,15 @@ module InstrComputer(Param:sig
         in
         (* TODO: For now we consider all casts to be taints. Probably this isn't a *)
         (* good approach. *)
-        let do_castE () =
+        let do_castE typ expr =
+            let taint =
+	            match TH.check_type typ expr with
+	                | true -> do_expr env expr param_exprs func_envs
+                    | false -> T in  
             if Param.debug then (
                 P.print () "%s" "[DEBUG] Taint for CastE is: ";
-                P.print_taint () T);
-            T
+                P.print_taint () taint);
+            taint
         in
         let do_addrOf lvalue =
             let taint = get_lvalue_taint env lvalue param_exprs func_envs in
@@ -241,7 +245,7 @@ module InstrComputer(Param:sig
             | AlignOfE _ -> do_alignOfE ()
             | UnOp (_, un_expr, _) -> do_unOp un_expr
             | BinOp (_, bin_expr1, bin_expr2, _)  -> do_binOp bin_expr1 bin_expr2
-            | CastE _ -> do_castE ()
+            | CastE (typ, expr)-> do_castE typ expr
             | AddrOf lvalue -> do_addrOf lvalue
             | StartOf lvalue -> do_startOf lvalue
             | Info _ -> do_info ()

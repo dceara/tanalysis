@@ -11,7 +11,13 @@ module TypeComparer(Param:sig
                         val info : bool     
                      end) = struct
 
-        (* TODO: Arch dependency *)
+    module P = TaintPrinter.Printer(struct
+                                        let fmt = Param.fmt
+                                        let debug = Param.debug
+                                        let info = Param.info
+                                    end)
+
+    (* TODO: Arch dependency *)
     let byte_size () = 1
     let short_size () = 2 * byte_size ()
     let word_size () = 4 * byte_size ()
@@ -167,9 +173,14 @@ module TypeComparer(Param:sig
             get_expr_type_size (RefCount 0) expr in
         let TypeSize (RefCount dst_ref_cnt, dst_size) = 
             get_type_size (RefCount 0) dest_type in
-        match (src_ref_cnt, dst_ref_cnt) with
-            | (0, 0) -> dst_size <= src_size
-            | (x, y) when x < y -> dst_size <= ptr_size ()
-            | (x, y) when x == y -> dst_size <= src_size
-            | _ -> true                                                             
+        P.print () "[DEBUG] dst_ref = %d src_ref = %d\n" dst_ref_cnt src_ref_cnt;
+        match (dst_ref_cnt, src_ref_cnt) with
+            | (x, y) when x == y 
+                -> 
+                    P.print () "[DEBUG] (x,y) x==y dst_size = %d src_size = %d\n" dst_size src_size;
+                    dst_size <= src_size
+            | _ 
+                -> 
+                    P.print () "[DEBUG] (x,y) x!=y dst_size = %d src_size = %d\n" dst_size src_size;
+                    false                                                             
 end
