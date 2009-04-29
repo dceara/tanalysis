@@ -42,7 +42,7 @@ module Gamma = struct
             ignore ());
         Hashtbl.add env vid taint
         
-    let compare t1 t2 =
+    let compare_taint t1 t2 =
         match (t1, t2) with
             | (T, T) -> true
             | (U, U) -> true
@@ -63,7 +63,7 @@ module Gamma = struct
                 let t2 = Hashtbl.find env2 id in
                 match eq with
                     | false -> false
-                    | _ -> compare t1 t2)
+                    | _ -> compare_taint t1 t2)
             env1
             true
             

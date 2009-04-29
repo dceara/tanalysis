@@ -4,6 +4,10 @@ open Cil
 open Graph
 open Callgraph
 
+type 'a funcNodeType = FuncNone 
+                    | FuncNonRecursive of ('a * 'a list) 
+                    | FuncRecursive of 'a list
+
 module FunctionsComputer = struct 
  
     module G = Imperative.Digraph.Abstract(struct type t = callnode end)
@@ -66,19 +70,26 @@ let get_next_call mappings nodes g l =
             cnode.cnCallees
             false
     in
+    Printf.printf "%s\n" "[DEBUG] dbg3";
     match List.length l with
-        | 0 -> None
+        | 0 -> FuncNone
         | _ -> 
-            let ret_node = 
-                List.find
-                    (fun node ->
-                        let call_node = Hashtbl.find mappings node in
-                        let calls = calls_in_list call_node in
-                        match calls with
-                            | true -> false
-                            | false -> true)
-                     l in
-            Some (ret_node, List.filter (fun n -> n != ret_node) l)
+            try
+	            let ret_node = 
+	                List.find
+	                    (fun node ->
+	                        let call_node = Hashtbl.find mappings node in
+	                        let calls = calls_in_list call_node in
+	                        match calls with
+	                            | true -> false
+	                            | false -> true)
+	                     l in
+	            Printf.printf "%s\n" "[DEBUG] dbg4";
+	            FuncNonRecursive (ret_node, List.filter (fun n -> n != ret_node) l)
+            with Not_found 
+                ->
+                    Printf.printf "%s\n" "[DEBUG] dbg5";
+                    FuncRecursive l
 
 let get_scc () =
     let cg = computeGraph (Cil_state.file ()) in
