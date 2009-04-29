@@ -1,6 +1,7 @@
 open Cil_types
 open Cil
 
+
 type refCountType = RefCount of int
 
 type typeSize = TypeSize of refCountType * int
@@ -88,6 +89,7 @@ module TypeComparer(Param:sig
             | TInt (ikind, _) -> do_get_type_size_int (RefCount ref_cnt) ikind
             | TFloat (fkind, _) -> do_get_type_size_float (RefCount ref_cnt) fkind
             | TPtr (ptr_typ, _) -> do_get_type_size_ptr (RefCount ref_cnt) ptr_typ
+            (* TODO: Probably this isn't ok. What do we do if we have a fixed size array? *)
             | TArray (arr_typ, _, _) -> do_get_type_size_arr (RefCount ref_cnt) arr_typ 
             | TNamed (tinfo, _) -> get_type_size (RefCount ref_cnt) tinfo.ttype
             | TComp (compinfo, _) -> do_get_type_size_comp (RefCount ref_cnt) compinfo
