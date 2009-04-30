@@ -89,6 +89,7 @@ module Gamma = struct
         Format.fprintf fmt "%s\n" "========================================";
         Hashtbl.iter 
             (fun vid taint ->
+                let vid = if vid >= 0 then vid else (-vid) in
                 let vinfo = varinfo_from_vid vid in
                 Format.fprintf fmt "\tSymname: %s\n" vinfo.vname;
                 pretty_print_taint taint;

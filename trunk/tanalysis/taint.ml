@@ -27,21 +27,18 @@ let get_config_name () =
 let run_taint fmt debug info globals =
     let computed_function_envs = ref (Inthash.create 1024) in
     let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
-    Printf.printf "%s\n" "[DEBUG] dbg1";
     let get_function node = 
         let n = Hashtbl.find mappings node in
         let fname = nodeName n.cnInfo in
         Utils.get_function_by_name globals fname
     in
     let rec next_func component =
-        Printf.printf "%s\n" "[DEBUG] dbg2";
         match SccCallgraph.get_next_call mappings nodes g component with
             | FuncNone -> ignore ()
             | FuncNonRecursive (node, remaining) -> 
 		        (match get_function node with
 		            | None -> next_func remaining
 		            | Some func ->
-                        Printf.printf "[DEBUG] fname = %s\n" func.svar.vname;
                         run_custom_taint_non_recursive fmt debug info func computed_function_envs globals)
             | FuncRecursive node_list -> 
                 let func_list = List.fold_left 

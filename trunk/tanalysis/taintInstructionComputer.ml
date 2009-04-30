@@ -104,7 +104,7 @@ module InstrComputer(Param:sig
                     let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
                     let callee_env = Inthash.find func_envs vinfo.vid in
                     let formals = func.sformals in
-                    match Gamma.get_taint callee_env func.svar.vid with
+                    match Gamma.get_taint callee_env (-func.svar.vid) with
                         | U -> U
                         | T -> T
                         | (G g) 
@@ -401,8 +401,9 @@ module InstrComputer(Param:sig
                             (Typing.combine_taint 
                                 cond_taint 
                                 (do_null_expr env null_expr [] func_envs))) in
-        Gamma.set_taint env fid new_taint;
+        Gamma.set_taint env (-fid) new_taint;
         if Param.debug then (
+            P.print () "[DEBUG] FID: %d\n" fid;
             P.print () "[DEBUG] Old taint for return in function %s:" fname;
             P.print_taint () old_taint;
             P.print () "[DEBUG] New taint for return in function %s:" fname;

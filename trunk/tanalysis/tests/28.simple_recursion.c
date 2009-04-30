@@ -24,4 +24,3 @@ int foo2(int n)
         r = tainted;
     return r;
 }
-

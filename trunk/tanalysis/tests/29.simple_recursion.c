@@ -20,9 +20,10 @@ int foo(int n)
 int bar(int n)
 {
     int r;
+    int tainted;
     if (n > 1)
         r = n * foo(n);
     else 
-        r = 1;
+        r = tainted;
     return r;
 } 
