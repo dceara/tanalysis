@@ -24,7 +24,7 @@ let get_config_name () =
          else
             "default.cfg"
 
-let run_taint fmt globals =
+let run_taint fmt debug info globals =
     let computed_function_envs = ref (Inthash.create 1024) in
     let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
     Printf.printf "%s\n" "[DEBUG] dbg1";
@@ -42,7 +42,7 @@ let run_taint fmt globals =
 		            | None -> next_func remaining
 		            | Some func ->
                         Printf.printf "[DEBUG] fname = %s\n" func.svar.vname;
-                        run_custom_taint_non_recursive fmt func computed_function_envs globals)
+                        run_custom_taint_non_recursive fmt debug info func computed_function_envs globals)
             | FuncRecursive node_list -> 
                 let func_list = List.fold_left 
                                     (fun res node 
@@ -52,7 +52,7 @@ let run_taint fmt globals =
                                                 | Some func -> List.concat [res;[func]]) 
                                     []
                                     node_list in
-                run_custom_taint_recursive fmt func_list computed_function_envs globals
+                run_custom_taint_recursive fmt debug info func_list computed_function_envs globals
     in
     List.iter next_func lst;
     Format.fprintf fmt "%s\n" "Taint analysis done"
@@ -61,7 +61,7 @@ let run fmt =
     if Enabled.get () then
         let file = Cil_state.file () in
         let globals = file.globals in 
-        run_taint fmt globals
+        run_taint fmt false false globals
     
 (* Extend the Frama-C command line. *)
 let () =

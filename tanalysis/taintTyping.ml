@@ -3,7 +3,17 @@ open Utils
 open Cil_types
 
 (* Typing rules *)
-module Typing = struct
+module Typing (Param:sig
+                    val fmt : Format.formatter
+                    val debug : bool      
+                    val info : bool     
+                 end)=struct
+    
+    module TG = TypeHelper.TypeGetter(struct 
+                            let fmt = Param.fmt
+                            let debug = Param.debug
+                            let info = Param.debug
+                            end)
     
     (* Applies the oplus operator between taint values. *)
     let combine_taint t1 t2 =
@@ -53,9 +63,13 @@ module Typing = struct
 		            _env1;
 		        (true, _env1)
     
-    (* Locals are initialized to tainted. *)
+    (* Locals are initialized to tainted. An exception is made for structures. *)
+    (* All structures are initialized to untainted because only parts of the *)
+    (* structures may be used afterwards. *)
     let process_local env vinfo =
-        Gamma.set_taint env vinfo.vid T;
+        (match TG.is_structure vinfo.vtype with
+            | false -> Gamma.set_taint env vinfo.vid T
+            | true -> Gamma.set_taint env vinfo.vid U);
         env
     
     (* Formals are initialized to G. *)

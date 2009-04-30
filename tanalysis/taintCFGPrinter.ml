@@ -6,9 +6,9 @@ module Printer(Param:sig
                     val fmt : Format.formatter
                  end) = struct
                    
-    module P = TaintPrinter.Printer(struct
-                                        let fmt = Param.fmt
-                                    end)
+    module P = Printer.Printer(struct
+                                    let fmt = Param.fmt
+                                end)
     let print_cfg func =
         let print_stmt stmt = 
             P.print () "\n\n SID: %d " stmt.sid;

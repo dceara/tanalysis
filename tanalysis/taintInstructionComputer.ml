@@ -1,6 +1,5 @@
 open Cil_types
 open Cil
-open TaintTyping
 open TaintGamma
 
 
@@ -15,12 +14,23 @@ module InstrComputer(Param:sig
                                         let fmt = Param.fmt
                                         let debug = Param.debug
                                         let info = Param.info
-                                    end)    
+                                    end)
+                
     module TH = TypeHelper.TypeComparer(struct
 	                                        let fmt = Param.fmt
 	                                        let debug = Param.debug
 	                                        let info = Param.info
 	                                    end)  
+    module Typing = TaintTyping.Typing(struct
+                                         let fmt = Param.fmt
+                                         let debug = Param.debug
+                                         let info = Param.info
+                                        end)
+    module Alias = Alias.AliasAnalysis(struct
+                                         let fmt = Param.fmt
+                                         let debug = Param.debug
+                                         let info = Param.info
+                                        end)
     
     let extract_vinfo_from_ptr_expr expr =
         let rec _extract_vinfo_from_lval lvl =
@@ -282,7 +292,10 @@ module InstrComputer(Param:sig
         let do_assign_lvalue_tainted vinfo =
             (if Param.debug then
                 P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
-            Gamma.set_taint env vinfo.vid T;
+            let aliases = Alias.get_aliases vinfo in
+            List.iter 
+                (fun info -> Gamma.set_taint env info.vid T)
+                aliases;
             env
         in
         let do_assign_lvalue vinfo expr =
@@ -291,14 +304,21 @@ module InstrComputer(Param:sig
                 P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
                 P.print_taint () expr_taint
             );
-            Gamma.set_taint env vinfo.vid (Typing.combine_taint expr_taint cond_taint);
+            let taint = Typing.combine_taint expr_taint cond_taint in
+            let aliases = Alias.get_aliases vinfo in
+            List.iter 
+                (fun info -> Gamma.set_taint env info.vid taint)
+                aliases;
             env
         in
         let do_assign_lvalue_mem_tainted ptr_expr =
             let vinfo = extract_vinfo_from_ptr_expr ptr_expr in
             (if Param.debug then
                 P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
-            Gamma.set_taint env vinfo.vid T;
+            let aliases = Alias.get_aliases vinfo in
+            List.iter 
+                (fun info -> Gamma.set_taint env info.vid T)
+                aliases;
             env
         in
         let do_assign_lvalue_mem ptr_expr expr =
@@ -308,7 +328,11 @@ module InstrComputer(Param:sig
                 P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
                 P.print_taint () expr_taint
             );
-            Gamma.set_taint env vinfo.vid (Typing.combine_taint expr_taint cond_taint);
+            let taint = Typing.combine_taint expr_taint cond_taint in
+            let aliases = Alias.get_aliases vinfo in
+            List.iter 
+                (fun info -> Gamma.set_taint env info.vid taint)
+                aliases;
             env
         in
         
