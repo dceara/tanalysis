@@ -145,7 +145,6 @@ module TypeComparer(Param:sig
                     get_type_size (RefCount cnt) typ
                 in
                 match off with
-                    (* TODO check if -1 is correct *)
                     | NoOffset 
                         -> do_get_array_item_type_size_no_offset ()
                     | Field (inner_finfo, inner_off) 
