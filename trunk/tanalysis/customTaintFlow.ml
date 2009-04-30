@@ -298,6 +298,7 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
         let env = Gamma.create_env () in
         let taint = List.fold_left 
                         (fun t formal ->
+                            Gamma.set_taint env formal.vid (G [formal]);
                             Typing.combine_taint t (G [formal]))
                         U
                         f.sformals in

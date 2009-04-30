@@ -100,7 +100,7 @@ module InstrComputer(Param:sig
                 try
                     Gamma.get_taint env vinfo.vid 
                 with Not_found ->
-                    (* Then the lvalue is actually a function call.. Stupid CIL :P *)
+                    (* Then the lvalue is actually a function call.. :| *)
                     let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
                     let callee_env = Inthash.find func_envs vinfo.vid in
                     let formals = func.sformals in
@@ -200,8 +200,6 @@ module InstrComputer(Param:sig
                 P.print_taint () taint);
             taint
         in
-        (* TODO: For now we consider all casts to be taints. Probably this isn't a *)
-        (* good approach. *)
         let do_castE typ expr =
             let taint =
 	            match TH.check_type typ expr with
@@ -371,6 +369,8 @@ module InstrComputer(Param:sig
             P.print () "[INFO] Processing call instruction %s" "\n");
         match null_lval with
             | Some (Var vinfo, _) -> do_call_lval vinfo 
+            (* TODO: calls without return values can also modify data through *)
+            (* pointers and globals. *)
             | _ -> do_call_default ()
     
     (* Changes the environment according to the instruction *)
@@ -440,7 +440,6 @@ module InstrComputer(Param:sig
         );
         new_cond_taint
         
-    (* TODO *)
     let do_loop_instr env stmt_block stmt_continue stmt_break cond_taint =
          (if Param.info then
             P.print () "[INFO] Processing loop instruction %s" "\n");
