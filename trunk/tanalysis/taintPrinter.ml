@@ -3,8 +3,10 @@ open TaintGamma
 module Printer(Param:sig
                         val fmt : Format.formatter  
                      end) = struct
-                        
-    let print () = Format.fprintf Param.fmt
+    
+    include Printer.Printer(struct 
+                             let fmt = Param.fmt
+                            end)
     
     let print_taint () = Gamma.pretty_print_taint Param.fmt
     

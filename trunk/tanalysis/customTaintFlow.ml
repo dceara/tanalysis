@@ -1,5 +1,4 @@
 open Cil_types
-open TaintTyping
 open TaintGamma
 
 module TaintComputer(Param:sig
@@ -29,6 +28,12 @@ module TaintComputer(Param:sig
                                             let dom_tree = Param.dom_tree
                                             let fmt = Param.fmt
                                           end)
+
+    module Typing = TaintTyping.Typing(struct
+                                         let fmt = Param.fmt
+                                         let debug = Param.debug
+                                         let info = Param.info
+                                        end)
 
     (* This function should be removed. It's used only for debugging purposes. *)
     let print_envs () =
@@ -251,7 +256,10 @@ module TaintComputer(Param:sig
         final
 end
 
-let run_custom_taint format f f_envs gls =
+(* Runs the analysis on a given function with regard to the already computed *)
+(* environments. *)
+(* Returns the new environment for f. *)
+let run_custom_taint format dbg inf f f_envs gls =
     let tree = Dominators.computeIDom f in 
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
@@ -260,17 +268,32 @@ let run_custom_taint format f f_envs gls =
                                                 let globals = gls
                                                 let dom_tree = tree
                                                 let fmt = format
-                                                let debug = false
-                                                let info = false
+                                                let debug = dbg
+                                                let info = inf
                                             end) in
     let start_stmt = List.hd f.sallstmts in
     TaintComputer.start [start_stmt]
 
-let run_custom_taint_non_recursive format f f_envs gls =
-    let env = run_custom_taint format f f_envs gls in
+(* Runs the analysis for a non recursive function f. Adds the new environment for *)
+(* f to the function environments. *)
+let run_custom_taint_non_recursive format debug info f f_envs gls =
+    let env = run_custom_taint format debug info f f_envs gls in
     Inthash.add !f_envs f.svar.vid env
-  
-let run_custom_taint_recursive format f_list f_envs gls =
+
+(* Runs taint analysis on a given list of mutually recursive functions. *)
+(* Params: *)
+(* format - the format used for printing *)
+(* f_list - the list of fundec for the mutually recursive functions *)
+(* f_envs - the already computed function environments *)
+(* gls - the list of globals in the program *)
+let run_custom_taint_recursive format dbg inf f_list f_envs gls =
+    let module Typing = TaintTyping.Typing(struct
+                                         let fmt = format
+                                         let debug = dbg
+                                         let info = inf
+                                        end) in
+    (* Initializes an environment for a recursive function. That is: *)
+    (* add a return value that is dependent on all the formals. *)
     let init_recursive_env f =
         let env = Gamma.create_env () in
         let taint = List.fold_left 
@@ -281,16 +304,21 @@ let run_custom_taint_recursive format f_list f_envs gls =
         Gamma.set_taint env f.svar.vid taint; 
         env 
     in
+    (* Compares two environments for the same recursive function. Compares the *)
+    (* return value. If the return value didn't change true is returned. False, *)
+    (* otherwise. *)
     let compare_recursive_env f old_env new_env =
         let old_f_taint = Gamma.get_taint old_env f.svar.vid in
         let new_f_taint = Gamma.get_taint new_env f.svar.vid in
         Gamma.compare_taint old_f_taint new_f_taint
     in
+    (* Function that iterates until no more changes are made to the environments *)
+    (* for the mutually recursive functions. *)
     let rec iterate () = 
         match List.fold_left
                 (fun changed f ->
                     let old_env = Inthash.find !f_envs f.svar.vid in
-                    let new_env = run_custom_taint format f f_envs gls in
+                    let new_env = run_custom_taint format dbg inf f f_envs gls in
                     match compare_recursive_env f old_env new_env with
                         | false -> 
                             Inthash.replace !f_envs f.svar.vid new_env;

@@ -10,21 +10,25 @@ RM=rm -f
 build: pack
 
 pack: utils \
+    printer \
+    typeHelper \
 	taintGamma \
 	taintTyping \
 	taintPrinter \
 	taintCFGPrinter \
-	typeHelper \
+	alias \
 	taintInstructionComputer \
 	customTaintFlow sccCallgraph \
 	sccCallgraph \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
+	                   printer.cmo \
+	                   typeHelper.cmo \
 					   taintGamma.cmo \
 					   taintTyping.cmo \
 					   taintPrinter.cmo \
 					   taintCFGPrinter.cmo \
-					   typeHelper.cmo \
+					   alias.cmo \
 					   taintInstructionComputer.cmo \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
@@ -36,6 +40,9 @@ sccCallgraph: sccCallgraph.ml
 utils: utils.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
+printer: printer.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+	
 typeHelper: typeHelper.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^	
 	
@@ -51,6 +58,9 @@ taintPrinter: taintPrinter.ml
 taintCFGPrinter: taintCFGPrinter.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
+alias: alias.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^	
+	
 taintInstructionComputer: taintInstructionComputer.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 	

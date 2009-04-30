@@ -6,17 +6,33 @@ type refCountType = RefCount of int
 
 type typeSize = TypeSize of refCountType * int
 
+module TypeGetter(Param:sig
+                        val fmt : Format.formatter
+                        val debug : bool      
+                        val info : bool     
+                     end) = struct
+    let rec is_structure typ =
+        let do_named tinfo =
+            is_structure tinfo.ttype
+        in
+        let do_comp compinfo =
+            compinfo.cstruct
+        in
+        match typ with
+            | TNamed (tinfo, _) -> do_named tinfo 
+            | TComp (compinfo, _) -> do_comp compinfo
+            | _ -> false
+end
+
 module TypeComparer(Param:sig
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
                      end) = struct
 
-    module P = TaintPrinter.Printer(struct
-                                        let fmt = Param.fmt
-                                        let debug = Param.debug
-                                        let info = Param.info
-                                    end)
+    module P = Printer.Printer(struct
+                                    let fmt = Param.fmt
+                                end)
 
     (* TODO: Arch dependency *)
     let byte_size () = 1

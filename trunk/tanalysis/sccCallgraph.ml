@@ -70,7 +70,6 @@ let get_next_call mappings nodes g l =
             cnode.cnCallees
             false
     in
-    Printf.printf "%s\n" "[DEBUG] dbg3";
     match List.length l with
         | 0 -> FuncNone
         | _ -> 
@@ -84,14 +83,13 @@ let get_next_call mappings nodes g l =
 	                            | true -> false
 	                            | false -> true)
 	                     l in
-	            Printf.printf "%s\n" "[DEBUG] dbg4";
 	            FuncNonRecursive (ret_node, List.filter (fun n -> n != ret_node) l)
             with Not_found 
                 ->
-                    Printf.printf "%s\n" "[DEBUG] dbg5";
                     FuncRecursive l
 
 let get_scc () =
+    let module FC = FunctionsComputer in
     let cg = computeGraph (Cil_state.file ()) in
-    let (mappings, nodes, g, lst) = FunctionsComputer.compute_scc cg in
+    let (mappings, nodes, g, lst) = FC.compute_scc cg in
     (mappings, nodes, g, lst)
