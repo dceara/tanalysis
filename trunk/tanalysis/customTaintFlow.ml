@@ -286,8 +286,7 @@ let run_custom_taint_recursive format f_list f_envs gls =
         let new_f_taint = Gamma.get_taint new_env f.svar.vid in
         Gamma.compare_taint old_f_taint new_f_taint
     in
-    let rec iterate () =
-        Printf.printf "%s" "[DEBUG] iterating through recursive funcs\n"; 
+    let rec iterate () = 
         match List.fold_left
                 (fun changed f ->
                     let old_env = Inthash.find !f_envs f.svar.vid in
