@@ -248,11 +248,16 @@ module TaintComputer(Param:sig
     let start worklist = 
         (* CFGP.print_cfg Param.func *)
         let initial_env = create_initial_env () in
+        (if Param.info then
+            P.print () "Computing initial environment for function %s.\n" Param.func.svar.vname); 
         init_environments initial_env;
+        (if Param.info then
+            P.print () "Computing environment for function %s.\n" Param.func.svar.vname);
         compute (List.map (fun s -> (s, None, [(0, U)])) worklist);
         let final = combine_return_envs initial_env in
         P.print () "\nEnvironment for function %s:\n" Param.func.svar.vname;
         P.print_env () final;
+        P.print () "\nEND Environment for function %s.\n" Param.func.svar.vname;
         final
 end
 
@@ -302,20 +307,21 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
                             Typing.combine_taint t (G [formal]))
                         U
                         f.sformals in
-        Gamma.set_taint env f.svar.vid taint; 
+        Gamma.set_taint env (-f.svar.vid) taint; 
         env 
     in
     (* Compares two environments for the same recursive function. Compares the *)
     (* return value. If the return value didn't change true is returned. False, *)
     (* otherwise. *)
     let compare_recursive_env f old_env new_env =
-        let old_f_taint = Gamma.get_taint old_env f.svar.vid in
-        let new_f_taint = Gamma.get_taint new_env f.svar.vid in
+        let old_f_taint = Gamma.get_taint old_env (-f.svar.vid) in
+        let new_f_taint = Gamma.get_taint new_env (-f.svar.vid) in
         Gamma.compare_taint old_f_taint new_f_taint
     in
     (* Function that iterates until no more changes are made to the environments *)
     (* for the mutually recursive functions. *)
     let rec iterate () = 
+        Printf.printf "%s\n" "[DEBUG] Iterating....";
         match List.fold_left
                 (fun changed f ->
                     let old_env = Inthash.find !f_envs f.svar.vid in
@@ -324,7 +330,8 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
                         | false -> 
                             Inthash.replace !f_envs f.svar.vid new_env;
                             true
-                        | true -> false)
+                        | true -> 
+                            false)
                 false
                 f_list with
             | false -> ignore ()

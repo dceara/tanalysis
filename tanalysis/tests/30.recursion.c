@@ -1,11 +1,12 @@
 int main(int argc, char** argv)
 {
-    int x = foo (10);
-    int y = foo (foo_iterative(argc));
+    int x = foo (10, 10);
+    int y = foo (foo_iterative(argc), argc);
     int tainted;
-    int z = foo (tainted);
+    int z = foo (tainted, 100);
     int t = foo_iterative(z);
-    int q = foo (foo_iterative(tainted));
+    int q = foo (foo_iterative(tainted), tainted);
+    int p = foo (100, tainted);
     
     return 0;
 }
@@ -30,7 +31,7 @@ int foo_iterative(int n)
     return prev_prev;
 }
 
-int foo(int n) 
+int foo(int n, int x) 
 {
     int r;
     if (n > 1)
@@ -44,7 +45,7 @@ int bar(int n)
 {
     int r;
     if (n > 1)
-        r = n * foo(n);
+        r = n * foo(n, 100);
     else 
         r = 1;
     return r;
