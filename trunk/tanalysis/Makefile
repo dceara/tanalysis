@@ -22,10 +22,10 @@ pack: utils \
 	sccCallgraph \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
-	                   printer.cmo \
-	                   typeHelper.cmo \
+					   printer.cmo \
+					   typeHelper.cmo \
 					   taintGamma.cmo \
-                       taintPrinter.cmo \
+					   taintPrinter.cmo \
 					   taintCFGPrinter.cmo \
 					   taintTyping.cmo \
 					   alias.cmo \

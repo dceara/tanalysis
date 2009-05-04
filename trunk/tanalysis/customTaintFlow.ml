@@ -35,17 +35,6 @@ module TaintComputer(Param:sig
                                          let info = Param.info
                                         end)
 
-    (* This function should be removed. It's used only for debugging purposes. *)
-    let print_envs () =
-        P.print () "\n\n%s\n" "[DEBUG] Printing all the envs:";
-        Inthash.iter
-            (fun key env ->
-                P.print () "Environmnet for sid: %d\n" key;
-                P.print_env () env;
-                P.print () "%s" "\n")
-            Param.stmt_envs;
-        P.print () "%s" "\n\n"
-
     (* Tests if the old environment and the new environment are the same. *)
     let test_for_change old_ (new_, cond_stack) =
         match Gamma.compare old_ new_ with
@@ -132,7 +121,6 @@ module TaintComputer(Param:sig
     (* computed. cond_taint - the taintedness of the condition. Must be combined *)
     (* with all the assignments so that implicit data flows are covered. *)
     let rec compute worklist =
-        (* print_envs (); *)
         match List.length worklist with
         (* Stop when the worklist is empty. *)
         | 0 -> ignore ()
@@ -316,7 +304,6 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
     (* Function that iterates until no more changes are made to the environments *)
     (* for the mutually recursive functions. *)
     let rec iterate () = 
-        Printf.printf "%s\n" "[DEBUG] Iterating....";
         match List.fold_left
                 (fun changed f ->
                     let old_env = Inthash.find !f_envs f.svar.vid in
