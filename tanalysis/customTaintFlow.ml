@@ -65,7 +65,6 @@ module TaintComputer(Param:sig
     (* the current_cond_taint). *)
     let rec do_stmt stmt new_env cond_taint =
         let current_cond_taint = Typing.combine_taint_list cond_taint in
-        (* let current_cond_taint = List.hd cond_taint in *)
         match stmt.skind with
             | (Instr instr) 
                 -> 
@@ -157,7 +156,7 @@ module TaintComputer(Param:sig
                         (List.fold_left
 	                        (fun env pred_stmt ->
 	                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
-	                            Typing.combine env pred_env)
+                                Typing.combine env pred_env)
 	                        (Inthash.find Param.stmt_envs first_pred_id)    
 	                        (List.tl current_stmt.preds)),
                     combine_cond_taint current_stmt nullable_old_stmt cond_taint
@@ -246,7 +245,6 @@ module TaintComputer(Param:sig
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
-        (* CFGP.print_cfg Param.func *)
         let initial_env = create_initial_env () in
         (if Param.info then
             P.print () "Computing initial environment for function %s.\n" Param.func.svar.vname); 
@@ -297,6 +295,11 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
                                          let debug = dbg
                                          let info = inf
                                         end) in
+    let module TG = TypeHelper.TypeGetter(struct
+                                            let fmt = format
+                                            let debug = dbg
+                                            let info = inf
+                                        end) in  
     (* Initializes an environment for a recursive function. That is: *)
     (* add a return value that is dependent on all the formals. *)
     let init_recursive_env f =
@@ -307,16 +310,8 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
                             Typing.combine_taint t (G [formal]))
                         U
                         f.sformals in
-        Gamma.set_taint env (-f.svar.vid) taint; 
+        Gamma.set_taint env (-f.svar.vid) taint;
         env 
-    in
-    (* Compares two environments for the same recursive function. Compares the *)
-    (* return value. If the return value didn't change true is returned. False, *)
-    (* otherwise. *)
-    let compare_recursive_env f old_env new_env =
-        let old_f_taint = Gamma.get_taint old_env (-f.svar.vid) in
-        let new_f_taint = Gamma.get_taint new_env (-f.svar.vid) in
-        Gamma.compare_taint old_f_taint new_f_taint
     in
     (* Function that iterates until no more changes are made to the environments *)
     (* for the mutually recursive functions. *)
@@ -326,7 +321,7 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
                 (fun changed f ->
                     let old_env = Inthash.find !f_envs f.svar.vid in
                     let new_env = run_custom_taint format dbg inf f f_envs gls in
-                    match compare_recursive_env f old_env new_env with
+                    match Gamma.compare old_env new_env with
                         | false -> 
                             Inthash.replace !f_envs f.svar.vid new_env;
                             true

@@ -29,9 +29,7 @@ module TypeGetter(Param:sig
             | _ -> false
     
     let is_return_param typ = 
-        match typ with
-            | TPtr _ -> true
-            | _ -> false
+        Cil.isPointerType typ
     
     let rec get_actual_param expr =
         let do_get_actual_param_lvalue lvl =

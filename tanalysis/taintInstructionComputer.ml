@@ -125,7 +125,7 @@ module InstrComputer(Param:sig
 		                                        | T -> T
 		                                        | (G g) ->
 		                                            instantiate_call env g param_exprs formals in
-		                                Gamma.set_taint env l_vinfo.vid p_taint)
+                                        Gamma.set_taint env l_vinfo.vid p_taint)
                         formals;
                     match Gamma.get_taint callee_env (-func.svar.vid) with
                         | U -> U
