@@ -53,7 +53,7 @@ let run_taint fmt debug info globals =
     in
     List.iter next_func lst;
     Format.fprintf fmt "%s\n" "Taint analysis done"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+
 let run fmt =
     if Enabled.get () then
         let file = Cil_state.file () in

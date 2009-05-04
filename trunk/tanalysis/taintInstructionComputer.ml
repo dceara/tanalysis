@@ -37,6 +37,51 @@ module InstrComputer(Param:sig
                                          let info = Param.info
                                         end)
     
+    let list_global_vars () =
+        let globals = List.filter
+                        (fun global ->
+                            match global with
+                                | GVar _ -> true
+                                | _ -> false)
+                        Param.globals in
+        let globals = List.map
+                        (fun global ->
+                            match global with
+                                | GVar (vinfo, _, _) -> vinfo)
+                        globals in
+        let _list_global_vars () =
+            globals
+        in 
+        _list_global_vars
+    
+    let create_initial_env func = 
+        let initial_env = Gamma.create_env () in
+        (List.iter
+            (fun formal ->
+                ignore (Typing.process_formal initial_env formal))
+            func.sformals);  
+        (List.iter 
+            (fun local ->
+                ignore (Typing.process_local initial_env local))
+            func.slocals);
+        (* (List.iter
+            (fun global ->
+                ignore (Typing.process_global initial_env global))
+            (list_global_vars () ())); *)
+        initial_env
+
+    (* Initializes an environment for a recursive function. That is: *)
+    (* add a return value that is dependent on all the formals. *)
+    let create_initial_env_rec func =
+        let env = create_initial_env func in
+        let taint = List.fold_left 
+                        (fun t formal ->
+                            Typing.combine_taint t (G [formal]))
+                        U
+                        func.sformals in
+        Gamma.set_taint env (-func.svar.vid) taint;
+        env 
+    
     let extract_vinfo_from_ptr_expr expr =
         let rec _extract_vinfo_from_lval lvl =
             match lvl with
@@ -88,6 +133,7 @@ module InstrComputer(Param:sig
                         (0, false)
                         formals in
             List.nth actuals i
+                
         in
         (* Local function used for instantiating all the formal parameter taints *)
         (* according to actual parameter taints. *)
@@ -111,7 +157,7 @@ module InstrComputer(Param:sig
                     let formals = func.sformals in
                     List.iter
                         (fun formal ->
-                            if TG.is_return_param formal.vtype then ignore()
+                            if TG.is_return_param formal.vtype == false then ignore()
                             else
                                 let actual_param = TG.get_actual_param 
                                                         (find_binding param_exprs formals formal) in

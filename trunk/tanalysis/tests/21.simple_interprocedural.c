@@ -1,3 +1,5 @@
+int global;
+
 int main(int argc, char** argv) //argc = G, argv = G
 {
     int a = 2;
