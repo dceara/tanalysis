@@ -84,5 +84,9 @@ module Typing (Param:sig
         let t = (G [vinfo]) in 
         Gamma.set_taint env vinfo.vid t;
         env
+        
+    let process_global env vinfo = 
+        Gamma.set_taint env vinfo.vid (G [vinfo]);
+        env
     
 end

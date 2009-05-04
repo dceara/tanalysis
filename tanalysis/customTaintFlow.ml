@@ -182,19 +182,6 @@ module TaintComputer(Param:sig
 			                                mfun 
 			                                current_stmt.succs]) in
                     compute new_list
-                        
-
-    let create_initial_env () = 
-        let initial_env = Gamma.create_env () in
-        (List.iter
-            (fun formal ->
-                ignore (Typing.process_formal initial_env formal))
-            Param.func.sformals);  
-        (List.iter 
-            (fun local ->
-                ignore (Typing.process_local initial_env local))
-            Param.func.slocals);
-        initial_env
         
     (* Initialized the locals and formals in all the environments associated *)
     (* to the statements *)
@@ -233,7 +220,7 @@ module TaintComputer(Param:sig
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
-        let initial_env = create_initial_env () in
+        let initial_env = SC.create_initial_env Param.func in
         (if Param.info then
             P.print () "Computing initial environment for function %s.\n" Param.func.svar.vname); 
         init_environments initial_env;
@@ -288,19 +275,12 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
                                             let debug = dbg
                                             let info = inf
                                         end) in  
-    (* Initializes an environment for a recursive function. That is: *)
-    (* add a return value that is dependent on all the formals. *)
-    let init_recursive_env f =
-        let env = Gamma.create_env () in
-        let taint = List.fold_left 
-                        (fun t formal ->
-                            Gamma.set_taint env formal.vid (G [formal]);
-                            Typing.combine_taint t (G [formal]))
-                        U
-                        f.sformals in
-        Gamma.set_taint env (-f.svar.vid) taint;
-        env 
-    in
+    let module SC = TaintInstructionComputer.InstrComputer(struct
+                                                            let globals = gls
+                                                            let fmt = format
+                                                            let debug = dbg
+                                                            let info = inf
+                                                        end) in
     (* Function that iterates until no more changes are made to the environments *)
     (* for the mutually recursive functions. *)
     let rec iterate () = 
@@ -321,6 +301,6 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
     in    
     
     List.iter 
-        (fun f -> Inthash.add !f_envs f.svar.vid (init_recursive_env f)) 
+        (fun f -> Inthash.add !f_envs f.svar.vid (SC.create_initial_env_rec f)) 
         f_list;
     iterate ()
