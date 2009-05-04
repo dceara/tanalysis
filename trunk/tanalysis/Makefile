@@ -13,9 +13,9 @@ pack: utils \
     printer \
     typeHelper \
 	taintGamma \
-	taintTyping \
 	taintPrinter \
-	taintCFGPrinter \
+    taintCFGPrinter \
+	taintTyping \
 	alias \
 	taintInstructionComputer \
 	customTaintFlow sccCallgraph \
@@ -25,9 +25,9 @@ pack: utils \
 	                   printer.cmo \
 	                   typeHelper.cmo \
 					   taintGamma.cmo \
-					   taintTyping.cmo \
-					   taintPrinter.cmo \
+                       taintPrinter.cmo \
 					   taintCFGPrinter.cmo \
+					   taintTyping.cmo \
 					   alias.cmo \
 					   taintInstructionComputer.cmo \
 					   customTaintFlow.cmo \

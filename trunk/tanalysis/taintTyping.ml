@@ -15,6 +15,12 @@ module Typing (Param:sig
                             let info = Param.debug
                             end)
     
+    module P = TaintPrinter.Printer(struct
+                                        let fmt = Param.fmt
+                                        let debug = Param.debug
+                                        let info = Param.info
+                                    end)
+    
     (* Applies the oplus operator between taint values. *)
     let combine_taint t1 t2 =
         let taint_comparator g1 g2 =
@@ -53,7 +59,8 @@ module Typing (Param:sig
         (* if one of the envs wasn't visited, the data there isn't sane so we*)
         (* ignore it :) *)
         match vis2 with
-            | false -> (true, _env1)
+            | false -> 
+                (true, _env1)
             | true ->
 		        Hashtbl.iter
 		            (fun id t1 ->
@@ -61,7 +68,7 @@ module Typing (Param:sig
 		                Gamma.set_taint (vis1, _env1) id (combine_taint t1 t2)
 		            )
 		            _env1;
-		        (true, _env1)
+                (true, _env1)
     
     (* Locals are initialized to tainted. An exception is made for structures. *)
     (* All structures are initialized to untainted because only parts of the *)
