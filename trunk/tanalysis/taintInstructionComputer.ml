@@ -21,6 +21,11 @@ module InstrComputer(Param:sig
 	                                        let debug = Param.debug
 	                                        let info = Param.info
 	                                    end)  
+    module TG = TypeHelper.TypeGetter(struct
+                                            let fmt = Param.fmt
+                                            let debug = Param.debug
+                                            let info = Param.info
+                                        end)  
     module Typing = TaintTyping.Typing(struct
                                          let fmt = Param.fmt
                                          let debug = Param.debug
@@ -104,6 +109,24 @@ module InstrComputer(Param:sig
                     let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
                     let callee_env = Inthash.find func_envs vinfo.vid in
                     let formals = func.sformals in
+                    List.iter
+                        (fun formal ->
+                            match TG.is_return_param formal.vtype with
+                                | false -> ignore ()
+                                | true -> 
+                                    let actual_param = TG.get_actual_param 
+                                                            (find_binding param_exprs formals formal) in
+			                        match actual_param with
+			                        | None -> ignore ()
+			                        | Some l_vinfo ->
+		                                let p_taint = 
+		                                    match Gamma.get_taint callee_env formal.vid with
+		                                        | U -> U
+		                                        | T -> T
+		                                        | (G g) ->
+		                                            instantiate_call env g param_exprs formals in
+		                                Gamma.set_taint env l_vinfo.vid p_taint)
+                        formals;
                     match Gamma.get_taint callee_env (-func.svar.vid) with
                         | U -> U
                         | T -> T
@@ -361,7 +384,8 @@ module InstrComputer(Param:sig
             );
             env
         in  
-        let do_call_default () = 
+        let do_call_void () =
+            ignore (do_expr env cast_expr param_exprs func_envs); 
             env 
         in
         
@@ -369,9 +393,7 @@ module InstrComputer(Param:sig
             P.print () "[INFO] Processing call instruction %s" "\n");
         match null_lval with
             | Some (Var vinfo, _) -> do_call_lval vinfo 
-            (* TODO: calls without return values can also modify data through *)
-            (* pointers and globals. *)
-            | _ -> do_call_default ()
+            | _ -> do_call_void ()
     
     (* Changes the environment according to the instruction *)
     let do_instr env instr cond_taint func_envs =

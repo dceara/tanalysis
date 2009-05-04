@@ -11,6 +11,11 @@ module TypeGetter(Param:sig
                         val debug : bool      
                         val info : bool     
                      end) = struct
+                        
+    module P = Printer.Printer(struct
+                                    let fmt = Param.fmt
+                                end)                    
+    
     let rec is_structure typ =
         let do_named tinfo =
             is_structure tinfo.ttype
@@ -22,6 +27,69 @@ module TypeGetter(Param:sig
             | TNamed (tinfo, _) -> do_named tinfo 
             | TComp (compinfo, _) -> do_comp compinfo
             | _ -> false
+    
+    let is_return_param typ = 
+        match typ with
+            | TPtr _ -> true
+            | _ -> false
+    
+    let rec get_actual_param expr =
+        let do_get_actual_param_lvalue lvl =
+            (* TODO: check this *)
+            match lvl with
+                | (Var vinfo, _) -> 
+                    (match Cil.isPointerType vinfo.vtype with
+                        | false -> None
+                        | true -> Some vinfo)
+                | _ -> None
+        in
+        let do_get_actual_param_cast typ cast_expr =
+            match Cil.isPointerType typ with
+                | false -> None
+                | true -> get_actual_param cast_expr
+        in
+        let do_get_actual_param_unop typ un_expr =
+            match Cil.isPointerType typ with
+                | false -> None
+                | true -> get_actual_param un_expr
+        in
+        let do_get_actual_param_binop typ left_expr right_expr =
+            match Cil.isPointerType typ with
+                | false -> None
+                | true -> 
+                    match get_actual_param left_expr with
+                        | None -> get_actual_param right_expr
+                        | Some vinfo -> Some vinfo 
+        in
+        let do_get_actual_param_addrof lvl =
+            (* TODO: check this *)
+            match lvl with
+                | (Var vinfo, _) -> 
+                    Some vinfo
+                | _ -> 
+                    None
+        in
+        let do_get_actual_param_startof lvl =
+            (* TODO: check this *)
+            match lvl with
+                | (Var vinfo, _) -> Some vinfo
+                | _ -> None
+        in
+        
+        match expr with
+            |   Const _ -> None
+			|   SizeOf _ -> None
+			|   SizeOfE _ -> None
+			|   SizeOfStr _ -> None
+			|   AlignOf _ -> None
+			|   AlignOfE _ -> None
+            |   Lval lvl -> do_get_actual_param_lvalue lvl
+            |   CastE (typ, cast_expr) -> do_get_actual_param_cast typ cast_expr
+			|   UnOp (_, un_expr, typ) -> do_get_actual_param_unop typ un_expr
+			|   BinOp (_, left_expr, right_expr, typ) -> do_get_actual_param_binop typ left_expr right_expr
+			|   AddrOf lvl -> do_get_actual_param_addrof lvl 
+			|   StartOf lvl -> do_get_actual_param_startof lvl
+            |   _ -> None
 end
 
 module TypeComparer(Param:sig
@@ -190,14 +258,7 @@ module TypeComparer(Param:sig
             get_expr_type_size (RefCount 0) expr in
         let TypeSize (RefCount dst_ref_cnt, dst_size) = 
             get_type_size (RefCount 0) dest_type in
-        P.print () "[DEBUG] dst_ref = %d src_ref = %d\n" dst_ref_cnt src_ref_cnt;
         match (dst_ref_cnt, src_ref_cnt) with
-            | (x, y) when x == y 
-                -> 
-                    P.print () "[DEBUG] (x,y) x==y dst_size = %d src_size = %d\n" dst_size src_size;
-                    dst_size <= src_size
-            | _ 
-                -> 
-                    P.print () "[DEBUG] (x,y) x!=y dst_size = %d src_size = %d\n" dst_size src_size;
-                    false                                                             
+            | (x, y) when x == y ->  dst_size <= src_size
+            | _ ->  false                                                             
 end
