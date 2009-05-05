@@ -160,7 +160,7 @@ module TaintComputer(Param:sig
                     (* Fixed point reached for current statement. The successors *)
                     (* aren't added to the worklist. *)
                     (if (Param.debug) then
-                        Printf.printf "[DEBUG] Fixed point reached for sid %d\n" current_stmt.sid);
+                        P.print () "[DEBUG] Fixed point reached for sid %d\n" current_stmt.sid);
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     compute (List.tl worklist)
             | true
