@@ -51,7 +51,11 @@ module Gamma = struct
                     List.for_all 
                         (fun vinfo1 ->
                             List.mem vinfo1 g2)
-                        g1  
+                        g1 &&
+                    List.for_all 
+                        (fun vinfo2 ->
+                            List.mem vinfo2 g1)
+                        g2  
             | _ -> false     
     
     (* Compares two environments. Returns true if envs are equal. *)    
@@ -60,10 +64,11 @@ module Gamma = struct
         let env2 = match env2 with (_, _env) -> _env in
         Hashtbl.fold
             (fun id t1 eq ->
-                let t2 = Hashtbl.find env2 id in
                 match eq with
                     | false -> false
-                    | _ -> compare_taint t1 t2)
+                    | _ -> 
+                        let t2 = Hashtbl.find env2 id in
+                        compare_taint t1 t2)
             env1
             true
             
@@ -73,7 +78,7 @@ module Gamma = struct
     (* Function for pretty printing an environment. Should be used for debugging *)
     (* purposes only. *)
     let pretty_print fmt env =
-        let env = match env with (_, _env) -> _env in
+        let (visited, env) = match env with (_vis, _env) -> (_vis, _env) in
         let pretty_print_taint taint = 
             (match taint with
                 | T -> Format.fprintf fmt "\t%s\n" "Tainted"
@@ -86,6 +91,8 @@ module Gamma = struct
                             g;
                         Format.fprintf fmt "%s" "\n";)
         in
+        Format.fprintf fmt "%s\n" "========================================";
+        Format.fprintf fmt "VISITED: %B\n" visited; 
         Format.fprintf fmt "%s\n" "========================================";
         Hashtbl.iter 
             (fun vid taint ->
@@ -110,9 +117,9 @@ module Gamma = struct
 
     let pretty_print_taint_list fmt l =
         let rec print_taint_list fmt l =
-	        match l with
-	            | [] -> ignore()
-	            | ((hsid, htaint)::tl) 
+            match l with
+                | [] -> ignore()
+                | ((hsid, htaint)::tl) 
                     -> 
                         pretty_print_taint fmt htaint;
                         Format.fprintf fmt "%s" ",";

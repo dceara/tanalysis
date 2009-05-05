@@ -2,14 +2,12 @@ open Cil_types
 open Cil
 open TaintGamma
 
-
 module InstrComputer(Param:sig
                         val globals : global list
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
                      end) = struct
-                                   
     module P = TaintPrinter.Printer(struct
                                         let fmt = Param.fmt
                                         let debug = Param.debug
@@ -17,10 +15,10 @@ module InstrComputer(Param:sig
                                     end)
                 
     module TH = TypeHelper.TypeComparer(struct
-	                                        let fmt = Param.fmt
-	                                        let debug = Param.debug
-	                                        let info = Param.info
-	                                    end)  
+                                            let fmt = Param.fmt
+                                            let debug = Param.debug
+                                            let info = Param.info
+                                        end)  
     module TG = TypeHelper.TypeGetter(struct
                                             let fmt = Param.fmt
                                             let debug = Param.debug
@@ -37,23 +35,23 @@ module InstrComputer(Param:sig
                                          let info = Param.info
                                         end)
     
+    (* This function returns the list of global variables. *)
     let list_global_vars () =
-        let globals = List.filter
-                        (fun global ->
+        let globals = List.fold_left
+                        (fun result global ->
                             match global with
-                                | GVar _ -> true
-                                | _ -> false)
+                                | GVar (vinfo, _, _) -> vinfo :: result
+                                | _ -> result)
+                        []
                         Param.globals in
-        let globals = List.map
-                        (fun global ->
-                            match global with
-                                | GVar (vinfo, _, _) -> vinfo)
-                        globals in
+        let globals = List.rev globals in
         let _list_global_vars () =
             globals
-        in 
+        in
         _list_global_vars
     
+    (* Creates an intial environment for a function. *)
+    (* The formals, locals, globals and the return value are initialized. *)
     let create_initial_env func = 
         let initial_env = Gamma.create_env () in
         (List.iter
@@ -64,24 +62,24 @@ module InstrComputer(Param:sig
             (fun local ->
                 ignore (Typing.process_local initial_env local))
             func.slocals);
-        (* (List.iter
+        (List.iter
             (fun global ->
                 ignore (Typing.process_global initial_env global))
-            (list_global_vars () ())); *)
+            (list_global_vars () ()));
+        let ret_taint = List.fold_left
+                            (fun t formal ->
+                                Typing.combine_taint t (G [formal]))
+                            U
+                            func.sformals in
+        let ret_taint = List.fold_left
+                            (fun t global ->
+                                Typing.combine_taint t (G [global]))
+                            ret_taint
+                            (list_global_vars () ()) in 
+        ignore (Typing.process_function_return initial_env func.svar ret_taint);
         initial_env
-
-    (* Initializes an environment for a recursive function. That is: *)
-    (* add a return value that is dependent on all the formals. *)
-    let create_initial_env_rec func =
-        let env = create_initial_env func in
-        let taint = List.fold_left 
-                        (fun t formal ->
-                            Typing.combine_taint t (G [formal]))
-                        U
-                        func.sformals in
-        Gamma.set_taint env (-func.svar.vid) taint;
-        env 
     
+    (* Extracts the variable info from a pointer expression. *)
     let extract_vinfo_from_ptr_expr expr =
         let rec _extract_vinfo_from_lval lvl =
             match lvl with
@@ -89,8 +87,8 @@ module InstrComputer(Param:sig
                 | (Mem exp, _) -> _extract_vinfo_from_ptr_expr exp
         and 
         _extract_vinfo_from_ptr_expr expr =
-	        match expr with
-	            | Const _ -> None
+            match expr with
+                | Const _ -> None
                 | SizeOf _ -> None
                 | SizeOfE _ -> None
                 | SizeOfStr _ -> None
@@ -112,14 +110,13 @@ module InstrComputer(Param:sig
             | None -> raise Not_found
             | Some vinfo -> vinfo
     
-    (* Returns the taintedness for a lvalue. *)
+    (* Performs the function call and returns the taintedness for the result. *)
     (* Params: *)
-    (* env - the current environment *)
-    (* lvalue - the lvalue being analyzed *)
-    (* param_exprs - contains the list of param expressions in the case that *)
-    (* lvalue contains a function call *)
-    (* func_envs - the environments for already computed functions *)    
-    let rec get_lvalue_taint env lvalue param_exprs func_envs =
+    (* env - the current function environment *)
+    (* vinfo - the variable info for the function being called *)
+    (* param_exprs - the list of parameter expressions for the callee *)
+    (* func_envs - already computed environments *)
+    let rec do_get_function_call_taint env vinfo param_exprs func_envs =
         (* Local function used for finding the actual parameter passed for a *)
         (* formal one. *)
         let find_binding actuals formals dep =
@@ -136,52 +133,80 @@ module InstrComputer(Param:sig
                 
         in
         (* Local function used for instantiating all the formal parameter taints *)
-        (* according to actual parameter taints. *)
-        let instantiate_call env ret_taint actuals formals =
-            List.fold_left 
-                (fun t dep -> 
-                    let param_expr = find_binding actuals formals dep in
-                    let param_taint = do_expr env param_expr [] func_envs in
-                    Typing.combine_taint t param_taint)
-                U
-                ret_taint
+        (* and global taints according to actual parameter taints and global taints *)
+        (* from the current environment. *)
+        let instantiate_call_taint env callee_env actuals formals vid =
+            match Gamma.get_taint callee_env vid with
+                | T -> T
+                | U -> U
+                | (G g) ->
+                    List.fold_left
+                        (fun t dep ->
+                            try 
+                                let param_expr = find_binding actuals formals dep in
+                                let param_taint = do_expr env param_expr [] func_envs in
+                                Typing.combine_taint t param_taint
+                            with Failure _ ->
+                                (* A global is used as a dependency. *)
+                                Typing.combine_taint t (Gamma.get_taint env dep.vid))
+                        U
+                        g
         in
+        (* Deals with pointer parameters as if they are return values. *)
+        let do_pointer_params func callee_env =
+            let formals = func.sformals in
+            List.iter
+                (fun formal ->
+                    if TG.is_return_param formal.vtype == false then ignore ()
+                    else
+                        let actual_param = TG.get_actual_param 
+                                            (find_binding param_exprs formals formal) in
+                        match actual_param with
+                            | None -> ignore ()
+                            | Some a_vinfo ->
+                                let a_taint = instantiate_call_taint env callee_env param_exprs formals formal.vid in
+                                Gamma.set_taint env a_vinfo.vid a_taint )
+                formals
+        in
+        (* Deals with globals as if they are return values. *)
+        let do_globals func callee_env =
+            let formals = func.sformals in
+            List.iter
+                (fun global ->
+                    let g_taint = instantiate_call_taint env callee_env param_exprs formals global.vid in
+                    Gamma.set_taint env global.vid g_taint)
+            (list_global_vars () ())    
+        in
+        (* Computes the taintedness of the return value for the given function. *)
+        let do_return func callee_env =
+            let formals = func.sformals in
+            let ret_taint = instantiate_call_taint env 
+                                callee_env 
+                                param_exprs 
+                                formals 
+                                (Typing.get_function_return_vid func.svar) in
+            ret_taint
+        in
+        let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
+        let callee_env = Inthash.find func_envs vinfo.vid in
+        do_pointer_params func callee_env;
+        do_globals func callee_env;
+        do_return func callee_env
+    
+    (* Returns the taintedness for a lvalue. *)
+    (* Params: *)
+    (* env - the current environment *)
+    (* lvalue - the lvalue being analyzed *)
+    (* param_exprs - contains the list of param expressions in the case that *)
+    (* lvalue contains a function call *)
+    (* func_envs - the environments for already computed functions *)    
+    and get_lvalue_taint env lvalue param_exprs func_envs =
         let get_lvalue_taint_vinfo vinfo =
             let taint = 
                 try
                     Gamma.get_taint env vinfo.vid 
                 with Not_found ->
-                    (* Then the lvalue is actually a function call.. :| *)
-                    let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
-                    let callee_env = Inthash.find func_envs vinfo.vid in
-                    let formals = func.sformals in
-                    List.iter
-                        (fun formal ->
-                            if TG.is_return_param formal.vtype == false then ignore()
-                            else
-                                let actual_param = TG.get_actual_param 
-                                                        (find_binding param_exprs formals formal) in
-		                        match actual_param with
-		                        | None -> ignore ()
-		                        | Some l_vinfo ->
-                                    (* A pointer is passed as a parameter so the taint is propagated *)
-                                    (* from the call. *)
-	                                let p_taint = 
-	                                    match Gamma.get_taint callee_env formal.vid with
-	                                        | U -> U
-	                                        | T -> T
-	                                        | (G g) ->
-	                                            instantiate_call env g param_exprs formals in
-                                    Gamma.set_taint env l_vinfo.vid p_taint)
-                        formals;
-                    match Gamma.get_taint callee_env (-func.svar.vid) with
-                        | U -> U
-                        | T -> T
-                        | (G g) 
-                            ->
-                                let g_taint = (instantiate_call env g param_exprs formals) in 
-                                g_taint       
-                    
+                    do_get_function_call_taint env vinfo param_exprs func_envs 
             in
             if Param.debug then (
                 P.print () "[DEBUG] Taint for lvalue %s: " vinfo.vname;
@@ -272,8 +297,8 @@ module InstrComputer(Param:sig
         in
         let do_castE typ expr =
             let taint =
-	            match TH.check_type typ expr with
-	                | true -> do_expr env expr param_exprs func_envs
+                match TH.check_type typ expr with
+                    | true -> do_expr env expr param_exprs func_envs
                     | false -> T in  
             if Param.debug then (
                 P.print () "%s" "[DEBUG] Taint for CastE is: ";
@@ -513,5 +538,5 @@ module InstrComputer(Param:sig
     let do_loop_instr env stmt_block stmt_continue stmt_break cond_taint =
          (if Param.info then
             P.print () "[INFO] Processing loop instruction %s" "\n");
-        (env, cond_taint)
+        (env, cond_taint)                     
 end

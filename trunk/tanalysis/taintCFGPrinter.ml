@@ -14,14 +14,16 @@ module Printer(Param:sig
             P.print () "\n\n SID: %d " stmt.sid;
             (match stmt.skind with 
                 | (Instr _) -> P.print () "%s\n" "INSTR" 
-	            | (Return (_, _)) -> P.print () "%s\n" "RETURN"
-	            | (If (_, _, _, _)) -> P.print () "%s\n" "IF"
-	            | (Switch (_, _, _, _)) -> P.print () "%s\n" "SWITCH"
-	            | (Loop (_, _, _, _, _)) -> P.print () "%s\n" "LOOP"
-	            | (Block _) -> P.print () "%s\n" "BLOCK" 
+                | (Return (_, _)) -> P.print () "%s\n" "RETURN"
+                | (If (_, _, _, _)) -> P.print () "%s\n" "IF"
+                | (Switch (_, _, _, _)) -> P.print () "%s\n" "SWITCH"
+                | (Loop (_, _, _, _, _)) -> P.print () "%s\n" "LOOP"
+                | (Block _) -> P.print () "%s\n" "BLOCK" 
                 | (Break _) -> P.print () "%s\n" "BREAK"
                 | (Continue _) -> P.print () "%s\n" "CONTINUE"
-	            | _ -> P.print () "%s\n" "UNKNOWN");
+                | (Goto _) -> P.print () "%s\n" "GOTO"
+                | _ -> P.print () "%s\n" "UNKNOWN"
+                );
             P.print () "%s" "\n"
             
         in
