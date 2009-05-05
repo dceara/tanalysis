@@ -3,7 +3,7 @@ int main(int argc, char** argv)
     int x = foo (10);
     int y = foo2 (20);
     return 0;
-}
+} 
 
 int foo(int n) 
 {

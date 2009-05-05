@@ -18,27 +18,27 @@ module FunctionsComputer = struct
         let g = G.create () in        
         let (mappings, nodes) = 
             Hashtbl.fold
-	            (fun key cn (result_m, result_n) ->
-	                let v = G.V.create cn in
-	                G.add_vertex g v;
-	                Hashtbl.add result_n (nodeName cn.cnInfo) v;
-	                Hashtbl.add result_m v cn;
-	                (result_m, result_n))    
+                (fun key cn (result_m, result_n) ->
+                    let v = G.V.create cn in
+                    G.add_vertex g v;
+                    Hashtbl.add result_n (nodeName cn.cnInfo) v;
+                    Hashtbl.add result_m v cn;
+                    (result_m, result_n))    
             call_graph 
             (Hashtbl.create 512, Hashtbl.create 512) in
-	    Hashtbl.iter
-	        (fun key cn ->
-	            let name = nodeName cn.cnInfo in
-	            let n1 = Hashtbl.find nodes name in
-	            Inthash.iter
-	                (fun key cn_callee ->
-	                    let callee = nodeName cn_callee.cnInfo in
-	                    let n2 = Hashtbl.find nodes callee in
-	                    G.add_edge g n1 n2
-	                    )
-	                cn.cnCallees
-	        ) call_graph;
-	    (mappings, nodes, g)
+        Hashtbl.iter
+            (fun key cn ->
+                let name = nodeName cn.cnInfo in
+                let n1 = Hashtbl.find nodes name in
+                Inthash.iter
+                    (fun key cn_callee ->
+                        let callee = nodeName cn_callee.cnInfo in
+                        let n2 = Hashtbl.find nodes callee in
+                        G.add_edge g n1 n2
+                        )
+                    cn.cnCallees
+            ) call_graph;
+        (mappings, nodes, g)
         
     let compute_scc call_graph =
         let (mappings, nodes, g) = create_graph call_graph in
@@ -74,16 +74,16 @@ let get_next_call mappings nodes g l =
         | 0 -> FuncNone
         | _ -> 
             try
-	            let ret_node = 
-	                List.find
-	                    (fun node ->
-	                        let call_node = Hashtbl.find mappings node in
-	                        let calls = calls_in_list call_node in
-	                        match calls with
-	                            | true -> false
-	                            | false -> true)
-	                     l in
-	            FuncNonRecursive (ret_node, List.filter (fun n -> n != ret_node) l)
+                let ret_node = 
+                    List.find
+                        (fun node ->
+                            let call_node = Hashtbl.find mappings node in
+                            let calls = calls_in_list call_node in
+                            match calls with
+                                | true -> false
+                                | false -> true)
+                         l in
+                FuncNonRecursive (ret_node, List.filter (fun n -> n != ret_node) l)
             with Not_found 
                 ->
                     FuncRecursive l

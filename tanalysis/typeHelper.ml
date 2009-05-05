@@ -76,17 +76,17 @@ module TypeGetter(Param:sig
         
         match expr with
             |   Const _ -> None
-			|   SizeOf _ -> None
-			|   SizeOfE _ -> None
-			|   SizeOfStr _ -> None
-			|   AlignOf _ -> None
-			|   AlignOfE _ -> None
+            |   SizeOf _ -> None
+            |   SizeOfE _ -> None
+            |   SizeOfStr _ -> None
+            |   AlignOf _ -> None
+            |   AlignOfE _ -> None
             |   Lval lvl -> do_get_actual_param_lvalue lvl
             |   CastE (typ, cast_expr) -> do_get_actual_param_cast typ cast_expr
-			|   UnOp (_, un_expr, typ) -> do_get_actual_param_unop typ un_expr
-			|   BinOp (_, left_expr, right_expr, typ) -> do_get_actual_param_binop typ left_expr right_expr
-			|   AddrOf lvl -> do_get_actual_param_addrof lvl 
-			|   StartOf lvl -> do_get_actual_param_startof lvl
+            |   UnOp (_, un_expr, typ) -> do_get_actual_param_unop typ un_expr
+            |   BinOp (_, left_expr, right_expr, typ) -> do_get_actual_param_binop typ left_expr right_expr
+            |   AddrOf lvl -> do_get_actual_param_addrof lvl 
+            |   StartOf lvl -> do_get_actual_param_startof lvl
             |   _ -> None
 end
 

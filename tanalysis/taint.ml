@@ -36,9 +36,9 @@ let run_taint fmt debug info globals =
         match SccCallgraph.get_next_call mappings nodes g component with
             | FuncNone -> ignore ()
             | FuncNonRecursive (node, remaining) -> 
-		        (match get_function node with
-		            | None -> next_func remaining
-		            | Some func ->
+                (match get_function node with
+                    | None -> next_func remaining
+                    | Some func ->
                         run_custom_taint_non_recursive fmt debug info func computed_function_envs globals)
             | FuncRecursive node_list -> 
                 let func_list = List.fold_left 

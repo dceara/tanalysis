@@ -62,18 +62,19 @@ module Typing (Param:sig
             | false -> 
                 (true, _env1)
             | true ->
-		        Hashtbl.iter
-		            (fun id t1 ->
-		                let t2 = Hashtbl.find _env2 id in
-		                Gamma.set_taint (vis1, _env1) id (combine_taint t1 t2)
-		            )
-		            _env1;
+                Hashtbl.iter
+                    (fun id t1 ->
+                        let t2 = Hashtbl.find _env2 id in
+                        Gamma.set_taint (vis1, _env1) id (combine_taint t1 t2)
+                    )
+                    _env1;
                 (true, _env1)
     
     (* Locals are initialized to tainted. An exception is made for structures. *)
     (* All structures are initialized to untainted because only parts of the *)
     (* structures may be used afterwards. *)
     let process_local env vinfo =
+        (* TODO: Initialize all locals to U *)
         (match TG.is_structure vinfo.vtype with
             | false -> Gamma.set_taint env vinfo.vid T
             | true -> Gamma.set_taint env vinfo.vid U);
@@ -89,4 +90,10 @@ module Typing (Param:sig
         Gamma.set_taint env vinfo.vid (G [vinfo]);
         env
     
+    let process_function_return env vinfo taint =
+        Gamma.set_taint env (-vinfo.vid) taint;
+        env
+    
+    let get_function_return_vid vinfo =
+        - vinfo.vid
 end

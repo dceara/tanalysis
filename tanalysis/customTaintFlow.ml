@@ -103,18 +103,18 @@ module TaintComputer(Param:sig
         match List.length stmt.preds with
             | 1 -> cond_taint
             | _ ->
-	        match nullable_old_stmt with
-	            | None -> List.tl cond_taint
-	            | Some old_stmt ->
+            match nullable_old_stmt with
+                | None -> List.tl cond_taint
+                | Some old_stmt ->
                 match old_stmt.skind with 
                     | Break _ -> cond_taint
                     | _ ->
-			        match stmt.skind with
-	                    | Loop _ -> 
-				            (match Dominators.dominates Param.dom_tree stmt old_stmt with
-				                | false -> cond_taint
-				                | true ->List.tl cond_taint)
-	                    | _ -> List.tl cond_taint
+                    match stmt.skind with
+                        | Loop _ -> 
+                            (match Dominators.dominates Param.dom_tree stmt old_stmt with
+                                | false -> cond_taint
+                                | true ->List.tl cond_taint)
+                        | _ -> List.tl cond_taint
         
     (* Params: *)
     (* worklist - the list of pairs (statement, is_cond_tainted) that will be *)
@@ -139,20 +139,21 @@ module TaintComputer(Param:sig
                 | _ 
                     ->
                     let first_pred = List.hd current_stmt.preds in
-                    let first_pred_id = first_pred.sid in  
+                    let first_pred_id = first_pred.sid in 
                     (Gamma.copy
                         (List.fold_left
-	                        (fun env pred_stmt ->
-	                            let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
+                            (fun env pred_stmt ->
+                                let pred_env = Inthash.find Param.stmt_envs pred_stmt.sid in
                                 Typing.combine env pred_env)
-	                        (Inthash.find Param.stmt_envs first_pred_id)    
-	                        (List.tl current_stmt.preds)),
+                            (Inthash.find Param.stmt_envs first_pred_id)    
+                            (List.tl current_stmt.preds)),
                     combine_cond_taint current_stmt nullable_old_stmt cond_taint
                     )
         in
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
+        let (new_, cond_stack) = (do_stmt current_stmt new_env cond_taint) in
         let (changed, env, cond_stack) = 
-            test_for_change old_env (do_stmt current_stmt new_env cond_taint) in
+            test_for_change old_env (new_, cond_stack) in
         match changed with
             | false 
                 -> 
@@ -177,10 +178,10 @@ module TaintComputer(Param:sig
                                 (s, (Some current_stmt), List.tl cond_taint)
                     in
                     let new_list = (List.concat 
-			                            [List.tl worklist;
-			                             List.map 
-			                                mfun 
-			                                current_stmt.succs]) in
+                                        [List.tl worklist;
+                                         List.map 
+                                            mfun 
+                                            current_stmt.succs]) in
                     compute new_list
         
     (* Initialized the locals and formals in all the environments associated *)
@@ -221,6 +222,8 @@ module TaintComputer(Param:sig
     (* must hold only the starting statement *)
     let start worklist = 
         let initial_env = SC.create_initial_env Param.func in
+        (* CFGP.print_cfg Param.func;
+        initial_env *)
         (if Param.info then
             P.print () "Computing initial environment for function %s.\n" Param.func.svar.vname); 
         init_environments initial_env;
@@ -301,6 +304,6 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
     in    
     
     List.iter 
-        (fun f -> Inthash.add !f_envs f.svar.vid (SC.create_initial_env_rec f)) 
+        (fun f -> Inthash.add !f_envs f.svar.vid (SC.create_initial_env f)) 
         f_list;
     iterate ()
