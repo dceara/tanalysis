@@ -38,20 +38,20 @@ let run_taint fmt debug info globals =
     
     let computed_function_envs = ref (Inthash.create 1024) in
     let perform_analysis print_intermediate =
-	    let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
-	    let get_function node = 
-	        let n = Hashtbl.find mappings node in
-	        let fname = nodeName n.cnInfo in
-	        Utils.get_function_by_name globals fname
-	    in
-	    let rec next_func component =
-	        match SccCallgraph.get_next_call mappings nodes g component with
-	            | FuncNone -> ignore ()
-	            | FuncNonRecursive (node, remaining) -> 
-	                (match get_function node with
-	                    | None -> next_func remaining
-	                    | Some func ->
-	                        run_custom_taint_non_recursive 
+        let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
+        let get_function node = 
+            let n = Hashtbl.find mappings node in
+            let fname = nodeName n.cnInfo in
+            Utils.get_function_by_name globals fname
+        in
+        let rec next_func component =
+            match SccCallgraph.get_next_call mappings nodes g component with
+                | FuncNone -> ignore ()
+                | FuncNonRecursive (node, remaining) -> 
+                    (match get_function node with
+                        | None -> next_func remaining
+                        | Some func ->
+                            run_custom_taint_non_recursive 
                                 fmt 
                                 debug 
                                 info
@@ -59,16 +59,16 @@ let run_taint fmt debug info globals =
                                 func 
                                 computed_function_envs 
                                 globals)
-	            | FuncRecursive node_list -> 
-	                let func_list = List.fold_left 
-	                                    (fun res node 
-	                                        -> 
-	                                            match get_function node with
-	                                                | None -> res
-	                                                | Some func -> List.concat [res;[func]]) 
-	                                    []
-	                                    node_list in
-	                run_custom_taint_recursive 
+                | FuncRecursive node_list -> 
+                    let func_list = List.fold_left 
+                                        (fun res node 
+                                            -> 
+                                                match get_function node with
+                                                    | None -> res
+                                                    | Some func -> List.concat [res;[func]]) 
+                                        []
+                                        node_list in
+                    run_custom_taint_recursive 
                         fmt 
                         debug 
                         info 
@@ -76,13 +76,13 @@ let run_taint fmt debug info globals =
                         func_list 
                         computed_function_envs 
                         globals
-	    in
-	    List.iter next_func lst;
+        in
+        List.iter next_func lst;
     in
     let print_results enabled =
         Format.fprintf fmt "\n\n%s\n" "Taint analysis done";
         if enabled then 
-		    Cil.dumpFile (new TaintPretty.print !computed_function_envs) stdout "test" (Cil_state.file ())
+            Cil.dumpFile (new TaintPretty.print !computed_function_envs) stdout "test" (Cil_state.file ())
     in
     
     perform_analysis (PrintIntermediateEnabled.get ());

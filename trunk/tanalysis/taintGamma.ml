@@ -76,28 +76,28 @@ module Gamma = struct
         match List.length env_list with
             | 0 -> env
             | _ ->
-	        let result_env = create_env () in
-	        
-	        let do_get_differences _env _old =
-	            Hashtbl.iter
-	                (fun vid taint ->
-	                    let old_taint = get_taint _old vid in
-	                    match compare_taint taint old_taint with
-	                        | true -> ignore ()
-	                        | false ->
-	                            try 
-	                                ignore(get_taint result_env vid)
-	                            with Not_found ->
-	                                set_taint result_env vid taint)
-	                _env 
-	        in
-	        
-	        let env = match env with (_, _env) -> _env in
-	        List.iter
-	            (fun old_env ->
-	                do_get_differences env old_env)
-	            env_list;
-	        result_env
+            let result_env = create_env () in
+            
+            let do_get_differences _env _old =
+                Hashtbl.iter
+                    (fun vid taint ->
+                        let old_taint = get_taint _old vid in
+                        match compare_taint taint old_taint with
+                            | true -> ignore ()
+                            | false ->
+                                try 
+                                    ignore(get_taint result_env vid)
+                                with Not_found ->
+                                    set_taint result_env vid taint)
+                    _env 
+            in
+            
+            let env = match env with (_, _env) -> _env in
+            List.iter
+                (fun old_env ->
+                    do_get_differences env old_env)
+                env_list;
+            result_env
     
     let env_iter f env =
         let env = match env with (_, _env) -> _env in
@@ -158,14 +158,14 @@ module Gamma = struct
                 | (G g) ->
                     let len = List.length g in
                     match 
-	                    (List.fold_left
-	                        (fun (str, idx) el ->
-	                            if idx < len - 1 then
-	                                (Format.sprintf "%sG(%s) + " str el.vname, idx + 1)
-	                            else
-	                                (Format.sprintf "%sG(%s)" str el.vname, idx + 1))
-	                        ("", 0)
-	                        g)
+                        (List.fold_left
+                            (fun (str, idx) el ->
+                                if idx < len - 1 then
+                                    (Format.sprintf "%sG(%s) + " str el.vname, idx + 1)
+                                else
+                                    (Format.sprintf "%sG(%s)" str el.vname, idx + 1))
+                            ("", 0)
+                            g)
                     with (str, _) -> str    
                         in  
         Format.sprintf "T(%s) = %s" vinfo.vname taint_str
