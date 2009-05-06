@@ -188,7 +188,7 @@ module InstrComputer(Param:sig
             ret_taint
         in
         let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
-        let callee_env = Inthash.find func_envs vinfo.vid in
+        let (callee_env, _) = Inthash.find func_envs vinfo.vid in
         do_pointer_params func callee_env;
         do_globals func callee_env;
         do_return func callee_env

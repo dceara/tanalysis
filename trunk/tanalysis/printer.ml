@@ -3,4 +3,5 @@ module Printer(Param:sig
                      end) = struct
                         
     let print () = Format.fprintf Param.fmt
+           
 end

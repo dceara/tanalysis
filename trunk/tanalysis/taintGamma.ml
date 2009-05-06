@@ -18,7 +18,7 @@ type environmentStack = environment list
 
 (* The function environment is a mapping between a function id and it's *)
 (* computed environment. *)
-type functionEnvironment = environment Inthash.t
+type functionEnvironment = (environment * statementsEnvironment) Inthash.t
 
 type taintStack = Same | Push of int * taintValue | Pop
 
@@ -71,7 +71,40 @@ module Gamma = struct
                         compare_taint t1 t2)
             env1
             true
-            
+    
+    let get_differences env env_list =
+        match List.length env_list with
+            | 0 -> env
+            | _ ->
+	        let result_env = create_env () in
+	        
+	        let do_get_differences _env _old =
+	            Hashtbl.iter
+	                (fun vid taint ->
+	                    let old_taint = get_taint _old vid in
+	                    match compare_taint taint old_taint with
+	                        | true -> ignore ()
+	                        | false ->
+	                            try 
+	                                ignore(get_taint result_env vid)
+	                            with Not_found ->
+	                                set_taint result_env vid taint)
+	                _env 
+	        in
+	        
+	        let env = match env with (_, _env) -> _env in
+	        List.iter
+	            (fun old_env ->
+	                do_get_differences env old_env)
+	            env_list;
+	        result_env
+    
+    let env_iter f env =
+        let env = match env with (_, _env) -> _env in
+        Hashtbl.iter
+            (fun vid taint -> f vid taint)
+            env
+                            
     let copy env =
         match env with (visited, _env) -> (visited, Hashtbl.copy _env)
 
@@ -91,8 +124,8 @@ module Gamma = struct
                             g;
                         Format.fprintf fmt "%s" "\n";)
         in
-        Format.fprintf fmt "%s\n" "========================================";
-        Format.fprintf fmt "VISITED: %B\n" visited; 
+        (* Format.fprintf fmt "%s\n" "========================================";
+        Format.fprintf fmt "VISITED: %B\n" visited;                             *) 
         Format.fprintf fmt "%s\n" "========================================";
         Hashtbl.iter 
             (fun vid taint ->
@@ -114,6 +147,28 @@ module Gamma = struct
                     (fun el -> Format.fprintf fmt "Gamma(%s), " el.vname)
                     g;
                 Format.fprintf fmt "%s" "\n"
+                
+    let pretty_string_taint vid taint =
+        let vid = if vid >= 0 then vid else (-vid) in
+        let vinfo = varinfo_from_vid vid in
+        let taint_str = 
+            match taint with
+                | T -> Format.sprintf "%s" "T"
+                | U -> Format.sprintf "%s" "U"
+                | (G g) ->
+                    let len = List.length g in
+                    match 
+	                    (List.fold_left
+	                        (fun (str, idx) el ->
+	                            if idx < len - 1 then
+	                                (Format.sprintf "%sG(%s) + " str el.vname, idx + 1)
+	                            else
+	                                (Format.sprintf "%sG(%s)" str el.vname, idx + 1))
+	                        ("", 0)
+	                        g)
+                    with (str, _) -> str    
+                        in  
+        Format.sprintf "T(%s) = %s" vinfo.vname taint_str
 
     let pretty_print_taint_list fmt l =
         let rec print_taint_list fmt l =
