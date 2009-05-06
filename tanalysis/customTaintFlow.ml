@@ -12,6 +12,7 @@ module TaintComputer(Param:sig
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
+                        val print_int : bool
                      end) = struct
 
 
@@ -125,7 +126,7 @@ module TaintComputer(Param:sig
         (* Stop when the worklist is empty. *)
         | 0 -> ignore ()
         | _ ->
-        let (current_stmt, nullable_old_stmt, cond_taint) = List.hd worklist in
+        let (current_stmt, nullable_old_stmt, cond_taint) = List.hd worklist in        
         if (Param.info) then (
             P.print () "[INFO] Processing instruction %d from worklist\n" current_stmt.sid;
         );
@@ -221,9 +222,7 @@ module TaintComputer(Param:sig
     (* worklist - the list of statements that will be computed. Initially this *)
     (* must hold only the starting statement *)
     let start worklist = 
-        let initial_env = SC.create_initial_env Param.func in
-        (* CFGP.print_cfg Param.func;
-        initial_env *)
+        let initial_env = SC.create_initial_env Param.func in        
         (if Param.info then
             P.print () "Computing initial environment for function %s.\n" Param.func.svar.vname); 
         init_environments initial_env;
@@ -231,16 +230,17 @@ module TaintComputer(Param:sig
             P.print () "Computing environment for function %s.\n" Param.func.svar.vname);
         compute (List.map (fun s -> (s, None, [(0, U)])) worklist);
         let final = combine_return_envs initial_env in
-        P.print () "\nEnvironment for function %s:\n" Param.func.svar.vname;
-        P.print_env () final;
-        P.print () "\nEND Environment for function %s.\n" Param.func.svar.vname;
-        final
+        if Param.print_int then (
+	        P.print () "\nEnvironment for function %s:\n" Param.func.svar.vname;
+	        P.print_env () final
+        );
+        (final, Param.stmt_envs)
 end
 
 (* Runs the analysis on a given function with regard to the already computed *)
 (* environments. *)
 (* Returns the new environment for f. *)
-let run_custom_taint format dbg inf f f_envs gls =
+let run_custom_taint format dbg inf print_intermediate f f_envs gls =
     let tree = Dominators.computeIDom f in 
     let module TaintComputer = TaintComputer(struct
                                                 let stmt_envs = (Inthash.create 1024)
@@ -251,15 +251,16 @@ let run_custom_taint format dbg inf f f_envs gls =
                                                 let fmt = format
                                                 let debug = dbg
                                                 let info = inf
+                                                let print_int = print_intermediate
                                             end) in
     let start_stmt = List.hd f.sallstmts in
     TaintComputer.start [start_stmt]
 
 (* Runs the analysis for a non recursive function f. Adds the new environment for *)
 (* f to the function environments. *)
-let run_custom_taint_non_recursive format debug info f f_envs gls =
-    let env = run_custom_taint format debug info f f_envs gls in
-    Inthash.add !f_envs f.svar.vid env
+let run_custom_taint_non_recursive format debug info print_intermediate f f_envs gls =
+    let (env, all_stmts_envs) = run_custom_taint format debug info print_intermediate f f_envs gls in
+    Inthash.add !f_envs f.svar.vid (env, all_stmts_envs)
 
 (* Runs taint analysis on a given list of mutually recursive functions. *)
 (* Params: *)
@@ -267,7 +268,7 @@ let run_custom_taint_non_recursive format debug info f f_envs gls =
 (* f_list - the list of fundec for the mutually recursive functions *)
 (* f_envs - the already computed function environments *)
 (* gls - the list of globals in the program *)
-let run_custom_taint_recursive format dbg inf f_list f_envs gls =
+let run_custom_taint_recursive format dbg inf print_intermediate f_list f_envs gls =
     let module Typing = TaintTyping.Typing(struct
                                          let fmt = format
                                          let debug = dbg
@@ -289,11 +290,11 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
     let rec iterate () = 
         match List.fold_left
                 (fun changed f ->
-                    let old_env = Inthash.find !f_envs f.svar.vid in
-                    let new_env = run_custom_taint format dbg inf f f_envs gls in
+                    let (old_env, _) = Inthash.find !f_envs f.svar.vid in
+                    let (new_env, all_stmt_envs) = run_custom_taint format dbg inf print_intermediate f f_envs gls in
                     match Gamma.compare old_env new_env with
                         | false -> 
-                            Inthash.replace !f_envs f.svar.vid new_env;
+                            Inthash.replace !f_envs f.svar.vid (new_env, all_stmt_envs);
                             true
                         | true -> 
                             false)
@@ -303,7 +304,8 @@ let run_custom_taint_recursive format dbg inf f_list f_envs gls =
             | true -> iterate () 
     in    
     
+    (* TODO: check if we can remove Inthash.create *)
     List.iter 
-        (fun f -> Inthash.add !f_envs f.svar.vid (SC.create_initial_env f)) 
+        (fun f -> Inthash.add !f_envs f.svar.vid (SC.create_initial_env f, Inthash.create 1024)) 
         f_list;
     iterate ()
