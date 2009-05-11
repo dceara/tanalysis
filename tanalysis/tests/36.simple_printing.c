@@ -1,6 +1,6 @@
 int main()
 {
-    int a, b;
+    int a = taint(), b;
     
     b = 200;
     if (b) {

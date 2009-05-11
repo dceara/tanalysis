@@ -3,7 +3,7 @@ int prod2 = 1;
 
 int main(int argc1, int argc2)
 {
-    int tainted;
+    int tainted = taint();
     int n = 100;
     prod = argc1;
     prod2 = argc1;

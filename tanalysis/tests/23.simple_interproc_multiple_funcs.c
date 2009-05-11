@@ -1,6 +1,5 @@
 int main(int argc, char** argv) //argc = G, argv = G
 {
-    int a, b, c, d;
     int x = bar(0, 1, 2);
     int y = bar(0, 1, argc);
     return 0;

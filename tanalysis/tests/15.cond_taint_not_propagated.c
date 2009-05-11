@@ -3,6 +3,7 @@ int main(int argc, char** argv) //argc = G, argv = G
     int a, b, c;
     a = 0;
     b = 0;
+    c = taint();
     
     
     if (a < argc) {     // T(cond) = G(argc)

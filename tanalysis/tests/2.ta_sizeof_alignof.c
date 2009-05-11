@@ -1,6 +1,7 @@
 int main(int argc, char** argv) //argc = G, argv = G
 {
-    unsigned int a, b, c, d, e, f, g; // all T
+    unsigned int a, b, c, d, e, f, g; 
+    a = b = c = d = e = f = g = taint();// all T
     a = sizeof(int);     // T(a) = U
     b = sizeof(a+c);     // T(b) = T
     c = sizeof(b);       // T(c) = T

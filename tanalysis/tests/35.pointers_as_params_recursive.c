@@ -1,7 +1,7 @@
 
 int main(int argc, char** argv) //argc = G, argv = G
 {
-    int tainted;
+    int tainted = taint();
     int result_test = 1;
     int result_tainted = 1;
     int result_generic = 1;

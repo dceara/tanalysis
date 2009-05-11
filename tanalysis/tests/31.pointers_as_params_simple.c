@@ -18,7 +18,7 @@ int main(int argc, char** argv) //argc = G, argv = G
 
 int foo(int* p)
 {
-    int tainted;
+    int tainted = taint();
     *p = tainted;
     return 100;
 }

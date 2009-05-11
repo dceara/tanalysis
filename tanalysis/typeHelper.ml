@@ -133,12 +133,21 @@ module TypeComparer(Param:sig
             | FDouble -> TypeSize (RefCount ref_cnt, double_size ())
             | FLongDouble -> TypeSize (RefCount ref_cnt, longdouble_size ())
     
+    and do_expand_named_type possible_named_typ =
+        match possible_named_typ with
+            | TNamed (tinfo, _) -> do_expand_named_type tinfo.ttype
+            | _ -> possible_named_typ
+    
     and do_get_type_size_struct compinfo =
         List.fold_left
             (fun size finfo ->
-                match get_type_size (RefCount 0) finfo.ftype with
-                    | TypeSize (RefCount 0, s) -> size + s
-                    | TypeSize (RefCount _, s) -> size + ptr_size ())
+                let ftyp = do_expand_named_type finfo.ftype in
+                match ftyp with
+                    | TPtr _ -> size + ptr_size ()
+                    | _ ->
+                        (match get_type_size (RefCount 0) ftyp with
+                            | TypeSize (RefCount 0, s) -> size + s
+                            | TypeSize (RefCount _, s) -> size + ptr_size ()))  
             0 
             compinfo.cfields
     
@@ -167,16 +176,34 @@ module TypeComparer(Param:sig
     and get_type_size (RefCount ref_cnt) typ =
         match typ with
             (* TODO: *)
-            | TVoid _ -> TypeSize (RefCount ref_cnt, 100000)
-            | TInt (ikind, _) -> do_get_type_size_int (RefCount ref_cnt) ikind
-            | TFloat (fkind, _) -> do_get_type_size_float (RefCount ref_cnt) fkind
-            | TPtr (ptr_typ, _) -> do_get_type_size_ptr (RefCount ref_cnt) ptr_typ
+            | TVoid _ -> 
+                (* P.print () "%s\\n" "DEBUG1"; *)
+                TypeSize (RefCount ref_cnt, 100000)
+            | TInt (ikind, _) -> 
+                (* P.print () "%s\\n" "DEBUG2"; *)
+                do_get_type_size_int (RefCount ref_cnt) ikind
+            | TFloat (fkind, _) -> 
+                (* P.print () "%s\\n" "DEBUG3"; *)
+                do_get_type_size_float (RefCount ref_cnt) fkind
+            | TPtr (ptr_typ, _) -> 
+                (* P.print () "%s\\n" "DEBUG4"; *)
+                do_get_type_size_ptr (RefCount ref_cnt) ptr_typ
             (* TODO: Probably this isn't ok. What do we do if we have a fixed size array? *)
-            | TArray (arr_typ, _, _) -> do_get_type_size_arr (RefCount ref_cnt) arr_typ 
-            | TNamed (tinfo, _) -> get_type_size (RefCount ref_cnt) tinfo.ttype
-            | TComp (compinfo, _) -> do_get_type_size_comp (RefCount ref_cnt) compinfo
-            | TEnum _ -> TypeSize (RefCount ref_cnt, enum_size ())
-            | _ -> TypeSize (RefCount ref_cnt, 0)
+            | TArray (arr_typ, _, _) -> 
+                (* P.print () "%s\\n" "DEBUG5"; *)
+                do_get_type_size_arr (RefCount ref_cnt) arr_typ 
+            | TNamed (tinfo, _) -> 
+                (* P.print () "DEBUG6 tname = %s\n" tinfo.tname; *)
+                get_type_size (RefCount ref_cnt) tinfo.ttype
+            | TComp (compinfo, _) -> 
+                (* P.print () "%s\\n" "DEBUG7"; *)
+                do_get_type_size_comp (RefCount ref_cnt) compinfo
+            | TEnum _ -> 
+                (* P.print () "%s\\n" "DEBUG8"; *)
+                TypeSize (RefCount ref_cnt, enum_size ())
+            | _ -> 
+                (* P.print () "%s\\n" "DEBUG9"; *)
+                TypeSize (RefCount ref_cnt, 0)
     
     let rec get_expr_type_size (RefCount ref_cnt) expr  =
         let do_get_expr_type_size_const cnst =
@@ -257,6 +284,7 @@ module TypeComparer(Param:sig
         let TypeSize (RefCount dst_ref_cnt, dst_size) = 
             get_type_size (RefCount 0) dest_type in
         match (dst_ref_cnt, src_ref_cnt) with
+            | (x, y) when x > 0 && y == 0 -> true
             | (x, y) when x == y ->  dst_size <= src_size
-            | _ ->  false                                                             
+            | _ ->  false
 end

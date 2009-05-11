@@ -104,7 +104,11 @@ module Gamma = struct
         Hashtbl.iter
             (fun vid taint -> f vid taint)
             env
-                            
+    
+    let env_length env =
+        let env = match env with (_, _env) -> _env in
+        Hashtbl.length env
+                                                                            
     let copy env =
         match env with (visited, _env) -> (visited, Hashtbl.copy _env)
 
@@ -114,26 +118,23 @@ module Gamma = struct
         let (visited, env) = match env with (_vis, _env) -> (_vis, _env) in
         let pretty_print_taint taint = 
             (match taint with
-                | T -> Format.fprintf fmt "\t%s\n" "Tainted"
-                | U -> Format.fprintf fmt "\t%s\n" "Untainted"
+                | T -> Format.fprintf fmt "%s\n" "Tainted"
+                | U -> Format.fprintf fmt "%s\n" "Untainted"
                 | (G g) 
                     -> 
-                        Format.fprintf fmt "\t%s" "Generic: ";
+                        Format.fprintf fmt "%s" "Generic: ";
                         List.iter 
                             (fun el -> Format.fprintf fmt "Gamma(%s), " el.vname)
                             g;
                         Format.fprintf fmt "%s" "\n";)
-        in
-        (* Format.fprintf fmt "%s\n" "========================================";
-        Format.fprintf fmt "VISITED: %B\n" visited;                             *) 
+        in 
         Format.fprintf fmt "%s\n" "========================================";
         Hashtbl.iter 
             (fun vid taint ->
                 let vid = if vid >= 0 then vid else (-vid) in
                 let vinfo = varinfo_from_vid vid in
-                Format.fprintf fmt "\tSymname: %s\n" vinfo.vname;
-                pretty_print_taint taint;
-                Format.fprintf fmt "%s" "\n")
+                Format.fprintf fmt "\tSymname: %s = " vinfo.vname;
+                pretty_print_taint taint)
             env;
         Format.fprintf fmt "%s\n" "========================================"
     
