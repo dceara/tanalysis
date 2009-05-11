@@ -6,6 +6,7 @@ type taintMetaValue = M_T | M_U | M_G of string list
 module Initializer(Param:sig
                         val globals : global list
                         val func_hash_ref : ((string, fundec) Hashtbl.t) ref
+                        val lib_func_hash_ref : fundec Inthash.t ref
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
@@ -89,7 +90,8 @@ module Initializer(Param:sig
         Inthash.add (!Param.func_envs_ref) funcdec.svar.vid (env, Inthash.create 1024);
         if Param.info then (
             P.print () "[INFO] Added library function: %s\n" fname
-        )
+        );
+        Inthash.add (!Param.lib_func_hash_ref) funcdec.svar.vid funcdec
 
     let start () =
         add_function
@@ -104,6 +106,10 @@ module Initializer(Param:sig
         add_function
             ("printf", TInt (IInt, []), M_U)
             [("p_format", TVoid [], M_G ["p_format"])];
+        add_function
+            ("fprintf", TInt (IInt, []), M_U)
+            [("stream", TPtr (TVoid [], []), M_G ["stream"]);
+             ("p_format", TVoid [], M_G ["p_format"])];
         add_function
             ("fgetc", TInt (IInt, []), M_G ["stream"])
             [("stream", TPtr (TVoid [], []), M_G ["stream"])];
@@ -143,13 +149,43 @@ module Initializer(Param:sig
         add_function
             ("fclose", TInt (IInt, []), M_U)
             [("stream", TPtr (TVoid [], []), M_G ["stream"])];
-        
+        add_function
+            ("strcmp", TInt (IInt, []), M_G ["s1";"s2"])
+            [("s1", TPtr (TVoid [], []), M_G ["s1"]);
+             ("s2", TPtr (TVoid [], []), M_G ["s2"])]; 
+        add_function
+            ("strncmp", TInt (IInt, []), M_G ["n"])
+            [("s1", TPtr (TVoid [], []), M_G ["s1"]);
+             ("s2", TPtr (TVoid [], []), M_G ["s2"]);
+             ("n", TInt (IInt, []), M_U);];
+        add_function
+            ("strlen", TInt (IInt, []), M_G ["s1"])
+            [("s1", TPtr (TVoid [], []), M_G ["s1"])]; 
+        add_function
+            ("strcpy", TPtr (TVoid [], []), M_G ["s2"])
+            [("s1", TPtr (TVoid [], []), M_G ["s1"; "s2"]);
+             ("s2", TPtr (TVoid [], []), M_G ["s2"])]; 
+        add_function
+            ("strncpy", TPtr (TVoid [], []), M_G ["n"])
+            [("s1", TPtr (TVoid [], []), M_G ["s1"]);
+             ("s2", TPtr (TVoid [], []), M_G ["s2"]);
+             ("n", TInt (IInt, []), M_U)];
+        add_function
+            ("sprintf", TInt (IInt, []), M_U)
+            [("dest", TPtr (TVoid [], []), M_G ["format"; "dest"]);
+             ("format", TPtr (TVoid [], []), M_G ["format"])];
+        add_function
+            ("snprintf", TInt (IInt, []), M_U)
+            [("dest", TPtr (TVoid [], []), M_G ["format"; "dest"; "size"]);
+             ("size", TInt (IInt, []), M_U);
+             ("format", TPtr (TVoid [], []), M_G ["format"])]         
 end
 
-let test format dbg inf config_fname func_envs glbls func_hash =
+let test format dbg inf config_fname func_envs glbls func_hash lib_func_hash =
     let module I = Initializer(struct 
                                 let globals = glbls
                                 let func_hash_ref = func_hash 
+                                let lib_func_hash_ref = lib_func_hash
 		                        let fmt = format
 		                        let debug = dbg      
 		                        let info = inf     
