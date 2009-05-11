@@ -4,6 +4,7 @@ open TaintGamma
 
 module InstrComputer(Param:sig
                         val globals : global list
+                        val func_hash : (string, fundec) Hashtbl.t
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
@@ -117,6 +118,7 @@ module InstrComputer(Param:sig
     (* param_exprs - the list of parameter expressions for the callee *)
     (* func_envs - already computed environments *)
     let rec do_get_function_call_taint env vinfo param_exprs func_envs =
+        let p_exp_length = List.length param_exprs in        
         (* Local function used for finding the actual parameter passed for a *)
         (* formal one. *)
         let find_binding actuals formals dep =
@@ -155,18 +157,23 @@ module InstrComputer(Param:sig
         (* Deals with pointer parameters as if they are return values. *)
         let do_pointer_params func callee_env =
             let formals = func.sformals in
-            List.iter
-                (fun formal ->
-                    if TG.is_return_param formal.vtype == false then ignore ()
+            ignore (List.fold_left
+                (fun idx formal ->
+                    if idx >= p_exp_length then
+                        idx + 1
                     else
-                        let actual_param = TG.get_actual_param 
-                                            (find_binding param_exprs formals formal) in
-                        match actual_param with
-                            | None -> ignore ()
-                            | Some a_vinfo ->
-                                let a_taint = instantiate_call_taint env callee_env param_exprs formals formal.vid in
-                                Gamma.set_taint env a_vinfo.vid a_taint )
-                formals
+                        if TG.is_return_param formal.vtype == false then idx + 1
+	                    else
+	                        let actual_param = TG.get_actual_param 
+	                                            (find_binding param_exprs formals formal) in
+	                        (match actual_param with
+	                            | None -> ignore ()
+	                            | Some a_vinfo ->
+	                                let a_taint = instantiate_call_taint env callee_env param_exprs formals formal.vid in
+	                                Gamma.set_taint env a_vinfo.vid a_taint);
+                            idx + 1)
+                0
+                formals)
         in
         (* Deals with globals as if they are return values. *)
         let do_globals func callee_env =
@@ -175,7 +182,7 @@ module InstrComputer(Param:sig
                 (fun global ->
                     let g_taint = instantiate_call_taint env callee_env param_exprs formals global.vid in
                     Gamma.set_taint env global.vid g_taint)
-            (list_global_vars () ())    
+                (list_global_vars () ())
         in
         (* Computes the taintedness of the return value for the given function. *)
         let do_return func callee_env =
@@ -187,11 +194,22 @@ module InstrComputer(Param:sig
                                 (Typing.get_function_return_vid func.svar) in
             ret_taint
         in
-        let func = Utils. get_fundec_by_id Param.globals vinfo.vid in
-        let (callee_env, _) = Inthash.find func_envs vinfo.vid in
+        let func = Hashtbl.find Param.func_hash vinfo.vname in
+        let (callee_env, _) = Inthash.find func_envs func.svar.vid in
         do_pointer_params func callee_env;
         do_globals func callee_env;
         do_return func callee_env
+    
+    and do_offset env offset func_envs =
+        match offset with
+            | NoOffset -> 
+                U
+            | Field _ -> 
+                U
+            | Index (idx_exp, idx_offset) ->
+                let idx_taint = do_expr env idx_exp [] func_envs in
+                let idx_offset_taint = do_offset env idx_offset func_envs in
+                Typing.combine_taint idx_taint idx_offset_taint
     
     (* Returns the taintedness for a lvalue. *)
     (* Params: *)
@@ -201,21 +219,28 @@ module InstrComputer(Param:sig
     (* lvalue contains a function call *)
     (* func_envs - the environments for already computed functions *)    
     and get_lvalue_taint env lvalue param_exprs func_envs =
-        let get_lvalue_taint_vinfo vinfo =
+        let get_lvalue_taint_vinfo vinfo offset =
+            if Param.debug then (
+                P.print () "[DEBUG] Getting taint for lvalue: %s\n" vinfo.vname
+            );
             let taint = 
                 try
                     Gamma.get_taint env vinfo.vid 
                 with Not_found ->
                     do_get_function_call_taint env vinfo param_exprs func_envs 
             in
+            let offset_taint = do_offset env offset func_envs in
+            let taint = Typing.combine_taint taint offset_taint in
             if Param.debug then (
                 P.print () "[DEBUG] Taint for lvalue %s: " vinfo.vname;
                 P.print_taint () taint);
             taint
         in
         (* Gets the taint for a lvalue that is a memory location. I.e.: a pointer. *)
-        let get_lvalue_taint_mem expr =
+        let get_lvalue_taint_mem expr offset =
             let taint = do_expr env expr [] func_envs in
+            let offset_taint = do_offset env offset func_envs in
+            let taint = Typing.combine_taint taint offset_taint in
             if Param.debug then (
                 P.print () "[DEBUG] Taint for memory lvalue: %s" "\n";
                 P.print_taint () taint);
@@ -224,8 +249,8 @@ module InstrComputer(Param:sig
         (if Param.info then
             P.print () "[INFO] Getting lvalue taint %s" "\n"); 
         match lvalue with
-            | ((Var vinfo), _) -> get_lvalue_taint_vinfo vinfo
-            | ((Mem exp), _) -> get_lvalue_taint_mem exp          
+            | ((Var vinfo), offset) -> get_lvalue_taint_vinfo vinfo offset
+            | ((Mem exp), offset) -> get_lvalue_taint_mem exp offset         
     and
     (* Returns the taintedness of an expression according to the environment. *)
     (* Params: *)
@@ -382,7 +407,7 @@ module InstrComputer(Param:sig
     (* function call *)
     (* func_env - the previously computed function environments *)
     let do_assign env lvalue expr cond_taint param_exprs func_env =
-        let do_assign_lvalue_tainted vinfo =
+        let do_assign_lvalue_tainted vinfo offset =
             (if Param.debug then
                 P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
             let aliases = Alias.get_aliases vinfo in
@@ -391,13 +416,15 @@ module InstrComputer(Param:sig
                 aliases;
             env
         in
-        let do_assign_lvalue vinfo expr =
+        let do_assign_lvalue vinfo expr offset =
             let expr_taint = do_expr env expr param_exprs func_env in
+            let offset_taint = do_offset env offset func_env in
             if Param.debug then (
                 P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
                 P.print_taint () expr_taint
             );
             let taint = Typing.combine_taint expr_taint cond_taint in
+            let taint = Typing.combine_taint taint offset_taint in
             let aliases = Alias.get_aliases vinfo in
             List.iter 
                 (fun info -> Gamma.set_taint env info.vid taint)
@@ -416,12 +443,14 @@ module InstrComputer(Param:sig
         in
         let do_assign_lvalue_mem ptr_expr expr =
             let vinfo = extract_vinfo_from_ptr_expr ptr_expr in
+            let vinfo_expr_taint = do_expr env ptr_expr [] func_env in
             let expr_taint = do_expr env expr param_exprs func_env in
             if Param.debug then (
                 P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
                 P.print_taint () expr_taint
             );
             let taint = Typing.combine_taint expr_taint cond_taint in
+            let taint = Typing.combine_taint taint vinfo_expr_taint in
             let aliases = Alias.get_aliases vinfo in
             List.iter 
                 (fun info -> Gamma.set_taint env info.vid taint)
@@ -432,9 +461,9 @@ module InstrComputer(Param:sig
         (if Param.info then
             P.print () "[INFO] Processing assign instruction %s" "\n");
         match (lvalue, cond_taint) with
-            | ((Var vinfo, _), T) -> do_assign_lvalue_tainted vinfo                    
-            | ((Var vinfo, _), _) -> do_assign_lvalue vinfo expr
-            | ((Mem ptr_expr, _), T) -> do_assign_lvalue_mem_tainted ptr_expr 
+            | ((Var vinfo, offset), T) -> do_assign_lvalue_tainted vinfo offset                   
+            | ((Var vinfo, offset), _) -> do_assign_lvalue vinfo expr offset
+            | ((Mem ptr_expr, _), T) -> do_assign_lvalue_mem_tainted ptr_expr
             | ((Mem ptr_expr, _), _) -> do_assign_lvalue_mem ptr_expr expr   
             
     (* TODO: Makes the assumption that all the functions return a single value and have no *)

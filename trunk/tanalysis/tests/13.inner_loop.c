@@ -2,7 +2,8 @@ int main(int argc, char** argv) //argc = G, argv = G
 {
     int a, b;
     int a1, b1;
-    a = b = 0;
+    a = b = 0;              // T(a) = T(b) = U
+    a1 = b1 = taint();      // T(a1) = T(b1) = T
     
 while (a < 10) {            // T(cond) = U
         while (b < 20) {    // T(cond) = U + U = U

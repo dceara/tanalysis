@@ -1,6 +1,7 @@
 int main(int argc, char** argv) //argc = G, argv = G
 {
-    int a, b, d, e;         // all tainted
+    int a, b, d, e;         
+    a = b = d = e = taint();// all tainted
     a = 2;                  //should be untainted
     b = argc;               //T(b) = G(argc)
     d = a + b + d;          //T(d) = U + G(argc) + T = T

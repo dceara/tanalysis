@@ -4,6 +4,7 @@ int main(int argc, char** argv) //argc = G, argv = G
     int a1, b1, c1;
     int a2, b2, c2;
     a = c = 0;
+    b = taint();
     a1 = b1 = c1 = 0;
     a2 = b2 = c2 = 0;
     

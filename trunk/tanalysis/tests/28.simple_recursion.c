@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 
 int foo(int n) 
 {
-    int r;
+    int r = taint();
     if (n > 1)
         r = n * foo(n);
     else 
@@ -17,7 +17,7 @@ int foo(int n)
 
 int foo2(int n)
 {
-    int r, tainted;
+    int r = taint(), tainted = taint();
     if (n > 1)
         r = n * foo2(n);
     else 

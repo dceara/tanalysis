@@ -1,4 +1,4 @@
-int global = 0;
+int global = 2;
 
 int main()
 {
@@ -9,7 +9,7 @@ int main()
 
 void foo()
 {
-    int tainted;
+    int tainted = taint();
     global = tainted;
 }
 

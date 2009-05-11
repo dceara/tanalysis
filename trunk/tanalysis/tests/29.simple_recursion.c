@@ -2,14 +2,14 @@ int main(int argc, char** argv)
 {
     int x = foo (10);
     int y = foo (argc);
-    int tainted;
+    int tainted = taint();
     int z = foo (tainted);
     return 0;
 }
 
 int foo(int n) 
 {
-    int r;
+    int r = taint();
     if (n > 1)
         r = n * bar(n);
     else 
@@ -19,8 +19,8 @@ int foo(int n)
 
 int bar(int n)
 {
-    int r;
-    int tainted;
+    int r = taint();
+    int tainted = taint();
     if (n > 1)
         r = n * foo(n);
     else 

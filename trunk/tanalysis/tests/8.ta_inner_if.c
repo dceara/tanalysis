@@ -1,6 +1,7 @@
 int main(int argc, int argc2, char** argv) //argc = G, argv = G
 {
-            int a, b, c;                    // T(all) = T
+            int a, b, c;                    
+            a = b = c = taint();            // T(all) = T
 /* 2: */    if (argc) {                     // T(cond) = G(argc)
     
 /* 4: */        if (2) {                    // T(cond) = U

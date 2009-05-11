@@ -3,6 +3,7 @@ int main(int argc, int argc2, char** argv) //argc = G, argv = G
     int a, b, c, d, tainted, i;
     int a1, b1, c1, d1, i1;
     a = b = d = 0;
+    c = tainted = taint();
     for (i = 0; i < argc; ++ i) {
         a++;
         while (b < 500) {

@@ -70,15 +70,20 @@ module Typing (Param:sig
                     _env1;
                 (true, _env1)
     
+    let visit_env (_, env) = (true, env)
+    
     (* Locals are initialized to tainted. An exception is made for structures. *)
     (* All structures are initialized to untainted because only parts of the *)
     (* structures may be used afterwards. *)
     let process_local env vinfo =
+        Gamma.set_taint env vinfo.vid U;
+        env
+        (* 
         (* TODO: Initialize all locals to U *)
         (match TG.is_structure vinfo.vtype with
             | false -> Gamma.set_taint env vinfo.vid T
             | true -> Gamma.set_taint env vinfo.vid U);
-        env
+        env *)
     
     (* Formals are initialized to G. *)
     let process_formal env vinfo =

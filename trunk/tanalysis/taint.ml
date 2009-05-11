@@ -8,8 +8,13 @@ open CustomTaintFlow
 
 let option_enabled () = "taint-analysis.enabled"
 let option_print_intermediate () = "taint-analysis.print-intermediate"
+let option_print_final () = "taint-analysis.print-final"
 let option_print_source () = "taint-analysis.print-source"
 let option_config_file () = "taint-analysis.config_file"
+let option_debugging () = "taint-analysis.debug"
+let option_info () = "taint-analysis.info"
+
+let default_config_file () = "taint.cfg"
 
 (* Register a new Frama-C option. *)
 module Enabled =
@@ -20,12 +25,22 @@ module PrintIntermediateEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_print_intermediate () end)
     
 (* Register a new Frama-C option. *)
+module PrintFinalEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_print_final () end)
+    
+(* Register a new Frama-C option. *)
 module PrintSourceEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_print_source () end)
-                        
+
+module Debugging = 
+    Cmdline.Dynamic.Register.False(struct let name = option_debugging () end)
+
+module Info = 
+    Cmdline.Dynamic.Register.False(struct let name = option_info () end)
+                                                                                                                                                
 (* Register config file sub option. *)
 module ConfigFile =
-    Cmdline.Dynamic.Register.EmptyString(struct let name = option_config_file () end)    
+    Cmdline.Dynamic.Register.EmptyString(struct let name = option_config_file () end)
 
 let get_config_name () =
     let config_file_option = option_config_file () in
@@ -34,9 +49,28 @@ let get_config_name () =
          else
             "default.cfg"
 
-let run_taint fmt debug info globals =
-    
+let run_taint fmt debug info config_file_name globals =
+    let module P = TaintPrinter.Printer(struct
+                                        let fmt = fmt
+                                    end) in   
     let computed_function_envs = ref (Inthash.create 1024) in
+    let func_hash = Hashtbl.create 1024 in
+    List.iter
+        (fun global ->
+            match global with
+                | GFun (funcdec, _) -> Hashtbl.add func_hash funcdec.svar.vname funcdec
+                | _ -> ignore ())
+        globals;
+    let intialize_library_calls () =
+        TaintLibraryHelper.test 
+            fmt 
+            debug 
+            info
+            config_file_name 
+            computed_function_envs
+            globals
+            (ref func_hash)
+    in    
     let perform_analysis print_intermediate =
         let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
         let get_function node = 
@@ -58,6 +92,7 @@ let run_taint fmt debug info globals =
                                 print_intermediate 
                                 func 
                                 computed_function_envs 
+                                func_hash
                                 globals)
                 | FuncRecursive node_list -> 
                     let func_list = List.fold_left 
@@ -75,25 +110,41 @@ let run_taint fmt debug info globals =
                         print_intermediate
                         func_list 
                         computed_function_envs 
+                        func_hash
                         globals
         in
         List.iter next_func lst;
     in
     let print_results enabled =
-        Format.fprintf fmt "\n\n%s\n" "Taint analysis done";
+        if enabled then (
+            Inthash.iter
+                (fun id (env, _) ->
+                    let vinfo = varinfo_from_vid id in
+		            P.print () "\nEnvironment for function %s:\n" vinfo.vname;
+		            P.print_env () env)
+            (!computed_function_envs)
+        )
+    in
+    let print_source enabled =
         if enabled then 
             Cil.dumpFile (new TaintPretty.print !computed_function_envs) stdout "test" (Cil_state.file ())
     in
     
+    intialize_library_calls ();
     perform_analysis (PrintIntermediateEnabled.get ());
-    print_results (PrintSourceEnabled.get ())
+    print_results (PrintFinalEnabled.get ());
+    print_source (PrintSourceEnabled.get ())
     
 
 let run fmt =
     if Enabled.get () then
         let file = Cil_state.file () in
         let globals = file.globals in 
-        run_taint fmt false false globals
+        let config_file_name = 
+            match ConfigFile.is_set () with
+                | true -> ConfigFile.get ()
+                | false -> default_config_file () in
+        run_taint fmt (Debugging.get ()) (Info.get ()) config_file_name globals
     
 (* Extend the Frama-C command line. *)
 let () =
@@ -108,9 +159,21 @@ let () =
        Arg.Unit PrintIntermediateEnabled.on,
        ": Print the intermediate results for the taint analysis.";
     
+       "-print-final", (* plug-in option *)
+       Arg.Unit PrintFinalEnabled.on,
+       ": Print the final results for the taint analysis.";
+    
        "-print-source", (* plug-in option *)
        Arg.Unit PrintSourceEnabled.on,
        ": Print the source file with comments about the taintedness of the variables.";
+    
+       "-taint-debug", (* plug-in option *)
+       Arg.Unit Debugging.on,
+       ": Turn debugging ON."; 
+    
+       "-taint-info", (* plug-in option *)
+       Arg.Unit Info.on,
+       ": Turn info ON.";
     
        "-config-file",
        Arg.String (Cmdline.Dynamic.Apply.String.set (option_config_file () )),
