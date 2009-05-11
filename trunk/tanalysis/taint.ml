@@ -55,6 +55,7 @@ let run_taint fmt debug info config_file_name globals =
                                     end) in   
     let computed_function_envs = ref (Inthash.create 1024) in
     let func_hash = Hashtbl.create 1024 in
+    let lib_func_hash = Inthash.create 1024 in
     List.iter
         (fun global ->
             match global with
@@ -70,6 +71,7 @@ let run_taint fmt debug info config_file_name globals =
             computed_function_envs
             globals
             (ref func_hash)
+            (ref lib_func_hash)
     in    
     let perform_analysis print_intermediate =
         let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
@@ -119,9 +121,13 @@ let run_taint fmt debug info config_file_name globals =
         if enabled then (
             Inthash.iter
                 (fun id (env, _) ->
-                    let vinfo = varinfo_from_vid id in
-		            P.print () "\nEnvironment for function %s:\n" vinfo.vname;
-		            P.print_env () env)
+                    try
+	                    let _ = Inthash.find lib_func_hash id in
+	                        ignore ()
+                    with Not_found ->
+	                    let vinfo = varinfo_from_vid id in
+			            P.print () "\nEnvironment for function %s:\n" vinfo.vname;
+			            P.print_env () env)
             (!computed_function_envs)
         )
     in
