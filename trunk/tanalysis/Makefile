@@ -9,12 +9,13 @@ RM=rm -f
 
 build: pack
 
-pack: utils \
-    printer \
-    typeHelper \
+pack: xmlm \
+	utils \
+	printer \
+	typeHelper \
 	taintGamma \
 	taintPrinter \
-    taintCFGPrinter \
+	taintCFGPrinter \
 	taintTyping \
 	alias \
 	taintPretty \
@@ -37,6 +38,9 @@ pack: utils \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
 					   taint.cmo  
+
+xmlm: xmlm.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
 sccCallgraph: sccCallgraph.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^

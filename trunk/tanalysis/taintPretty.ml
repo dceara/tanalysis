@@ -22,8 +22,7 @@ class print func_envs = object(self)
             (fun vid taint ->
                 let str_taint = Gamma.pretty_string_taint vid taint in
                 super#pGlobal fmt (GText (Format.sprintf "/*%s*/" str_taint)))
-            env;
-        super#pGlobal fmt (GText "")
+            env
 
     method pAnnotatedStmt next fmt s =
         let current_func_vinfo = self#current_function in
@@ -41,8 +40,5 @@ class print func_envs = object(self)
                         self#pDifferences fmt result_env s
                     | false ->
                         super#pAnnotatedStmt next fmt s
-                
-    initializer
-        super#setPrintInstrTerminator ";\n"
     	
 end
