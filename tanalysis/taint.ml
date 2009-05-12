@@ -151,7 +151,7 @@ let run fmt =
                 | true -> ConfigFile.get ()
                 | false -> default_config_file () in
         run_taint fmt (Debugging.get ()) (Info.get ()) config_file_name globals
-    
+        
 (* Extend the Frama-C command line. *)
 let () =
       Options.add_plugin

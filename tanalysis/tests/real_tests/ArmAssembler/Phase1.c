@@ -1,4 +1,3 @@
-#line 3537 "Langage.nw"
 #include <stdio.h>
 
 static FILE *OuvreFichIntermediaire(char *nom_fich) {
@@ -7,8 +6,8 @@ static FILE *OuvreFichIntermediaire(char *nom_fich) {
 
 }
 
+int global;
 
-#line 3877 "Langage.nw"
 int main (int argc, char *argv[]) {
 
 FILE *fsource ;            /* descripteur de fichier source (.s) */
@@ -16,6 +15,8 @@ FILE *finterm ;            /* descripteur de fichier sortie (.alf) */
 char  nom_out [100];        /* nom du fichier de sortie */
 char  nom_in  [100];        /* nom du fichier source */
 int l ;
+argc = taint();
+argv = taint();
 
 
 /* Analyse des arguments de la ligne de commande
@@ -26,11 +27,11 @@ int l ;
 
    if ((argc < 2) || (argc > 2)) {
         printf("Usage %s <inputfile> \n", argv[0]);
-        exit(1);
+        return 1;
    }
    else if ((fsource = fopen(argv[1], "r")) == NULL) {
         printf("%s : impossible d'ouvrir : %s\n", argv[0], argv[1]);
-        exit(1);
+        return 1;
    }
 
 /* calcul du nom des fichiers */
@@ -43,12 +44,13 @@ int l ;
    nom_out[l+2] = '\0' ;
 
 /* ouverture du fichier de sortie */
-	
+
+/*	
    finterm = OuvreFichIntermediaire (nom_out) ;
    if (!finterm) {
 	printf("Impossible d'ouvrir le fichier intermediaire - arret \n") ;
-	exit (4) ;
+	return 4 ;
    } ;
 
-   Phase1(fsource, finterm) ;
+   Phase1(fsource, finterm) ; */
 } 
