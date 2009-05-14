@@ -4,6 +4,9 @@ open Cil
 
 type refCountType = RefCount of int
 
+(* TODO: void* types *)
+(* type sizeType = Size of int | VoidSize *)
+
 type typeSize = TypeSize of refCountType * int
 
 module TypeGetter(Param:sig
@@ -279,12 +282,14 @@ module TypeComparer(Param:sig
             | Info _ -> TypeSize (RefCount ref_cnt, 0)
     
     let check_type dest_type expr =
-        let TypeSize (RefCount src_ref_cnt, src_size) =    
+        (* TODO check casts *)
+        true
+        (* let TypeSize (RefCount src_ref_cnt, src_size) =    
             get_expr_type_size (RefCount 0) expr in
         let TypeSize (RefCount dst_ref_cnt, dst_size) = 
             get_type_size (RefCount 0) dest_type in
         match (dst_ref_cnt, src_ref_cnt) with
             | (x, y) when x > 0 && y == 0 -> true
             | (x, y) when x == y ->  dst_size <= src_size
-            | _ ->  false
+            | _ ->  false *)
 end

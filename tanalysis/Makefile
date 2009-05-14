@@ -23,6 +23,7 @@ pack: xmlm \
 	taintLibraryHelper \
 	customTaintFlow sccCallgraph \
 	sccCallgraph \
+	taintResults \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
 					   printer.cmo \
@@ -37,6 +38,7 @@ pack: xmlm \
 					   taintLibraryHelper.cmo \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
+					   taintResults.cmo \
 					   taint.cmo  
 
 xmlm: xmlm.ml
@@ -80,7 +82,10 @@ taintLibraryHelper: taintLibraryHelper.ml
 	
 customTaintFlow: customTaintFlow.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
-	  
+
+taintResults: taintResults.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+	
 taint: taint.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
     

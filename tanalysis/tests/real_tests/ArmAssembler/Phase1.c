@@ -45,12 +45,11 @@ argv = taint();
 
 /* ouverture du fichier de sortie */
 
-/*	
    finterm = OuvreFichIntermediaire (nom_out) ;
    if (!finterm) {
 	printf("Impossible d'ouvrir le fichier intermediaire - arret \n") ;
 	return 4 ;
    } ;
 
-   Phase1(fsource, finterm) ; */
+   Phase1(fsource, finterm) ;
 } 

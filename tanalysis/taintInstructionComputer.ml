@@ -80,37 +80,6 @@ module InstrComputer(Param:sig
         ignore (Typing.process_function_return initial_env func.svar ret_taint);
         initial_env
     
-    (* Extracts the variable info from a pointer expression. *)
-    let extract_vinfo_from_ptr_expr expr =
-        let rec _extract_vinfo_from_lval lvl =
-            match lvl with
-                | (Var vinfo, _) -> Some vinfo
-                | (Mem exp, _) -> _extract_vinfo_from_ptr_expr exp
-        and 
-        _extract_vinfo_from_ptr_expr expr =
-            match expr with
-                | Const _ -> None
-                | SizeOf _ -> None
-                | SizeOfE _ -> None
-                | SizeOfStr _ -> None
-                | AlignOf _ -> None
-                | AddrOf lvl -> _extract_vinfo_from_lval lvl
-                | StartOf _ -> None
-                | Lval lvl -> _extract_vinfo_from_lval lvl
-                | UnOp (_, unop_expr, _) -> _extract_vinfo_from_ptr_expr unop_expr 
-                | BinOp (_, expr1, expr2, _) 
-                    -> 
-                        let null_vinfo1 = _extract_vinfo_from_ptr_expr expr1 in
-                        let null_vinfo2 = _extract_vinfo_from_ptr_expr expr2 in
-                        (match null_vinfo1 with
-                            | None -> null_vinfo2
-                            | _ -> null_vinfo1)
-                | _ -> None   
-        in
-        match _extract_vinfo_from_ptr_expr expr with
-            | None -> raise Not_found
-            | Some vinfo -> vinfo
-    
     (* Performs the function call and returns the taintedness for the result. *)
     (* Params: *)
     (* env - the current function environment *)
@@ -227,7 +196,11 @@ module InstrComputer(Param:sig
                 try
                     Gamma.get_taint env vinfo.vid 
                 with Not_found ->
-                    do_get_function_call_taint env vinfo param_exprs func_envs 
+                    try
+                        do_get_function_call_taint env vinfo param_exprs func_envs
+                    with Not_found ->
+                        P.print () "[ERROR] Cannot find lvalue: %s\n" vinfo.vname;
+                        T 
             in
             let offset_taint = do_offset env offset func_envs in
             let taint = Typing.combine_taint taint offset_taint in
@@ -432,7 +405,7 @@ module InstrComputer(Param:sig
             env
         in
         let do_assign_lvalue_mem_tainted ptr_expr =
-            let vinfo = extract_vinfo_from_ptr_expr ptr_expr in
+            let vinfo = Utils.extract_vinfo_from_ptr_expr ptr_expr in
             (if Param.debug then
                 P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
             let aliases = Alias.get_aliases vinfo in
@@ -442,7 +415,7 @@ module InstrComputer(Param:sig
             env
         in
         let do_assign_lvalue_mem ptr_expr expr =
-            let vinfo = extract_vinfo_from_ptr_expr ptr_expr in
+            let vinfo = Utils.extract_vinfo_from_ptr_expr ptr_expr in
             let vinfo_expr_taint = do_expr env ptr_expr [] func_env in
             let expr_taint = do_expr env expr param_exprs func_env in
             if Param.debug then (

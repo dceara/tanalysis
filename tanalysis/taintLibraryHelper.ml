@@ -100,6 +100,14 @@ module Initializer(Param:sig
         add_function 
             ("malloc", TPtr (TVoid [], []), M_G ["p1"]) 
             [("p1", TInt (IInt, []), M_U)];
+        add_function 
+            ("calloc", TPtr (TVoid [], []), M_G ["p1"; "p2"]) 
+            [("p1", TInt (IInt, []), M_U);
+             ("p2", TInt (IInt, []), M_U)];
+        add_function 
+            ("realloc", TPtr (TVoid [], []), M_G ["p1"; "p2"]) 
+            [("p1", TPtr (TVoid [], []), M_G["p1"]);
+             ("p2", TInt (IInt, []), M_U)];
         add_function
             ("feof", TInt (IInt, []), M_U)
             [("p1", TPtr (TVoid [], []), M_G ["p1"])];
@@ -140,9 +148,28 @@ module Initializer(Param:sig
              ("p9", TPtr (TVoid [], []), M_T);
              ("p10", TPtr (TVoid [], []), M_T)];
         add_function
+            ("sscanf", TInt (IInt, []), M_U)
+            [("str", TPtr (TVoid [], []), M_G ["str"]);
+             ("p_format", TVoid [], M_G ["p_format"]);
+             ("p1", TPtr (TVoid [], []), M_T);
+             ("p2", TPtr (TVoid [], []), M_T);
+             ("p3", TPtr (TVoid [], []), M_T);
+             ("p4", TPtr (TVoid [], []), M_T);
+             ("p5", TPtr (TVoid [], []), M_T);
+             ("p6", TPtr (TVoid [], []), M_T);
+             ("p7", TPtr (TVoid [], []), M_T);
+             ("p8", TPtr (TVoid [], []), M_T);
+             ("p9", TPtr (TVoid [], []), M_T);
+             ("p10", TPtr (TVoid [], []), M_T)];
+        add_function
             ("fopen", TPtr (TVoid [], []), M_U)
             [("path", TPtr (TVoid [], []), M_G ["path"]);
              ("mode", TPtr (TVoid [], []), M_G ["mode"])];
+        add_function
+            ("freopen", TPtr (TVoid [], []), M_U)
+            [("path", TPtr (TVoid [], []), M_G ["path"]);
+             ("mode", TPtr (TVoid [], []), M_G ["mode"]);
+             ("stream", TPtr (TVoid [], []), M_G ["stream"])];
         add_function
             ("exit", TVoid [], M_U)
             [("status", TInt (IInt, []), M_G ["status"])];
@@ -171,6 +198,11 @@ module Initializer(Param:sig
              ("s2", TPtr (TVoid [], []), M_G ["s2"]);
              ("n", TInt (IInt, []), M_U)];
         add_function
+            ("memcpy", TPtr (TVoid [], []), M_G ["n"])
+            [("dest", TPtr (TVoid [], []), M_G["dest"]);
+             ("src", TPtr (TVoid [], []), M_G["src"]);
+             ("n", TInt (IInt, []), M_U)];
+        add_function
             ("sprintf", TInt (IInt, []), M_U)
             [("dest", TPtr (TVoid [], []), M_G ["format"; "dest"]);
              ("format", TPtr (TVoid [], []), M_G ["format"])];
@@ -178,7 +210,36 @@ module Initializer(Param:sig
             ("snprintf", TInt (IInt, []), M_U)
             [("dest", TPtr (TVoid [], []), M_G ["format"; "dest"; "size"]);
              ("size", TInt (IInt, []), M_U);
-             ("format", TPtr (TVoid [], []), M_G ["format"])]         
+             ("format", TPtr (TVoid [], []), M_G ["format"])];     
+        add_function
+            ("strtol", TInt (IInt, []), M_G ["nptr"])
+            [("nptr", TPtr (TVoid [], []), M_G ["nptr"]);
+             ("endptr", TPtr (TVoid [], []), M_G ["endptr"]);
+             ("base", TInt (IInt, []), M_U)];
+        add_function
+            ("perror", TVoid [], M_U)
+            [("str", TPtr (TVoid [], []), M_G ["str"])];
+        add_function
+            ("pow", TFloat (FFloat, []), M_G ["p1"; "p2"])
+            [("p1", TFloat (FFloat, []), M_U);
+             ("p2", TFloat (FFloat, []), M_U)];
+        add_function
+            ("sqrt", TFloat (FFloat, []), M_G ["p1"])
+            [("p1", TFloat (FFloat, []), M_U)];
+        add_function
+            ("acos", TFloat (FFloat, []), M_G ["p1"])
+            [("p1", TFloat (FFloat, []), M_U)];
+        add_function
+            ("sin", TFloat (FFloat, []), M_G ["p1"])
+            [("p1", TFloat (FFloat, []), M_U)];
+        add_function
+            ("abs", TInt (IInt, []), M_G ["p1"])
+            [("p1", TInt (IInt, []), M_U)];
+        add_function
+            ("open", TInt (IInt, []), M_U)
+            [("path", TPtr (TVoid [], []), M_G ["path"]);
+             ("flags", TInt (IInt, []), M_U)]
+             
 end
 
 let test format dbg inf config_fname func_envs glbls func_hash lib_func_hash =
