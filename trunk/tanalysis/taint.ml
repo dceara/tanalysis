@@ -5,11 +5,13 @@ open Visitor
 open SccCallgraph 
 open Callgraph
 open CustomTaintFlow
+open TaintResults
 
 let option_enabled () = "taint-analysis.enabled"
 let option_print_intermediate () = "taint-analysis.print-intermediate"
 let option_print_final () = "taint-analysis.print-final"
 let option_print_source () = "taint-analysis.print-source"
+let option_do_results () = "taint-analysis.do-results"
 let option_config_file () = "taint-analysis.config_file"
 let option_debugging () = "taint-analysis.debug"
 let option_info () = "taint-analysis.info"
@@ -31,6 +33,10 @@ module PrintFinalEnabled =
 (* Register a new Frama-C option. *)
 module PrintSourceEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_print_source () end)
+    
+(* Register a new Frama-C option. *)
+module DoResultsEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_do_results () end)
 
 module Debugging = 
     Cmdline.Dynamic.Register.False(struct let name = option_debugging () end)
@@ -135,11 +141,24 @@ let run_taint fmt debug info config_file_name globals =
         if enabled then 
             Cil.dumpFile (new TaintPretty.print !computed_function_envs) stdout "test" (Cil_state.file ())
     in
+    let do_results enabled =
+        if enabled then
+             match get_results 
+	                fmt 
+	                debug 
+	                info 
+	                !computed_function_envs 
+	                func_hash 
+	                globals with
+            | (stmt_count, taint_stmt_count) ->
+                P.print () "STMT_COUNT: %d TAINT_STMT_COUNT: %d\n" stmt_count taint_stmt_count
+    in
     
     intialize_library_calls ();
     perform_analysis (PrintIntermediateEnabled.get ());
     print_results (PrintFinalEnabled.get ());
-    print_source (PrintSourceEnabled.get ())
+    print_source (PrintSourceEnabled.get ());
+    do_results (DoResultsEnabled.get ())
     
 
 let run fmt =
@@ -172,6 +191,10 @@ let () =
        "-print-source", (* plug-in option *)
        Arg.Unit PrintSourceEnabled.on,
        ": Print the source file with comments about the taintedness of the variables.";
+    
+       "-do-results", (* plug-in option *)
+       Arg.Unit DoResultsEnabled.on,
+       ": Compute a percentage of the tainted instructions.";
     
        "-taint-debug", (* plug-in option *)
        Arg.Unit Debugging.on,

@@ -72,6 +72,55 @@ module Typing (Param:sig
     
     let visit_env (_, env) = (true, env)
     
+    (* TODO: instantiate all taints in the env according to taint_instances *)
+    let instantiate_func_env env_hash taint_instances =
+        let _find_instance vinfo =
+            match 
+                List.fold_left 
+                    (fun i (vinfo_instance, taint) ->
+                        match i with
+                        | Some _ -> i
+                        | None ->
+                            if vinfo_instance.vid == vinfo.vid then
+                                Some taint
+                            else
+                                None)
+                    None
+                    taint_instances with
+            | None -> 
+                P.print () "%s\n" "WARNING!!!!!! INSTANTIATE_FUNC_ENV ERROR";
+                T
+            | Some t -> t
+        in
+        let _instantiate_taint taint =
+            match taint with
+                | T -> T
+                | U -> U
+                | G g_list ->
+                    List.fold_left
+                        (fun t g ->
+                            combine_taint t (_find_instance g))
+                        U
+                        g_list
+        in
+        let _instantiate_env env =
+            let new_env = Gamma.create_env () in
+            Gamma.env_iter
+                (fun id taint ->
+                    let taint_instance = _instantiate_taint taint in
+                    Gamma.set_taint new_env id taint_instance)
+                env;
+            new_env
+        in
+        
+        let instance_env_hash = Inthash.create 1024 in
+        Inthash.iter
+            (fun id env ->
+                let new_env = _instantiate_env env in
+                Inthash.add instance_env_hash id new_env)
+            env_hash;
+        instance_env_hash
+    
     (* Locals are initialized to tainted. An exception is made for structures. *)
     (* All structures are initialized to untainted because only parts of the *)
     (* structures may be used afterwards. *)

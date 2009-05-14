@@ -1,7 +1,9 @@
 int main(int argc, char** argv)
 {
     int x = foo (10, 10);
-    int y = foo (foo_iterative(argc), argc);
+    int p1 = taint();
+    int p2 = taint();
+    int y = foo (foo_iterative(p1), p2);
     int tainted = taint();
     int z = foo (tainted, 100);
     int t = foo_iterative(z);
