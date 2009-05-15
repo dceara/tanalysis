@@ -1,0 +1,12 @@
+Document: bsd-mailx
+Title: Mail Reference Manual
+Author: Kurt Shoens, Craig Leres, Mark Andrews
+Abstract: This document describes how to use the Mail
+ program to send and receive messages.
+Section: Network/Communication
+
+Format: PostScript
+Files: /usr/share/doc/bsd-mailx/manual.ps.gz
+
+Format: text
+Files: /usr/share/doc/bsd-mailx/manual.txt.gz
