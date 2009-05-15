@@ -1,12 +1,9 @@
-(* Frama-C journal generated at 10:22 the 14/05/2009 *)
+(* Frama-C journal generated at 07:28 the 15/05/2009 *)
 
 (* Running *)
 let start () =
  let () = Journal.run () in
- let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
- let () = Journal.apply "Cmdline.taint-analysis.do-results.set" true in
- let () = Cmdline.Files.add "tests/real_tests/Circles/cercuri.c" in
- let () = File.init_from_cmdline () in
+ let () = Cmdline.PrintShare.set true in
  (* Finished *)
  Journal.finished ()
 

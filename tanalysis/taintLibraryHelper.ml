@@ -134,6 +134,19 @@ module Initializer(Param:sig
              ("stream", TPtr (TVoid [], []), M_G ["stream"])];
         (* TODO: handle variable argument count *)
         add_function
+            ("scanf", TInt (IInt, []), M_U)
+            [("p_format", TVoid [], M_G ["p_format"]);
+             ("p1", TPtr (TVoid [], []), M_T);
+             ("p2", TPtr (TVoid [], []), M_T);
+             ("p3", TPtr (TVoid [], []), M_T);
+             ("p4", TPtr (TVoid [], []), M_T);
+             ("p5", TPtr (TVoid [], []), M_T);
+             ("p6", TPtr (TVoid [], []), M_T);
+             ("p7", TPtr (TVoid [], []), M_T);
+             ("p8", TPtr (TVoid [], []), M_T);
+             ("p9", TPtr (TVoid [], []), M_T);
+             ("p10", TPtr (TVoid [], []), M_T)];
+        add_function
             ("fscanf", TInt (IInt, []), M_U)
             [("stream", TPtr (TVoid [], []), M_G ["stream"]);
              ("p_format", TVoid [], M_G ["p_format"]);
