@@ -1,0 +1,159 @@
+bsd-mailx for DEBIAN
+----------------------
+
+The history of this package is quite complicated. The changelog
+includes a summary with the different maintainers.
+
+At the beginning of Debian, I think this package was based on a BSD 5.5 
+mail version from FreeBSD.
+
+There has been a lot on work on the package shipped with Debian
+0.93R6, which was based a BSD 8.1 mail version from BSD4.4Lite.  The
+extensions includes support for dotfile locking, setgid support, POP
+support, signal handling hacks.
+
+here is a README originally found:
+  + README for Berkely mailx version 8.1 with POP extension
+  + 
+  + This is "mailx", a simple program for sending and receiving email.
+  + 
+  + This is based on mailx version 8.1 (as distributed with BSD 4.4lite).
+  + 
+  + It has been extended to support the post-office protocol (POP).  Run
+  + "mail -p" and it will retrive your email from a POP server rather than
+  + from your local mail queue.  See the manual page for more details.
+  + 
+  + The POP support was written by Jonathan I. Kamens for version mailx 5.5
+  + (as distributed with BSD 4.3.)
+  + 
+  + The POP support was integrated into version 8.1 by Salvatore Valente
+  + for no particular reason.  (It would have been simpler for me to
+  + simply use Jonathan's 5.5 source tree.  There are no major differences
+  + between the two versions.)
+  + 
+  + Have a nice day.
+  + -Salvatore Valente.  <svalente@athena.mit.edu>
+  + 5/12/94
+  + 
+  + 
+  + PORTING
+  + 
+  + Before attempting to compile this for _any_ system, you should do two
+  + things:
+  + 
+  + Edit CFLAGS in Makefile.
+  + Edit pathnames.h.
+  + 
+  + These sources are _extremely_ BSDish.  I have successfully built this
+  + for Linux, BSD 4.3, NetBSD, Ultrix, Aix, and SunOS.  I have never
+  + successfully gotten it to build for Solaris or any System 5ish system.
+  + If you want to try, here are some issues you will face:
+  + 
+  + It uses BSD signal() semantics.  Use sigaction().
+  + It uses BSD longjmp() semantics.  Use siglongjmp().
+  + It uses BSD sgtty.  Use termios.
+  + It uses BSD signal mask functions.  Use posix sigmask functions.
+  + 
+  + There will probably be other hurdles too.  Good luck.
+
+
+With Debian1.1 a switch was done to a version base on a BSD5.5 mail
+program, because of signal handling problems (which I think were due
+to bad compilation options). So no more POP support. Some patches
+from Ken Whang <Kenneth.C.Whang-1@umn.edu> included, the corresponding
+README was:
+  + mailx-5.5-kw 5/30/95
+  + 
+  + 
+  + WHAT'S IN THIS PATCH
+  + 
+  + There are a bunch of little features, common in System V and SunOS
+  + versions of mailx, that are missing from the NetBSD-based version
+  + distributed with Linux.  This patch attempts to fill in some of what's
+  + missing.
+  + 
+  + Changes from debian mailx-5.5 include:
+  + 
+  + 5/4/95:
+  + 
+  + -- interpret prompt variable
+  + -- interpret ~a and ~A tilde escapes
+  + -- updated tildehelp list
+  + -- changed mail.rc to ignore nothing (just my personal preference)
+  + -- accept From lines with times of the form hh:mm (formerly took only hh:mm:ss)
+  + 
+  + 5/7/95:
+  + 
+  + -- Save (S) command saves to mailbox named after author
+  + -- take startup commands from file named by environment variable MAILRC
+  + 
+  + 5/30/95:
+  + 
+  + -- -H switch for header summary only
+  + 
+  + Still to be done:
+  + 
+  + -- pipe ~p output through PAGER (see type1 in cmd1.c for an example)
+  + -- save (s) by default to MBOX (instead of "No file specified.")
+  + -- ~q should save to dead.letter, ~x is not known
+  + -- update man page
+  + -- allnet and showto ("showto" shows recipient instead of sender if sender
+  +    is current user)
+  + 
+  + Possibly difficult:
+  + 
+  + -- interpret editheaders variable as in SunOS version
+  + 
+  + Bugs:
+  + 
+  + -- ~a,~A tilde escapes leave an extra trailing blank on each line
+  + -- to conform to original style, I should really be using char *cp
+  +    instead of new variables sig and prompt to be looking up variables
+  + -- -H switch implementation is kind of gross.  grep for "hdronly" in
+  +    source files; much room for improvement!
+  + 
+  + 
+  + HOW TO INSTALL
+  + 
+  + Apply Sal Valente's debian patch first, so:
+  + 
+  +    tar xvfz mailx-5.5.tar.gz
+  +    cd mailx-5.5
+  +    zcat ../mailx-5.5.debian.diff.gz | patch -p1
+  +    zcat ../mailx-5.5-kw.diff.gz | patch -p1
+  +    make
+  + 
+  + Or you may wish to just uncompress the diff file and pick and choose
+  + the changes that you like.
+  + 
+  + 
+  + AUTHOR
+  + 
+  + Ken Whang  <Kenneth.C.Whang-1@umn.edu>
+
+This version has no provision for the debian mail policy (permission
+on /var/mail+dotfile locking), so Loic Prylli
+<lprylli@graville.fdn.fr> finally recreate a package based on the OpenBSD
+mail with the minimum number of patches to make it suited for debian
+(see changelog). There is no more POP support, nor the added
+functionality from Ken Whang, but all these patches are archived, so
+mail <lprylli@graville.fdn.fr> if you want them to be incorporated.
+
+
+Loic Prylli <lprylli@graville.fdn.fr>, Mon, 23 Dec 1996 00:13:13 +0100
+
+
+Sat Apr  4 14:05:38 CEST 1998:
+After a  security patch  to fix tmp races, a number of things broke.
+Here is what I have tried to fix them:
+The rationale is to have all file openings go through safe_open:
+File opened in mode "w", "w+",  are created with O_EXCL mode,
+ (should coincide with temporary files or new files)
+Files with "a" "a+" et "r+" mode do not require the O_EXCL files. "a+" et "r+" do not creat the file. 
+
+
+Still to do: check creat calls
+
+
+
+

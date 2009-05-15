@@ -1,0 +1,513 @@
+bsd-mailx (8.1.2-0.20081101cvs-2ubuntu1) jaunty; urgency=low
+
+  * Use postfix as the default MTA instead of exim4; another pointed
+    reminder of the need for a default-mta package...
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 15 Jan 2009 08:27:08 +0000
+
+bsd-mailx (8.1.2-0.20081101cvs-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Robert Luberda <robert@debian.org>  Sun, 09 Nov 2008 09:00:25 +0100
+
+bsd-mailx (8.1.2-0.20081101cvs-1) experimental; urgency=low
+
+  * New upstream release:
+  * Lower priority of mailx package to extra.
+  * Standards-Version: 3.8.0 (no changes).
+  * Remove duplicated `it' from desctiption (lintian).
+
+ -- Robert Luberda <robert@debian.org>  Sat, 01 Nov 2008 12:40:12 +0100
+
+bsd-mailx (8.1.2-0.20071201cvs-3) unstable; urgency=low
+
+  * Lower priority of mailx package to optional (see #477124).
+  * copyright: Add a copyright notice (lintian).
+  * Build depend on debhelper >= 6 (lintian).
+  * Change doc-base section to Network/Communication (lintian).
+
+ -- Robert Luberda <robert@debian.org>  Sat, 26 Apr 2008 09:52:18 +0200
+
+bsd-mailx (8.1.2-0.20071201cvs-2) unstable; urgency=medium
+
+  * Add conflict with old mailx packages (closes: #459621).
+  * Standards-Version: 3.7.3 (no changes).
+  * Fix invalid regexp in postinst.
+
+ -- Robert Luberda <robert@debian.org>  Tue, 08 Jan 2008 23:01:18 +0100
+
+bsd-mailx (8.1.2-0.20071201cvs-1) unstable; urgency=low
+
+  * New upstream version.
+  * Rename package to bsd-mailx, and create dummy mailx package for smooth
+    upgrades.
+  * Manage /usr/bin/mailx with update-alternatives to allow other packages
+    like mailutils or nail to be installed together with bsd-mailx.
+  * Remove outdated preinst script.
+
+ -- Robert Luberda <robert@debian.org>  Sat, 01 Dec 2007 12:54:13 +0100
+
+mailx (1:8.1.2-0.20071017cvs-2) unstable; urgency=low
+
+  * collect.c: Ooops, for debugging I commented out the line responsible
+    for removing temporary, and forgot to uncomment it...
+
+ -- Robert Luberda <robert@debian.org>  Fri, 19 Oct 2007 23:10:11 +0200
+
+mailx (1:8.1.2-0.20071017cvs-1) unstable; urgency=low
+
+  * New upstream version from OpenBSD CVS repository.
+  * send.c: treat messages which contain only a new line sign as empty
+    messages (closes: #355545).
+  * Fix ` debian-rules-ignores-make-clean-error' lintian warning.
+  * Bump debhelper compat mode to v6.
+
+ -- Robert Luberda <robert@debian.org>  Thu, 18 Oct 2007 23:35:53 +0200
+
+mailx (1:8.1.2-0.20070424cvs-1) unstable; urgency=low
+
+  * New upstream version from OpenBSD CVS repository.
+  * Standards-Version: 3.7.2.
+  * Lower package priority to standard to match the override file.
+  * main.c: Replace with spaces any embeded newline passed in arguments
+    for '-s' and '-a' options (closes: #419840).
+  * mail.1: Fix a typo (closes: #411420).
+
+ -- Robert Luberda <robert@debian.org>  Thu, 03 May 2007 12:09:36 +0200
+
+mailx (1:8.1.2-0.20050715cvs-1) unstable; urgency=low
+
+  * New upstream version from OpenBSD CVS repository:
+    + fixed segfault in list.c (closes: #313306).
+  * Standard-Version: 3.6.2 (no changes).  
+
+ -- Robert Luberda <robert@debian.org>  Fri, 15 Jul 2005 00:28:33 +0200
+
+mailx (1:8.1.2-0.20040524cvs-4) unstable; urgency=low
+
+  * Fix documentation of sendmail options in the man page and in the
+    mailx's usage output (closes: #285259).
+
+ -- Robert Luberda <robert@debian.org>  Sat, 18 Dec 2004 13:58:28 +0100
+
+mailx (1:8.1.2-0.20040524cvs-3) unstable; urgency=medium
+
+  * fio.c: Fix segfault on wildcard expansion introduced in previous upload.
+    Thanks to Yuri D'Elia for noticing this (see bug#148389).
+
+ -- Robert Luberda <robert@debian.org>  Sat, 13 Nov 2004 22:23:14 +0100
+
+mailx (1:8.1.2-0.20040524cvs-2) unstable; urgency=medium
+
+  * Bugfix release (closes: #278748):
+    + fio.c: Use wordexpr() instead of calling /bin/echo not to allow
+      executing external commands while expanding shell variables
+      and wildcards.
+    + names.c: isfileaddr function return false if '@', '!' or '%' i
+      characters occur anywhere (e.g not only before the slash) in the
+      recipient name.
+
+ -- Robert Luberda <robert@debian.org>  Wed,  3 Nov 2004 20:46:39 +0100
+
+mailx (1:8.1.2-0.20040524cvs-1) unstable; urgency=low
+
+  * New upstream version from OpenBSD CVS repository.
+  * debian/control: add exim4 alternative to mail-transport-agent
+    dependency (closes: #248498).
+  * USD.doc/mail*.nr: changed references from /usr/lib/Mail.rc to
+    /etc/mail.rc.
+  * USD.doc/Makefile, debian/rules: generate and install manual.txt 
+    (like in the upstream version).
+  * Removed lintian override file, it's no longer needed.
+  * Add lintian source overrides for `cvsignore-file-in-source' 
+    and `source-contains-CVS-dir'.
+
+ -- Robert Luberda <robert@debian.org>  Mon, 24 May 2004 23:03:47 +0200
+
+mailx (1:8.1.2-0.20031014cvs-2) unstable; urgency=medium
+
+  * edit.c: if the external editor (called by ~e or ~v commands) fails for
+    some reason, don't delete the temporary file if it has been modified.
+    This partly fixes bug#148037.
+  * popen.c: print exit code of failed commands.
+  * quit.c: change message saying that mailbox was "removed" to "truncated"
+    (closes: #196682); mailx does not remove mailboxes, see the entry
+    for 1:8.1.2-0.20020316cvs-2 in this changelog for the reason.
+
+ -- Robert Luberda <robert@debian.org>  Wed, 31 Mar 2004 23:42:19 +0200
+
+mailx (1:8.1.2-0.20031014cvs-1) unstable; urgency=low
+
+  * New upstream version from OpenBSD.
+  * Fix problem with building on Hurd (closes: #213929).
+  * mail.1: removed reference to non-existent lockspool man page.
+  * Standards-Version: 3.6.1 (no changes).
+
+ -- Robert Luberda <robert@debian.org>  Tue, 14 Oct 2003 20:48:51 +0200
+
+mailx (1:8.1.2-0.20030521cvs-1) unstable; urgency=low
+
+  * New upstream version from OpenBSD.
+  * Added EXT/vis.[ch] files, needed for compiling this version.
+  * Minor fix in Makefile (closes: #181022).
+  * debian/control: Remove ending dot from synopsis line (lintian).
+  * Standards-Version: 3.5.10 (no changes).
+
+ -- Robert Luberda <robert@debian.org>  Thu, 22 May 2003 21:12:21 +0200
+
+mailx (1:8.1.2-0.20020411cvs-5) unstable; urgency=low
+
+  * cmd1.c: Check if return value of screensize() > 0 (closes: #170784).
+  * Support DEB_BUILD_OPTIONS=noopt instead of debug.
+  * Build with debhelper v4.
+  * Standards-Version: 3.5.8.
+
+ -- Robert Luberda <robert@debian.org>  Sat,  7 Dec 2002 11:42:34 +0100
+
+mailx (1:8.1.2-0.20020411cvs-4) unstable; urgency=low
+
+  * send.c: Always wait for a sendmail process, check its exit code
+    and if non-zero, print a warning message to user and save original
+    message to ~/dead.letter (closes: #145379).
+  * popen.c: Make wait_child() return an exit code of the child.
+
+  * mail.1: s/^\.ne li$/.ne/g to fix groff warnings.
+
+ -- Robert Luberda <robert@debian.org>  Sat, 24 Aug 2002 22:15:23 +0200
+
+mailx (1:8.1.2-0.20020411cvs-3) unstable; urgency=low
+
+  * aux.c: in function alter() do initialize tv_usec part of the
+    timeval structure used to set modification time on the mailbox
+    file (closes: #152038).
+    Thanks to John Girash for help.
+
+ -- Robert Luberda <robert@debian.org>  Thu, 11 Jul 2002 05:21:34 +0200
+
+mailx (1:8.1.2-0.20020411cvs-2) unstable; urgency=low
+
+  * collect.c: return from grabh() if stdin is not a terminal. 
+    This fixes the `-I' option (closes: #149005).
+
+ -- Robert Luberda <robert@debian.org>  Tue, 18 Jun 2002 22:55:27 +0200
+
+mailx (1:8.1.2-0.20020411cvs-1) unstable; urgency=high
+
+  * New upstream CVS snapshot, with only one change, which fixes
+    potential security problem:
+    + collect.c:
+        Don't do tilde escapes unless we are in interactive mode.  Now the
+        behavior matches the man page...
+  * Many thanks to Michal Pajak for pointing out the problem.
+
+ -- Robert Luberda <robert@debian.org>  Thu, 11 Apr 2002 19:07:59 +0200
+
+mailx (1:8.1.2-0.20020316cvs-3) unstable; urgency=low
+
+  * fio.c: fixed previous patch (closes: #140527,#140485).
+
+ -- Robert Luberda <robert@debian.org>  Tue,  2 Apr 2002 07:14:58 +0200
+
+mailx (1:8.1.2-0.20020316cvs-2) unstable; urgency=low
+
+  * fio.c: Don't delete mailbox file, always truncate it, because liblockfile
+    fails to remove the lock file if mailbox doesn't exist (closes: #111537).
+
+ -- Robert Luberda <robert@debian.org>  Wed, 27 Mar 2002 09:20:08 +0100
+
+mailx (1:8.1.2-0.20020316cvs-1) unstable; urgency=low
+
+  * Applied patches from Arnaud Giersch <arnaud.giersch@free.fr>
+    which fix outstanding problems:
+    + closes: #37104: Bug in all mailx* (tested: <=mailx_8.1.1-10).
+    + closes: #71759: mailx concatenates messages.
+    MANY THANKS FOR YOUR HELP, Arnaud!
+
+  * New upstream version from OpenBSD CVS repository:
+    + closes: #34752: mail causes segmentation fault when pushing Ctrl+C.
+  * This version uses strlcpy&strlcat functions, appropriate files were
+    included in Debian patch.
+  * Added upstream changelog file, generated by hand from CVS logs using
+    `cvs2cl --no-wrap -S'.
+  * Makefile: added -p option to install (preserve timestamps of installed
+    files).
+
+ -- Robert Luberda <robert@debian.org>  Tue, 26 Mar 2002 05:47:53 +0100
+
+mailx (1:8.1.2-0.20010922cvs-3) unstable; urgency=low
+
+  * debian/copyright: text of BSD license can be found in common-licences,
+    so do not include it here...
+
+ -- Robert Luberda <robert@debian.org>  Fri,  4 Jan 2002 08:13:30 +0100
+
+mailx (1:8.1.2-0.20010922cvs-2) unstable; urgency=low
+
+  * debian/copyright: removed 3th paragraph from the text of BSD license
+    as suggested by Branden Robinson (closes: #123828).
+  * Upgraded standards version to 3.5.6 (no changes needed).
+
+ -- Robert Luberda <robert@debian.org>  Sat, 22 Dec 2001 21:56:31 +0100
+
+mailx (1:8.1.2-0.20010922cvs-1) unstable; urgency=low
+
+  * New version from OpenBSD cvs repository:
+    + aux.c: In skin(), only add a space after a comma if there is actually a
+      space in the input buffer. This prevents a rare buffer overflow on very 
+      long header lines...  (closes: #108677). See #108677 for more info.
+    + aux.c: In skin() don't die if realloc() fails since its only purpose is
+      to shrink the buffer, not expand it.
+
+  * No other changes was made, so I think this version should go to woody
+    as well.
+
+ -- Robert Luberda <robert@debian.org>  Sun, 23 Sep 2001 21:42:22 +0200
+
+mailx (1:8.1.2-0.20010705cvs-2) unstable; urgency=low
+
+  * Removed exim from exim|mail-transport-agent dependency (closes: #106122).
+  * Added a lintian override file for virtual-package-without-real-package-
+    dependency warning.
+  * Fix spelling in description of the package (closes: #106449).
+
+ -- Robert Luberda <robert@debian.org>  Wed,  8 Aug 2001 23:31:21 +0200
+
+mailx (1:8.1.2-0.20010705cvs-1) unstable; urgency=low
+
+  * New version from OpenBSD cvs.
+  * Updated copyright and README.Debian files.
+  * Removed IOSAFE patch - it wasn't used.
+  * REPLYTO can be set in ~/.mailrc too.
+
+ -- Robert Luberda <robert@debian.org>  Thu, 12 Jul 2001 18:58:01 +0200
+
+mailx (1:8.1.2-0.20010319cvs-4) unstable; urgency=low
+
+  * Applied patch from Tormod Volden <volden@iqe.phys.ethz.ch>, which adds
+    "showname" option to mailx (closes: #96867).
+  * v7.local.c: Removed /var/spool/mail hack added by Paul in 1:8.1.1-10.1.1
+  * quit.c: Use lockf instead if flock.
+  * quit.c: Add missing newline in `Saved ...' message.
+  * Added doc-base support.
+  * Added versioned dependency on base-files, as suggested in upgrading-
+    checklist for Debian Policy 3.5.4.
+  * Standards-Version: 3.5.5
+
+ -- Robert Luberda <robert@debian.org>  Tue, 12 Jun 2001 23:43:10 +0200
+
+mailx (1:8.1.2-0.20010319cvs-3) unstable; urgency=low
+
+  * Applied some patches from FreeBSD:
+    + Add Relpy-To header if REPLYTO environment variable is set.
+    + Add In-Reply-To header for replies (closes: #23115).
+  * When saving messages to mbox, print its real filename (closes: #68920).
+    Thanks to Tollef Fog Heen for patch.
+  * /etc/mail.rc: Add Delivered-To to list of ignored headers.
+
+ -- Robert Luberda <robert@debian.org>  Wed,  4 Apr 2001 00:20:57 +0200
+
+mailx (1:8.1.2-0.20010319cvs-2) unstable; urgency=low
+
+  * Don't ask about (B)Cc: header twice (closes: #90822).
+
+ -- Robert Luberda <robert@debian.org>  Fri, 23 Mar 2001 23:47:43 +0100
+
+mailx (1:8.1.2-0.20010319cvs-1) unstable; urgency=medium
+
+  * New maintainer (closes: #90146).
+  * New upstream version from OpenBSD CVS repository.
+  * Security fix: don't install mailx binary setgid mail. 
+    Now the liblockfile library is used for mailbox locking.
+  * cmd3.c: Initialize head variable with NULLs. This should fix 
+    problem with garbage text when replying (closes: #84166).
+  * Add conflicts with older suidmanager.
+  * Helpfiles moved to /usr/share/mailx.
+  * Added support for DEB_BUILD_OPTIONS=debug,nostrip.
+  * Updated Standards-Version: 3.5.2
+  * Switch to debhelper v3.
+  * Updated Build-Depends field.
+  * Closing bugs fixed in NMUs (closes: #23901, #64238, #68725, #68745).
+
+ -- Robert Luberda <robert@debian.org>  Thu, 22 Mar 2001 08:05:56 +0100
+
+mailx (1:8.1.1-10.3) unstable; urgency=low
+
+  * debian/rules: added install dependancy to binary-arch (Closes: Bug#83361). 
+
+ -- Edward Betts <edward@debian.org>  Sun, 28 Jan 2001 14:40:05 -0700
+
+mailx (1:8.1.1-10.2) unstable; urgency=low
+
+  * debian/control: Standards-Version updated.
+  * debian/control: Build-Depends added.
+  * debian/control: Depends line fixed (Closes: Bug#41909).
+  * debian/rules: rewritten, still uses debhelper.
+  * Makefile: man pages moved to /usr/share/man (Closes: Bug#80758).
+  * applied patch from Martin Schulze (Closes: Bug#23356, Bug#13756).
+  * applied patch from Ulf Jaenicke-Roessler <ujr@physik.phy.tu-dresden.de>
+    (Closes: Bug#26757, Bug#40424).
+  * misc/mail.help, USD.doc/mail[1568].nr: changed references from
+    /usr/spool/mail to /var/mail (Closes: Bug#41910).
+  * send.c: Comment out bcc code (Closes: Bug#75232).
+  * pathnames.h: Change default shell from /bin/csh to /bin/sh.
+  * pathnames.h: Change default pager from /bin/more to
+    /usr/bin/pager (Closes: Bug#41228).
+  * pathnames.h: Change default editor from /bin/ex to /usr/bin/editor
+    (Closes: Bug#66385).
+  * debian/rules: stop using dh_suidregister
+
+ -- Edward Betts <edward@debian.org>  Sun, 14 Jan 2001 12:36:16 -0700
+
+mailx (1:8.1.1-10.1.3) frozen unstable; urgency=high
+
+  * Fix the security fix: only accept a couple environment variables
+    instead of blindly using them all
+
+ -- Wichert Akkerman <wakkerma@debian.org>  Tue,  8 Aug 2000 11:42:02 -0700
+
+mailx (1:8.1.1-10.1.2) frozen unstable; urgency=high
+
+  * Another security problem: refuse to get the interactive variable
+    from the environment by explicitly setting it in the hashtable.
+
+ -- Wichert Akkerman <wakkerma@debian.org>  Mon,  7 Aug 2000 12:36:10 -0700
+
+mailx (1:8.1.1-10.1.1) frozen unstable; urgency=high
+
+  * NMU to fix RC bug. Now accepts both /var/mail and /var/spool/mail as
+    allowed places for setgid file manipulation. fixes:#64238
+
+ -- Paul Slootman <paul@debian.org>  Thu,  8 Jun 2000 19:51:14 +0200
+
+mailx (1:8.1.1-10.1) stable frozen unstable; urgency=high
+
+  * Security fix for a GID=mail shell.
+
+ -- Daniel Jacobowitz <dan@debian.org>  Sun,  4 Jun 2000 22:45:19 -0700
+
+mailx (1:8.1.1-10) frozen unstable; urgency=high
+
+  * correct major security flaw, patch from Alvaro Martinez Echevarria
+    <alvaro@lander.es>, bug#23880, bug#23901
+
+  * other potential buffer overflow, patch from Juan-Mariano de Goyeneche
+    <jmseyas@selva.dit.upm.es>, bug #22937
+  
+
+ -- Loic Prylli <Loic.Prylli@graville.fdn.fr>  Sun, 28 Jun 1998 20:15:18 -0400
+
+mailx (1:8.1.1-9) frozen unstable; urgency=high
+
+  * recompile without the signal handling workarounds (lo
+     that eliminate critical bugs where message parts can be lost
+     (#20798) and (#20558)
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Thu,  9 Apr 1998 02:11:26 +0200
+
+mailx (1:8.1.1-8) frozen unstable; urgency=high
+
+  * previous patch broke most file accesses, corrected safe_open (#20634)
+  * try to check every access to Fopen, change "a" into "w" for new files,
+    to suit behaviour of safe_open.
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Sat,  4 Apr 1998 22:01:19 +0200
+
+mailx (1:8.1.1-7) frozen; urgency=medium
+
+  * security fix for tmp races patch from Martin Schulze (#20059)
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Mon, 23 Mar 1998 22:52:35 +0100
+
+mailx (1:8.1.1-6) unstable; urgency=low
+
+  * convert to debhelper
+  * changelog now compressed (bug#15431)
+  * removed .orig and .rej from source (bug#18409)
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Sat, 14 Feb 1998 14:34:22 +0100
+
+mailx (1:8.1.1-5) unstable; urgency=low
+
+  * apply David Brown patch so mailx choose the right window size 
+     (#12197)
+  * correct Depends: in control file.
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Sat, 15 Nov 1997 00:30:38 +0100
+
+mailx (1:8.1.1-4) unstable; urgency=high
+
+  * mailx was sending empty message, ignoring user input
+    add clearerr when EAGAIN occur in "IOSAFE" code (#14263)
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Tue, 11 Nov 1997 20:22:35 +0100
+
+mailx (1:8.1.1-3.1) unstable; urgency=low
+
+  * Non-maintainer release.
+  * Libc6 compile. (#11705)
+  * Install missing symlink to manpage. (#7274)
+
+ -- Martin Mitchell <martin@debian.org>  Wed, 29 Oct 1997 04:34:39 +1100
+
+mailx (1:8.1.1-3) unstable; urgency=low
+
+  * add dpkg --assert-working-epoch in preinst bug#6850
+  * add writing of pid in mailbox locking file
+  * fix:mailx was not removing temporary lock files 
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Sat, 1 Feb 1997 11:44:04 +0100
+
+mailx (1:8.1.1-2) unstable; urgency=low
+
+  * correct bug #2733 (occur when no space left) dans quit.c
+  * detection of  From_ lines with tring to match the date bug#2010
+  * corrected garble output bug #2284
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Sat, 28 Dec 1996 15:02:22 +0100
+
+mailx (1:8.1.1-1) unstable; urgency=medium
+
+  * recreate completely starting from OpenBSD mail version (we loose a lot
+    of extension but we have a working program now)
+  * OpenBSD base version is the last one in december 96
+  * rechange the numbering of version, so epoch 1+8.1 is from 4.4BSD, the
+    last upstream digit is to change each time we update to a new openbsd
+    version.
+  * fix the problem of longjmp inside signals inside stdio calls
+  * reincorporate a patch to be dot file locking+setgid safe
+  * some fix in signal handling
+
+ -- Loic Prylli <lprylli@graville.fdn.fr>  Mon, 23 Dec 1996 01:57:44 +0100
+
+Mon Apr 29 17:21:42 1996  Sven Rudolph <sr1@inf.tu-dresden.de>
+
+	* releasing 8.5.5-1
+
+	* added symlink /usr/bin/Mail -> /usr/bin/mailx 
+
+Thu Apr 25 23:55:36 1996  Sven Rudolph <sr1@inf.tu-dresden.de>
+
+	* set version number to 8.5.5 because it has to superseed 8.1
+
+	* switched back to mailx-5.5-kw (see mailx-5.5-kw.diff.README)
+	  
+	* no POP support
+
+mailx 8.1 Debian 5 - 10/19/95 Sven Rudolph <sr1@inf.tu-dresden.de>
+* uses now BSD signal emulation (/usr/include/bsd/signal.h)
+* added virtual package names in Depends: and Provides fields (Bug#1460)
+* added Section: field
+* created symlink for mailx manpage (Bug#1114)
+
+mailx 8.1 Debian 4 - 5/20/95 Carl Streeter <streeter@cae.wisc.edu>
+* Added diffs from Delman Lee <delman@mipg.upenn.edu>:
+
+   Hi! I got mailx-8.1-3 from the Linux Debian distribution, and have
+   added a "hold-pop" option to hold messages on the POP server after
+   retrieving them. (Also fixed a minor bug with mailx thinking that there
+   is mail even if the POP mailbox is empty. Code around stat() below.)
+
+mailx 8.1 Debian 3 - 4/18/95 Carl Streeter <streeter@cae.wisc.edu>
+* Fixed control file to depend on smail|sendmail.  Updated to latest
+  guidelines
