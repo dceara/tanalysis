@@ -1,0 +1,499 @@
+Parsing
+[preprocessing] running gcc -C -E -I.   tests/real_tests/huffman/prog6.c
+[preprocessing] running gcc -C -E -I.   tests/real_tests/huffman/Occ.c
+[preprocessing] running gcc -C -E -I.   tests/real_tests/huffman/fap.c
+[preprocessing] running gcc -C -E -I.   tests/real_tests/huffman/bfile.c
+[preprocessing] running gcc -C -E -I.   tests/real_tests/huffman/arbre.c
+Cleaning unused parts
+Symbolic link
+Starting semantical analysis
+Analyzing results for function main
+Analyzing results for function printf
+Finished analyzing function printf
+Current stack: main, 
+WARNING: G reached in results check. Sid: 6
+Analyzing results for function fopen
+Finished analyzing function fopen
+Current stack: main, 
+Analyzing results for function exit
+Finished analyzing function exit
+Current stack: main, 
+Analyzing results for function printf
+Finished analyzing function printf
+Current stack: main, 
+Analyzing results for function initTab
+Finished analyzing function initTab
+Current stack: main, 
+Analyzing results for function exit
+Finished analyzing function exit
+Current stack: main, 
+WARNING: G reached in results check. Sid: 13
+Analyzing results for function countOcc
+WARNING: G reached in results check. Sid: 92
+Analyzing results for function feof
+Finished analyzing function feof
+Current stack: main, countOcc, 
+Analyzing results for function fscanf
+Finished analyzing function fscanf
+Current stack: main, countOcc, 
+Finished analyzing function countOcc
+Current stack: main, 
+WARNING: G reached in results check. Sid: 14
+Analyzing results for function huff
+Analyzing results for function creer_fap_vide
+Finished analyzing function creer_fap_vide
+Current stack: main, huff, 
+Analyzing results for function Cons
+Analyzing results for function malloc
+Finished analyzing function malloc
+Current stack: main, huff, Cons, 
+Finished analyzing function Cons
+Current stack: main, huff, 
+Analyzing results for function inserer
+Analyzing results for function malloc
+Finished analyzing function malloc
+Current stack: main, huff, inserer, 
+Finished analyzing function inserer
+Current stack: main, huff, 
+Analyzing results for function extraire
+Analyzing results for function free
+Finished analyzing function free
+Current stack: main, huff, extraire, 
+Finished analyzing function extraire
+Current stack: main, huff, 
+Analyzing results for function extraire
+Analyzing results for function free
+Finished analyzing function free
+Current stack: main, huff, extraire, 
+Finished analyzing function extraire
+Current stack: main, huff, 
+Analyzing results for function extraire
+Analyzing results for function free
+Finished analyzing function free
+Current stack: main, huff, extraire, 
+Finished analyzing function extraire
+Current stack: main, huff, 
+Analyzing results for function Cons
+Analyzing results for function malloc
+Finished analyzing function malloc
+Current stack: main, huff, Cons, 
+Finished analyzing function Cons
+Current stack: main, huff, 
+Analyzing results for function inserer
+Analyzing results for function malloc
+Finished analyzing function malloc
+Current stack: main, huff, inserer, 
+Finished analyzing function inserer
+Current stack: main, huff, 
+Finished analyzing function huff
+Current stack: main, 
+WARNING: G reached in results check. Sid: 15
+Analyzing results for function length
+WARNING: G reached in results check. Sid: 37
+Analyzing results for function longCode
+WARNING: G reached in results check. Sid: 39
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 74
+WARNING: G reached in results check. Sid: 42
+Analyzing results for function EstFeuille
+WARNING: G reached in results check. Sid: 338
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 347
+WARNING: G reached in results check. Sid: 339
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 348
+WARNING: G reached in results check. Sid: 341
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 346
+WARNING: G reached in results check. Sid: 342
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 344
+WARNING: G reached in results check. Sid: 345
+Finished analyzing function EstFeuille
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 361
+WARNING: G reached in results check. Sid: 52
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 45
+Analyzing results for function Car
+WARNING: G reached in results check. Sid: 334
+WARNING: G reached in results check. Sid: 385
+Finished analyzing function Car
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 53
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 46
+WARNING: G reached in results check. Sid: 60
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 56
+WARNING: G reached in results check. Sid: 48
+Analyzing results for function Car
+WARNING: G reached in results check. Sid: 334
+WARNING: G reached in results check. Sid: 385
+Finished analyzing function Car
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 61
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 57
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 49
+WARNING: G reached in results check. Sid: 58
+Analyzing results for function longCode
+WARNING: G reached in results check. Sid: 39
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 74
+WARNING: G reached in results check. Sid: 42
+Analyzing results for function EstFeuille
+WARNING: G reached in results check. Sid: 338
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 347
+WARNING: G reached in results check. Sid: 339
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 348
+WARNING: G reached in results check. Sid: 341
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 346
+WARNING: G reached in results check. Sid: 342
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 344
+WARNING: G reached in results check. Sid: 345
+Finished analyzing function EstFeuille
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 361
+WARNING: G reached in results check. Sid: 52
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 45
+Analyzing results for function Car
+WARNING: G reached in results check. Sid: 334
+WARNING: G reached in results check. Sid: 385
+Finished analyzing function Car
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 53
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 46
+WARNING: G reached in results check. Sid: 60
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 56
+WARNING: G reached in results check. Sid: 48
+Analyzing results for function Car
+WARNING: G reached in results check. Sid: 334
+WARNING: G reached in results check. Sid: 385
+Finished analyzing function Car
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 61
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 57
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 49
+WARNING: G reached in results check. Sid: 58
+WARNING: G reached in results check. Sid: 50
+WARNING: G reached in results check. Sid: 64
+WARNING: G reached in results check. Sid: 59
+WARNING: G reached in results check. Sid: 66
+WARNING: G reached in results check. Sid: 67
+WARNING: G reached in results check. Sid: 68
+WARNING: G reached in results check. Sid: 69
+WARNING: G reached in results check. Sid: 70
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 71
+WARNING: G reached in results check. Sid: 72
+WARNING: G reached in results check. Sid: 73
+Finished analyzing function longCode
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 50
+WARNING: G reached in results check. Sid: 64
+WARNING: G reached in results check. Sid: 59
+WARNING: G reached in results check. Sid: 66
+WARNING: G reached in results check. Sid: 67
+WARNING: G reached in results check. Sid: 68
+WARNING: G reached in results check. Sid: 69
+WARNING: G reached in results check. Sid: 70
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 71
+Analyzing results for function longCode
+WARNING: G reached in results check. Sid: 39
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 74
+WARNING: G reached in results check. Sid: 42
+Analyzing results for function EstFeuille
+WARNING: G reached in results check. Sid: 338
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 347
+WARNING: G reached in results check. Sid: 339
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 348
+WARNING: G reached in results check. Sid: 341
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 346
+WARNING: G reached in results check. Sid: 342
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, EstFeuille, 
+WARNING: G reached in results check. Sid: 344
+WARNING: G reached in results check. Sid: 345
+Finished analyzing function EstFeuille
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 361
+WARNING: G reached in results check. Sid: 52
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 45
+Analyzing results for function Car
+WARNING: G reached in results check. Sid: 334
+WARNING: G reached in results check. Sid: 385
+Finished analyzing function Car
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 53
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 46
+WARNING: G reached in results check. Sid: 60
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 56
+WARNING: G reached in results check. Sid: 48
+Analyzing results for function Car
+WARNING: G reached in results check. Sid: 334
+WARNING: G reached in results check. Sid: 385
+Finished analyzing function Car
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 61
+Analyzing results for function EstVide
+WARNING: G reached in results check. Sid: 335
+WARNING: G reached in results check. Sid: 386
+Finished analyzing function EstVide
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 57
+Analyzing results for function FilsGauche
+WARNING: G reached in results check. Sid: 331
+WARNING: G reached in results check. Sid: 382
+Finished analyzing function FilsGauche
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 49
+WARNING: G reached in results check. Sid: 58
+WARNING: G reached in results check. Sid: 50
+WARNING: G reached in results check. Sid: 64
+WARNING: G reached in results check. Sid: 59
+WARNING: G reached in results check. Sid: 66
+WARNING: G reached in results check. Sid: 67
+WARNING: G reached in results check. Sid: 68
+WARNING: G reached in results check. Sid: 69
+WARNING: G reached in results check. Sid: 70
+Analyzing results for function FilsDroit
+WARNING: G reached in results check. Sid: 332
+WARNING: G reached in results check. Sid: 383
+Finished analyzing function FilsDroit
+Current stack: main, length, longCode, longCode, 
+WARNING: G reached in results check. Sid: 71
+WARNING: G reached in results check. Sid: 72
+WARNING: G reached in results check. Sid: 73
+Finished analyzing function longCode
+Current stack: main, length, longCode, 
+WARNING: G reached in results check. Sid: 72
+WARNING: G reached in results check. Sid: 73
+Finished analyzing function longCode
+Current stack: main, length, 
+Finished analyzing function length
+Current stack: main, 
+Analyzing results for function afficheTab
+Analyzing results for function printf
+Finished analyzing function printf
+Current stack: main, afficheTab, 
+Analyzing results for function _bitread
+WARNING: G reached in results check. Sid: 75
+Analyzing results for function printf
+Finished analyzing function printf
+Current stack: main, afficheTab, _bitread, 
+WARNING: G reached in results check. Sid: 81
+Finished analyzing function _bitread
+Current stack: main, afficheTab, 
+Analyzing results for function printf
+Finished analyzing function printf
+Current stack: main, afficheTab, 
+Finished analyzing function afficheTab
+Current stack: main, 
+WARNING: G reached in results check. Sid: 17
+Analyzing results for function fopen
+Finished analyzing function fopen
+Current stack: main, 
+Analyzing results for function printf
+Finished analyzing function printf
+Current stack: main, 
+WARNING: G reached in results check. Sid: 23
+Analyzing results for function ecritureFichierCode
+WARNING: G reached in results check. Sid: 158
+Analyzing results for function nbCarDiff
+WARNING: G reached in results check. Sid: 145
+WARNING: G reached in results check. Sid: 148
+Finished analyzing function nbCarDiff
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 164
+Analyzing results for function fputc
+Finished analyzing function fputc
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 165
+WARNING: G reached in results check. Sid: 174
+Analyzing results for function fputc
+Finished analyzing function fputc
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 196
+WARNING: G reached in results check. Sid: 197
+Analyzing results for function sizeHuff
+WARNING: G reached in results check. Sid: 155
+WARNING: G reached in results check. Sid: 157
+Finished analyzing function sizeHuff
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 176
+WARNING: G reached in results check. Sid: 177
+WARNING: G reached in results check. Sid: 203
+Analyzing results for function fputc
+Finished analyzing function fputc
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 182
+Analyzing results for function fputc
+Finished analyzing function fputc
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 204
+WARNING: G reached in results check. Sid: 183
+WARNING: G reached in results check. Sid: 186
+WARNING: G reached in results check. Sid: 184
+WARNING: G reached in results check. Sid: 187
+WARNING: G reached in results check. Sid: 192
+Analyzing results for function fputc
+Finished analyzing function fputc
+Current stack: main, ecritureFichierCode, 
+WARNING: G reached in results check. Sid: 193
+WARNING: G reached in results check. Sid: 194
+Finished analyzing function ecritureFichierCode
+Current stack: main, 
+Analyzing results for function exit
+Finished analyzing function exit
+Current stack: main, 
+WARNING: G reached in results check. Sid: 24
+Analyzing results for function fclose
+Finished analyzing function fclose
+Current stack: main, 
+WARNING: G reached in results check. Sid: 25
+Analyzing results for function fclose
+Finished analyzing function fclose
+Current stack: main, 
+WARNING: G reached in results check. Sid: 26
+WARNING: G reached in results check. Sid: 358
+Finished analyzing function main
+Current stack: 
+STMT_COUNT: 336 TAINT_STMT_COUNT: 221

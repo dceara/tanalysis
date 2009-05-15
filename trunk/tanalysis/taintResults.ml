@@ -41,7 +41,6 @@ module ResultsComputer(Param:sig
     let stmt_count = ref 0;;
 
     let inc_stmt_count () =
-        (* P.print () "%s\n" "DEBUG_INC_STMT_COUNT"; *)
         stmt_count := !stmt_count + 1
 
     let taint_stmt_count = ref 0;;
@@ -171,9 +170,14 @@ module ResultsComputer(Param:sig
                         
             let effect_added = do_null_lval null_lval in
             let finfo = get_lval_vinfo (Utils.extract_lvalue_from_expr call_expr) in
-            let callee_func = Hashtbl.find Param.func_hash finfo.vname in
-            do_check_pointer_params callee_func effect_added;
-            do_function_call callee_func             
+            (* TODO: remove hardcoding for CIL mock function *)
+            if finfo.vname = "__builtin_alloca" then (
+                ignore ()
+            ) else (
+	            let callee_func = Hashtbl.find Param.func_hash finfo.vname in
+	            do_check_pointer_params callee_func effect_added;
+	            do_function_call callee_func
+            )             
         in
         
         inc_stmt_count ();
