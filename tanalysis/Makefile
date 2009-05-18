@@ -1,16 +1,15 @@
 FRAMAC_SHARE=$(shell frama-c -print-path)
 PLUGIN_NAME=taint-analysis
 CC=ocamlc
-CFLAGS=-I $(FRAMAC_SHARE)/lib
-PREFLAGS=-for-pack $(PLUGIN_NAME) -c
+CFLAGS=-I $(FRAMAC_SHARE)/lib -c
+PREFLAGS=-for-pack $(PLUGIN_NAME)
 PACKFLAGS=-pack -o $(PLUGIN_NAME).cmo
 CP=cp -f
 RM=rm -f
 
 build: pack
 
-pack: xmlm \
-	utils \
+pack: utils \
 	printer \
 	typeHelper \
 	taintGamma \
@@ -39,9 +38,9 @@ pack: xmlm \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
 					   taintResults.cmo \
-					   taint.cmo  
+					   taint.cmo 
 
-xmlm: xmlm.ml
+xmlr: xmlr.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
 sccCallgraph: sccCallgraph.ml

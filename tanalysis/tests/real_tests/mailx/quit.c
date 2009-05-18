@@ -475,7 +475,7 @@ edstop(void)
 		(void)rm(tempname);
 	}
 	printf("\"%s\" ", mailname);
-	fflush(stdout);
+	//fflush(stdout);
 	if ((obuf = Fopen(mailname, "r+")) == NULL) {
 		warn("%s", mailname);
 		relsesigs();
@@ -515,7 +515,7 @@ edstop(void)
 #endif		
 	} else
 		puts("complete");
-	fflush(stdout);
+	//fflush(stdout);
 
 done:
 	relsesigs();

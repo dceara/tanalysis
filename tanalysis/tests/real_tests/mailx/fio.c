@@ -488,28 +488,28 @@ expand(char *name)
 		switch (wordexp(name, &p, WRDE_NOCMD)) {
 			case 0: /* OK */
 				if (p.we_wordc == 0) {
-					fprintf(stderr, "\"%s\": No match.\n", name);
+					printf("\"%s\": No match.\n", name);
 				} else if (p.we_wordc > 1) {
-					fprintf(stderr, "\"%s\": Ambiguous.\n", name);
+					printf("\"%s\": Ambiguous.\n", name);
 				} else if (strlen(p.we_wordv[0]) >= PATHSIZE) {
-					fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
+					printf("\"%s\": Expansion buffer overflow.\n", name);
 				} else {
 					strncpy(xname, p.we_wordv[0], PATHSIZE);
 				};
 				break;
 			case WRDE_NOSPACE:
-				fprintf(stderr, "\"%s\": Out of memory.\n", name);
+				printf("\"%s\": Out of memory.\n", name);
 				break;
 			case WRDE_BADVAL:
 			case WRDE_BADCHAR:
 			case WRDE_SYNTAX:
-				fprintf(stderr, "\"%s\": Syntax error.\n", name);
+				printf("\"%s\": Syntax error.\n", name);
 				break;
 			case WRDE_CMDSUB:
-				fprintf(stderr, "\"%s\": Command execution not allowed.\n", name);
+				printf("\"%s\": Command execution not allowed.\n", name);
 				break;
 			default:
-				fprintf(stderr, "\"%s\": Unknown expansion error.\n", name);
+				printf("\"%s\": Unknown expansion error.\n", name);
 				break;
 		}
 
@@ -542,17 +542,17 @@ expand(char *name)
 	(void)close(pivec[0]);
 	if (wait_child(pid) < 0 && WIFSIGNALED(wait_status) &&
 	    WTERMSIG(wait_status) != SIGPIPE) {
-		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
+		printf("\"%s\": Expansion failed.\n", name);
 		return(NULL);
 	}
 	if (l < 0)
 		return(NULL);
 	if (l == 0) {
-		fprintf(stderr, "\"%s\": No match.\n", name);
+		printf("\"%s\": No match.\n", name);
 		return(NULL);
 	}
 	if (l == PATHSIZE) {
-		fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
+		printf("\"%s\": Expansion buffer overflow.\n", name);
 		return(NULL);
 	}
 	xname[l] = '\0';
@@ -560,7 +560,7 @@ expand(char *name)
 		;
 	cp[1] = '\0';
 	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
-		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
+		printf("\"%s\": Ambiguous.\n", name);
 		return(NULL);
 	}
 	return(savestr(xname));

@@ -101,8 +101,8 @@ collect(struct header *hp, int printheaders)
 	    (value("ask") != NULL || value("asksub") != NULL))
 		t &= ~GNL, getsub++;
 	if (printheaders) {
-		puthead(hp, stdout, t);
-		fflush(stdout);
+		//puthead(hp, stdout, t);
+		//fflush(stdout);
 	}
 	if (getsub && gethfromtty(hp, GSUBJECT) == -1)
 		goto err;
@@ -112,7 +112,7 @@ cont:
 		/* Come here for printing the after-suspend message. */
 		if (isatty(0)) {
 			puts("(continue)");
-			fflush(stdout);
+			//fflush(stdout);
 		}
 	}
 	for (;;) {
@@ -214,7 +214,7 @@ cont:
 			 */
 			hadintr++;
 			collabort();
-			fputs("Interrupt\n", stderr);
+			//fputs("Interrupt\n", stderr);
 			goto err;
 		case 'h':
 			/*
@@ -288,7 +288,7 @@ cont:
 				break;
 			}
 			printf("\"%s\" ", cp);
-			fflush(stdout);
+			//fflush(stdout);
 			lc = 0;
 			cc = 0;
 			while ((rc = readline(fbuf, linebuf, LINESIZE, NULL)) >= 0) {
@@ -313,7 +313,7 @@ cont:
 			while (*cp == ' ' || *cp == '\t')
 				cp++;
 			if (*cp == '\0') {
-				fputs("Write what file!?\n", stderr);
+				//fputs("Write what file!?\n", stderr);
 				break;
 			}
 			if ((cp = expand(cp)) == NULL)
@@ -356,7 +356,7 @@ cont:
 				goto err;
 		       }
 			puts("-------\nMessage contains:");
-			puthead(hp, stdout, GTO|GSUBJECT|GCC|GBCC|GNL);
+			//puthead(hp, stdout, GTO|GSUBJECT|GCC|GBCC|GNL);
 			while ((t = getc(collf)) != EOF)
 				(void)putchar(t);
 			goto cont;
@@ -399,7 +399,7 @@ cont:
 			}
 		} else {
 			puts("EOT");
-			(void)fflush(stdout);
+			//fflush(stdout);
 		}
 	}
 	goto out;
@@ -431,12 +431,12 @@ exwrite(char *name, FILE *fp, int f)
 
 	if (f) {
 		printf("\"%s\" ", name);
-		fflush(stdout);
+		//fflush(stdout);
 	}
 	if (stat(name, &junk) >= 0 && S_ISREG(junk.st_mode)) {
 		if (!f)
-			fprintf(stderr, "%s: ", name);
-		fputs("File exists\n", stderr);
+			printf("%s: ", name);
+		//fputs("File exists\n", stderr);
 		return(-1);
 	}
         /* FIXME: Fopen with "w" will currently prevent writing to an existig file
@@ -460,7 +460,7 @@ exwrite(char *name, FILE *fp, int f)
 	}
 	(void)Fclose(of);
 	printf("%lld/%lld\n", (long long)lc, (long long)cc);
-	fflush(stdout);
+	//fflush(stdout);
 	return(0);
 }
 
@@ -521,7 +521,7 @@ mespipe(FILE *fp, char *cmd)
 		goto out;
 	}
 	if (fsize(nf) == 0) {
-		fprintf(stderr, "No bytes from \"%s\" !?\n", cmd);
+		printf("No bytes from \"%s\" !?\n", cmd);
 		(void)Fclose(nf);
 		goto out;
 	}
@@ -569,7 +569,7 @@ forward(char *ms, FILE *fp, char *fn, int f)
 	else if ((tabst = value("indentprefix")) == NULL)
 		tabst = "\t";
 	ig = isupper(f) ? NULL : ignore;
-	fputs("Interpolating:", stdout);
+	//fputs("Interpolating:", stdout);
 	for (; *msgvec != 0; msgvec++) {
 		struct message *mp = message + *msgvec - 1;
 
@@ -597,17 +597,17 @@ collabort(void)
 	if (hadintr == 0 && isatty(0)) {
 		if (value("ignore") != NULL) {
 			puts("@");
-			fflush(stdout);
+			//fflush(stdout);
 			clearerr(stdin);
 		} else {
-			fflush(stdout);
-			fputs("\n(Interrupt -- one more to kill letter)\n",
-			    stderr);
+			//fflush(stdout);
+			//fputs("\n(Interrupt -- one more to kill letter)\n",
+			//    stderr);
 			hadintr++;
 		}
 		return(0);
 	}
-	fflush(stdout);
+	//fflush(stdout);
 	rewind(collf);
 	if (value("nosave") == NULL)
 		savedeadletter(collf);

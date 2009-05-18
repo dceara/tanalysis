@@ -135,8 +135,8 @@ overf:
 	}
 	*cp2 = 0;
 	if (changed) {
-		(void)printf("!%s\n", bangbuf);
-		(void)fflush(stdout);
+		printf("!%s\n", bangbuf);
+		//fflush(stdout);
 	}
 	(void)strlcpy(str, bangbuf, strsize);
 	(void)strlcpy(lastbang, bangbuf, sizeof(lastbang));
@@ -585,7 +585,7 @@ echo(void *v)
 		if ((cp = expand(cp)) != NULL) {
 			if (ap != argv)
 				putchar(' ');
-			fputs(cp, stdout);
+			//fputs(cp, stdout);
 		}
 	}
 	putchar('\n');

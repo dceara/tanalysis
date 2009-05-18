@@ -155,7 +155,7 @@ setfile(char *name)
 	sawcom = 0;
 	if (!edit && msgCount == 0) {
 nomail:
-		fprintf(stderr, "No mail for %s\n", who);
+		printf("No mail for %s\n", who);
 		return(-1);
 	}
 	return(0);
@@ -225,7 +225,7 @@ commands(void)
 			reset_on_stop = 1;
 			printf("%s", prompt);
 		}
-		fflush(stdout);
+		//fflush(stdout);
 		sreset();
 		/*
 		 * Read a line of commands from the current input
@@ -606,7 +606,7 @@ dointr(void)
 		(void)close(image);
 		image = -1;
 	}
-	fputs("Interrupt\n", stderr);
+	//fputs("Interrupt\n", stderr);
 }
 
 /*
@@ -672,8 +672,9 @@ newfileinfo(int omsgCount)
 		}
 	}
 	printf("\"%s\": ", ename);
-	if (msgCount == 1)
-		fputs("1 message", stdout);
+	if (msgCount == 1) {
+		//fputs("1 message", stdout);
+	}
 	else
 		printf("%d messages", msgCount);
 	if (n > 0)
@@ -684,8 +685,9 @@ newfileinfo(int omsgCount)
 		printf(" %d deleted", d);
 	if (s > 0)
 		printf(" %d saved", s);
-	if (readonly)
-		fputs(" [Read only]", stdout);
+	if (readonly) {
+		//fputs(" [Read only]", stdout);
+	}
 	putchar('\n');
 	return(mdot);
 }

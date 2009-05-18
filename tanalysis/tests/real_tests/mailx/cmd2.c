@@ -174,7 +174,7 @@ save1(char *str, int mark, char *cmd, struct ignoretab *ignore)
 	if ((file = expand(file)) == NULL)
 		return(1);
 	printf("\"%s\" ", file);
-	fflush(stdout);
+	//fflush(stdout);
 	if (access(file, 0) >= 0)
 		disp = "[Appended]";
 	else
@@ -363,8 +363,8 @@ core(void *v)
 		abort();
 		_exit(1);
 	}
-	fputs("Okie dokie", stdout);
-	fflush(stdout);
+	//fputs("Okie dokie", stdout);
+	//fflush(stdout);
 	wait_child(pid);
 	if (WIFSIGNALED(wait_status) && WCOREDUMP(wait_status))
 		puts(" -- Core dumped.");

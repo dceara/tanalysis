@@ -312,7 +312,7 @@ main(int argc, char **argv)
 		(void)printf("Mail version %s.  Type ? for help.\n",
 			version);
 	announce();
-	(void)fflush(stdout);
+	//fflush(stdout);
 	commands();
 	(void)ignoresig(SIGHUP, NULL, NULL);
 	(void)ignoresig(SIGINT, NULL, NULL);
@@ -360,11 +360,11 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-dEIinv] [-a header] [-b bcc-addr] [-c cc-addr] "
+	printf("usage: %s [-dEIinv] [-a header] [-b bcc-addr] [-c cc-addr] "
 	    "[-s subject] to-addr ...\n", __progname);
-	fprintf(stderr, "       %*s [-- sendmail-options ...]\n",
+	printf("       %*s [-- sendmail-options ...]\n",
 	    (int)strlen(__progname), "");
-	fprintf(stderr, "       %s [-dEIiNnv] -f [name]\n", __progname);
-	fprintf(stderr, "       %s [-dEIiNnv] [-u user]\n", __progname);
+	printf("       %s [-dEIiNnv] -f [name]\n", __progname);
+	printf("       %s [-dEIiNnv] [-u user]\n", __progname);
 	exit(1);
 }
