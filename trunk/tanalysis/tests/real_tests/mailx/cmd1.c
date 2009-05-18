@@ -96,8 +96,8 @@ headers(void *v)
 		printhead(mesg);
 	}
 	if (gothdrint) {
-		fflush(stdout);
-		fputs("\nInterrupt\n", stderr);
+		//fflush(stdout);
+		//fputs("\nInterrupt\n", stderr);
 	}
 	if (oact.sa_handler != SIG_IGN) {
 		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
@@ -350,7 +350,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 
 	cp = NULL;
 
-	obuf = stdout;
+	//obuf = stdout;
 	restoreterm = 0;
 
 	/*
@@ -361,7 +361,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 		obuf = Popen(cmd, "w");
 		if (obuf == NULL) {
 			warn("%s", cmd);
-			obuf = stdout;
+			//obuf = stdout;
 		}
 	} else if (value("interactive") != NULL &&
 	         (page || (cp = value("crt")) != NULL)) {
@@ -376,7 +376,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 			obuf = Popen(cp, "w");
 			if (obuf == NULL) {
 				warn("%s", cp);
-				obuf = stdout;
+				//obuf = stdout;
 			}
 		}
 	}
@@ -394,7 +394,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 			break;
 	}
 
-	if (obuf != stdout) {
+	if (obuf != NULL) {
 		(void)Pclose(obuf);
 		if (restoreterm)
 			(void)tcsetattr(fileno(stdin), TCSADRAIN, &tbuf);

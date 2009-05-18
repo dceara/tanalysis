@@ -396,14 +396,14 @@ mail1(struct header *hp, int printheaders)
 		goto out;
 	fixhead(hp, to);
 	if ((mtf = infix(hp, mtf)) == NULL) {
-		fputs(". . . message lost, sorry.\n", stderr);
+		//fputs(". . . message lost, sorry.\n", stderr);
 		return;
 	}
 	namelist = unpack(hp->h_smopts, to);
 	if (debug) {
 		char **t;
 
-		fputs("Sendmail arguments:", stdout);
+		//fputs("Sendmail arguments:", stdout);
 		for (t = namelist; *t != NULL; t++)
 			printf(" \"%s\"", *t);
 		putchar('\n');
@@ -452,10 +452,10 @@ mail1(struct header *hp, int printheaders)
 	* See: Bug#145379
 	*/
 	if ((w = wait_child(pid))) {
-		fprintf(stderr, "Can't send mail: sendmail process failed");
+		printf("Can't send mail: sendmail process failed");
 		if (w > 0)
-			fprintf(stderr, " with error code %d", w);
-		fprintf(stderr, "\n");
+			printf(" with error code %d", w);
+		printf("\n");
 		savedeadletter(mtf);
 	}
 #endif

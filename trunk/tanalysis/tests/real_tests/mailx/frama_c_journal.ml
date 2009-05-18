@@ -1,4 +1,4 @@
-(* Frama-C journal generated at 10:07 the 15/05/2009 *)
+(* Frama-C journal generated at 19:05 the 17/05/2009 *)
 
 (* Running *)
 let start () =
@@ -6,7 +6,6 @@ let start () =
  let () = Cmdline.CppCommand.set "gcc -C -E -D_BSD_SOURCE -DDEBIAN -IEXT -I." in
  let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
  let () = Cmdline.Files.add "_aux.c" in
- let () = Cmdline.Files.add "auxx.c" in
  let () = Cmdline.Files.add "cmd1.c" in
  let () = Cmdline.Files.add "cmd2.c" in
  let () = Cmdline.Files.add "cmd3.c" in

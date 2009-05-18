@@ -195,8 +195,8 @@ readtty(char *pr, char *src)
 	sigset_t oset;
 	int c;
 
-	fputs(pr, stdout);
-	fflush(stdout);
+	//fputs(pr, stdout);
+	//fflush(stdout);
 	if (src != NULL && strlen(src) > sizeof(canonb) - 2) {
 		puts("too long to edit");
 		return(src);
@@ -206,8 +206,8 @@ readtty(char *pr, char *src)
 		cp = copy(src, canonb);	/* safe, bounds checked above */
 	else
 		cp = copy("", canonb);
-	fputs(canonb, stdout);
-	fflush(stdout);
+	//fputs(canonb, stdout);
+	//fflush(stdout);
 #else
 	cp = src == NULL ? "" : src;
 	while ((c = *cp++) != '\0') {

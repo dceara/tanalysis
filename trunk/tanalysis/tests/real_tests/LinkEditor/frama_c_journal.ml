@@ -1,4 +1,4 @@
-(* Frama-C journal generated at 10:18 the 14/05/2009 *)
+(* Frama-C journal generated at 07:39 the 18/05/2009 *)
 
 (* Running *)
 let start () =
@@ -6,6 +6,8 @@ let start () =
  let () = Cmdline.CppCommand.set "gcc -E -C -I. -I./include" in
  let () = Journal.apply "Cmdline.taint-analysis.do-results.set" true in
  let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
+ let () = Journal.apply "Cmdline.taint-analysis.info.set" true in
+ let () = Journal.apply "Cmdline.taint-analysis.config_file.set" "../../../default.cfg" in
  let () = Cmdline.Files.add "autre.c" in
  let () = Cmdline.Files.add "chaines.c" in
  let () = Cmdline.Files.add "code.c" in

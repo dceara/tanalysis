@@ -16,7 +16,7 @@ let option_config_file () = "taint-analysis.config_file"
 let option_debugging () = "taint-analysis.debug"
 let option_info () = "taint-analysis.info"
 
-let default_config_file () = "taint.cfg"
+let default_config_file () = "default.cfg"
 
 (* Register a new Frama-C option. *)
 module Enabled =
@@ -48,13 +48,6 @@ module Info =
 module ConfigFile =
     Cmdline.Dynamic.Register.EmptyString(struct let name = option_config_file () end)
 
-let get_config_name () =
-    let config_file_option = option_config_file () in
-         if Cmdline.Dynamic.Apply.String.is_set config_file_option then
-            Cmdline.Dynamic.Apply.String.get config_file_option
-         else
-            "default.cfg"
-
 let run_taint fmt debug info config_file_name globals =
     let module P = TaintPrinter.Printer(struct
                                         let fmt = fmt
@@ -69,7 +62,7 @@ let run_taint fmt debug info config_file_name globals =
                 | _ -> ignore ())
         globals;
     let intialize_library_calls () =
-        TaintLibraryHelper.test 
+        TaintLibraryHelper.run 
             fmt 
             debug 
             info

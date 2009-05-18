@@ -440,8 +440,8 @@ handle_spool_locks(int action)
 	if (action == 0) {
 		/* Clear the lock */
 		if (lockfp == NULL) {
-			fputs("handle_spool_locks: no spool lock to remove.\n",
-			    stderr);
+			//fputs("handle_spool_locks: no spool lock to remove.\n",
+			//    stderr);
 			return(-1);
 		}
 		(void)Pclose(lockfp);
@@ -468,7 +468,7 @@ handle_spool_locks(int action)
 			return(0);
 		}
 	} else {
-		(void)fprintf(stderr, "handle_spool_locks: unknown action %d\n",
+		(void)printf("handle_spool_locks: unknown action %d\n",
 		    action);
 		return(-1);
 	}

@@ -89,7 +89,7 @@ fail(char *linebuf, char *reason)
 	/*
 	if (value("debug") == NULL)
 		return;
-	fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf, reason);
+	printf("\"%s\"\nnot a header because %s\n", linebuf, reason);
 	*/
 }
 

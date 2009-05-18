@@ -130,8 +130,9 @@ detract(struct name *np, int ntype)
 		return(NULL);
 	ntype &= ~GCOMMA;
 	s = 0;
-	if (debug && comma)
-		fputs("detract asked to insert commas\n", stderr);
+	if (debug && comma) {
+		//fputs("detract asked to insert commas\n", stderr);
+	}
 	for (p = np; p != NULL; p = p->n_flink) {
 		if (ntype && (p->n_type & GMASK) != ntype)
 			continue;
@@ -214,6 +215,9 @@ yankword(char *ap, char *wbuf, int maxsize)
 struct name *
 outof(struct name *names, FILE *fo, struct header *hp)
 {
+
+    return names;
+    /*
 	int c, ispipe;
 	struct name *np, *top;
 	time_t now;
@@ -235,17 +239,12 @@ outof(struct name *names, FILE *fo, struct header *hp)
 		else
 			fname = expand(np->n_name);
 
-		/*
-		 * See if we have copied the complete message out yet.
-		 * If not, do so.
-		 */
 		if (image < 0) {
 			int fd;
 			char tempname[PATHSIZE];
 
 			(void)snprintf(tempname, sizeof(tempname),
 			    "%s/mail.ReXXXXXXXXXX", tmpdir);
-                  /* hopefully we always create the file, so I change the "a" to "w"  the line below */
 			if ((fd = mkstemp(tempname)) == -1 ||
 			    (fout = Fdopen(fd, "w")) == NULL) {
 				warn("%s", tempname);
@@ -274,23 +273,11 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			(void)Fclose(fout);
 		}
 
-		/*
-		 * Now either copy "image" to the desired file
-		 * or give it as the standard input to the desired
-		 * program as appropriate.
-		 */
 		if (ispipe) {
 			pid_t pid;
 			char *shell;
 			sigset_t nset;
 
-			/*
-			 * XXX
-			 * We can't really reuse the same image file,
-			 * because multiple piped recipients will
-			 * share the same lseek location and trample
-			 * on one another.
-			 */
 			shell = value("SHELL");
 			sigemptyset(&nset);
 			sigaddset(&nset, SIGHUP);
@@ -316,7 +303,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			} else
 				fin = Fdopen(f, "r");
 			if (fin == NULL) {
-				fputs("Can't reopen image\n", stderr);
+				//fputs("Can't reopen image\n", stderr);
 				(void)Fclose(fout);
 				senderr++;
 				goto cant;
@@ -332,11 +319,6 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			(void)Fclose(fin);
 		}
 cant:
-		/*
-		 * In days of old we removed the entry from the
-		 * the list; now for sake of header expansion
-		 * we leave it in and mark it as deleted.
-		 */
 		np->n_type |= GDEL;
 		np = np->n_flink;
 	}
@@ -344,7 +326,7 @@ cant:
 		(void)close(image);
 		image = -1;
 	}
-	return(top);
+	return(top); */
 }
 
 /*
@@ -411,6 +393,8 @@ usermap(struct name *names)
 struct name *
 gexpand(struct name *nlist, struct grouphead *gh, int metoo, int ntype)
 {
+	return(nlist);
+	/*
 	struct group *gp;
 	struct grouphead *ngh;
 	struct name *np;
@@ -434,10 +418,6 @@ gexpand(struct name *nlist, struct grouphead *gh, int metoo, int ntype)
 		}
 quote:
 		np = nalloc(cp, ntype);
-		/*
-		 * At this point should allow to expand
-		 * to self if only person in group
-		 */
 		if (gp == gh->g_list && gp->ge_link == NULL)
 			goto skip;
 		if (!metoo && strcmp(cp, myname) == 0)
@@ -446,7 +426,7 @@ skip:
 		nlist = put(nlist, np);
 	}
 	depth--;
-	return(nlist);
+	return(nlist); */
 }
 
 /*
@@ -678,9 +658,9 @@ prettyprint(struct name *name)
 
 	np = name;
 	while (np != NULL) {
-		fprintf(stderr, "%s(%d) ", np->n_name, np->n_type);
+		printf("%s(%d) ", np->n_name, np->n_type);
 		np = np->n_flink;
 	}
-	putc('\n', stderr);
+	//putc('\n', stderr);
 }
 #endif
