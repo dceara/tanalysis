@@ -61,7 +61,7 @@ int bar(int n)
 } 
 }}}
 ----
-<div>
+<div onclick='alert("test")'>
 {{{ frama-c.byte -taint-analysis -print-results test.c }}}
 </div>
 ----
