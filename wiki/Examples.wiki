@@ -830,6 +830,7 @@ err:
 ----
 {{{ frama-c.byte -taint-analysis -print-final *.c }}}
 ----
+{{{
 Environment for function main:
 ========================================
 	Symname: cube = Generic: Gamma(cube), 
@@ -978,9 +979,11 @@ Environment for function is_alive:
 	Symname: k_min = Generic: Gamma(x), Gamma(y), Gamma(z), 
 	Symname: k_max = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
 ========================================
+}}}
 ----
 {{{ frama-c.byte -taint-analysis -print-source *.c }}}
 ----
+{{{
 typedef unsigned int size_t;
 typedef long long __quad_t;
 typedef long __off_t;
@@ -1780,4 +1783,5 @@ int main(int argc , char **argv )
   }
 
 }
+}}}
 ----
