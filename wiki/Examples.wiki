@@ -1,0 +1,2 @@
+#summary This page shows some examples outputs obtained with STAC for different inputs.
+
