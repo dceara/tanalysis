@@ -61,7 +61,9 @@ int bar(int n)
 } 
 }}}
 ----
-<code title="test code"> frama-c.byte -taint-analysis -print-results test.c </code>
+{{{
+frama-c.byte -taint-analysis -print-results test.c
+}}}
 ----
 {{{
 Environment for function main:
