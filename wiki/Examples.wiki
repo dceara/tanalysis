@@ -627,3 +627,1157 @@ int main(int argc , int argc2 , char **argv )
 }
 }}}
 ----
+=Small Picture Editor=
+{{{
+// utils.h
+#ifndef __UTILS_H
+#define __UTILS_H
+
+#include <stdio.h>
+
+#define CHECK(condition, error_label, error_message) \
+	do { \
+		if (!(condition)) { \
+			perror(error_message); \
+			goto error_label; \
+		} \
+	} while(0)
+
+#endif
+}}}
+----
+{{{
+// common.c
+#include <stdio.h>
+#include <stdlib.h>
+#include "common.h"
+#include "utils.h"
+
+int read_config(char* input_file, int* n, int* config, int max_size)
+{
+	FILE* fi;
+	int i, j, k, _n;
+	
+	fi = fopen(input_file, "r");
+	fscanf(fi, "%d", n);
+	_n = *n;
+	for(i = 0; i < _n; ++ i) {
+		for (j = 0; j < _n; ++ j) {
+			for (k = 0; k < _n; ++ k) {
+				fscanf(fi, "%d", &config[i * _n * _n + j * _n + k]);
+			}
+		}
+	}
+		
+	fclose(fi);
+	return 0;
+read_err:
+    fclose(fi);	
+fopen_err:
+	return -1;
+}
+
+static inline int max(int x, int y) 
+{
+	return x < y ? y : x;
+}
+
+static inline int min(int x, int y)
+{
+	return x < y ? x : y;
+}
+
+static inline int max_distance(int x, int y, int z)
+{
+	return (x + y + z) / 5 + 1;
+}
+
+int is_alive(int x, int y, int z, int* config, int n)
+{
+	int i, j, k, d;
+	int alive_cnt = 0;
+	int cnt = 0;
+	int i_min, i_max, j_min, j_max, k_min, k_max;
+	d = max_distance(x, y, z);
+	i_min = max(x - d, 0);
+	i_max = min(x + d + 1, n);
+	j_min = max(y - d, 0);
+	j_max = min(y + d + 1, n);
+	k_min = max(z - d, 0);
+	k_max = min(z + d + 1, n);
+	for (i = i_min; i < i_max; ++ i) {
+		for (j = j_min; j < j_max; ++ j) {
+			for (k = k_min; k < k_max; ++ k) {
+				if (x == i && y == j && z == k)
+					continue;
+				if (config[i * n * n + j * n + k]) 
+					++ alive_cnt;
+				++ cnt;
+			}	
+		}
+	}
+	if (alive_cnt * 100 < cnt * LOWER_DEATH_LIMIT)
+		return 0;
+	
+	if (alive_cnt * 100 > cnt * UPPER_DEATH_LIMIT)
+		return 0;
+	
+	if (alive_cnt * 100 > cnt * LOWER_CHANGE_LIMIT && alive_cnt * 100 < cnt * UPPER_CHANGE_LIMIT) {
+		if (config[x * n * n + y * n + z]) 
+			return 0;
+		return 1;
+	}
+	return 1;
+}
+
+int print_config(char* output_file, int n, int g, int* config, int* alive)
+{
+	FILE* fo;
+	int i, j, k;
+
+	CHECK((fo = fopen(output_file, "w")) != NULL, fopen_err, "Unable to open output file");
+
+	for (i = 0; i < n; ++ i) {
+		for (j = 0; j < n; ++ j) {
+			for (k = 0; k < n; ++ k) {
+				CHECK((fprintf(fo, "%d ", config[i * n * n + j * n + k]) != 0), write_err, "Unable to write to output file");
+			}
+			fprintf(fo, "\n");
+		}
+		fprintf(fo, "\n");
+	}
+
+	for (i = 0; i < g; ++ i) {
+		CHECK((fprintf(fo, "%d\n", alive[i]) != 0), write_err, "Unable to write to output file"); 
+	}
+	fclose(fo);
+	return 0;
+write_err:
+	fclose(fo);
+fopen_err:
+	return -1;
+}
+
+int dbg_print_config(int n, int* config)
+{
+	int i, j, k;
+	for (i = 0; i < n; ++ i) {
+		for (j = 0; j < n; ++ j) {
+			for (k = 0; k < n; ++ k) {
+				printf("%d ", config[i * n * n + j * n + k]);
+			}
+			printf("\n");
+		}
+		printf("\n\n");
+	}
+	printf("\n");
+	return 0;
+}
+}}}
+----
+{{{
+// main.c
+#include <stdio.h>
+#include <stdlib.h>
+#include "common.h"
+#include "utils.h"
+
+
+#define MAX_N 128
+#define MAX_CELLS (MAX_N * MAX_N * MAX_N)
+#define MAX_G 256
+
+int cube[MAX_CELLS], alive[MAX_G], tmp_cube[MAX_CELLS];
+int n, g;
+
+int main(int argc, char** argv) 
+{
+	int i, j, k, cnt;
+	int* old_config;
+	int* curr_config;
+	int* aux;
+
+	g = strtol(argv[1], (char **)NULL, 10);
+
+	CHECK((read_config(argv[2], &n, cube, MAX_N) == 0), err, "Unable to read initial config");
+
+	old_config = cube;
+	curr_config = tmp_cube;
+	for (cnt = 0; cnt < g; ++ cnt) {
+		for (i = 0; i < n; ++ i) {
+			for (j = 0; j < n; ++ j) {
+				for (k = 0; k < n; ++ k) {
+					if (is_alive(i, j, k, old_config, n)) {
+						curr_config[i * n * n + j * n + k] = 1;
+						++ alive[cnt];
+					} else {
+						curr_config[i * n * n + j * n + k] = 0;
+					}
+				}
+			}
+		}
+		aux = old_config;
+		old_config = curr_config;
+		curr_config = aux;
+	}
+
+	exit(print_config(argv[3], n , g, old_config, alive));
+
+err:
+	exit(1);
+}
+}}}
+----
+{{{ frama-c.byte -taint-analysis -print-final *.c }}}
+----
+Environment for function main:
+========================================
+	Symname: cube = Generic: Gamma(cube), 
+	Symname: alive = Generic: Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n), 
+	Symname: g = Generic: Gamma(g), 
+	Symname: argc = Generic: Gamma(argc), 
+	Symname: argv = Generic: Gamma(argv), 
+	Symname: i = Untainted
+	Symname: j = Untainted
+	Symname: k = Untainted
+	Symname: cnt = Untainted
+	Symname: old_config = Untainted
+	Symname: curr_config = Untainted
+	Symname: aux = Untainted
+	Symname: tmp = Untainted
+	Symname: tmp_0 = Untainted
+	Symname: tmp_1 = Untainted
+	Symname: __retres = Untainted
+	Symname: main = Generic: Gamma(n), Gamma(alive), Gamma(argv), Gamma(argc), Gamma(cube), Gamma(tmp_cube), Gamma(g), 
+========================================
+
+Environment for function max:
+========================================
+	Symname: cube = Generic: Gamma(cube), 
+	Symname: alive = Generic: Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n), 
+	Symname: g = Generic: Gamma(g), 
+	Symname: max = Generic: Gamma(x), Gamma(y), 
+	Symname: x = Generic: Gamma(x), 
+	Symname: y = Generic: Gamma(y), 
+	Symname: tmp = Generic: Gamma(x), Gamma(y), 
+========================================
+
+Environment for function min:
+========================================
+	Symname: cube = Generic: Gamma(cube), 
+	Symname: alive = Generic: Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n), 
+	Symname: g = Generic: Gamma(g), 
+	Symname: min = Generic: Gamma(x), Gamma(y), 
+	Symname: x = Generic: Gamma(x), 
+	Symname: y = Generic: Gamma(y), 
+	Symname: tmp = Generic: Gamma(x), Gamma(y), 
+========================================
+
+Environment for function max_distance:
+========================================
+	Symname: cube = Generic: Gamma(cube), 
+	Symname: alive = Generic: Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n), 
+	Symname: g = Generic: Gamma(g), 
+	Symname: __retres = Generic: Gamma(y), Gamma(x), Gamma(z), 
+	Symname: max_distance = Generic: Gamma(y), Gamma(x), Gamma(z), 
+	Symname: x = Generic: Gamma(x), 
+	Symname: y = Generic: Gamma(y), 
+	Symname: z = Generic: Gamma(z), 
+========================================
+
+Environment for function read_config:
+========================================
+	Symname: read_config = Untainted
+	Symname: cube = Generic: Gamma(cube), 
+	Symname: alive = Generic: Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n), 
+	Symname: g = Generic: Gamma(g), 
+	Symname: __retres = Untainted
+	Symname: input_file = Generic: Gamma(input_file), 
+	Symname: n_0 = Tainted
+	Symname: config = Tainted
+	Symname: max_size = Generic: Gamma(max_size), 
+	Symname: fi = Tainted
+	Symname: i = Tainted
+	Symname: j = Tainted
+	Symname: k = Tainted
+	Symname: _n = Tainted
+========================================
+
+Environment for function print_config:
+========================================
+	Symname: print_config = Generic: Gamma(n_0), 
+	Symname: cube = Generic: Gamma(config), Gamma(n_0), Gamma(g_0), Gamma(alive_0), Gamma(cube), 
+	Symname: alive = Generic: Gamma(config), Gamma(n_0), Gamma(g_0), Gamma(alive_0), Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(config), Gamma(n_0), Gamma(g_0), Gamma(alive_0), Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(config), Gamma(n_0), Gamma(g_0), Gamma(alive_0), Gamma(n), 
+	Symname: g = Generic: Gamma(config), Gamma(n_0), Gamma(g_0), Gamma(alive_0), Gamma(g), 
+	Symname: __retres = Generic: Gamma(n_0), 
+	Symname: output_file = Generic: Gamma(output_file), 
+	Symname: n_0 = Generic: Gamma(n_0), 
+	Symname: g_0 = Generic: Gamma(g_0), 
+	Symname: config = Generic: Gamma(config), 
+	Symname: alive_0 = Generic: Gamma(alive_0), 
+	Symname: fo = Untainted
+	Symname: i = Generic: Gamma(n_0), Gamma(g_0), 
+	Symname: j = Generic: Gamma(n_0), 
+	Symname: k = Generic: Gamma(n_0), 
+	Symname: tmp = Generic: Gamma(n_0), 
+	Symname: tmp_0 = Generic: Gamma(g_0), 
+========================================
+
+Environment for function dbg_print_config:
+========================================
+	Symname: dbg_print_config = Untainted
+	Symname: cube = Generic: Gamma(n_0), Gamma(config), Gamma(cube), 
+	Symname: alive = Generic: Gamma(n_0), Gamma(config), Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(n_0), Gamma(config), Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n_0), Gamma(config), Gamma(n), 
+	Symname: g = Generic: Gamma(n_0), Gamma(config), Gamma(g), 
+	Symname: __retres = Untainted
+	Symname: n_0 = Generic: Gamma(n_0), 
+	Symname: config = Generic: Gamma(config), 
+	Symname: i = Generic: Gamma(n_0), 
+	Symname: j = Generic: Gamma(n_0), 
+	Symname: k = Generic: Gamma(n_0), 
+========================================
+
+Environment for function is_alive:
+========================================
+	Symname: is_alive = Generic: Gamma(config), Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: cube = Generic: Gamma(cube), 
+	Symname: alive = Generic: Gamma(alive), 
+	Symname: tmp_cube = Generic: Gamma(tmp_cube), 
+	Symname: n = Generic: Gamma(n), 
+	Symname: g = Generic: Gamma(g), 
+	Symname: __retres = Generic: Gamma(config), Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: x = Generic: Gamma(x), 
+	Symname: y = Generic: Gamma(y), 
+	Symname: z = Generic: Gamma(z), 
+	Symname: config = Generic: Gamma(config), 
+	Symname: n_0 = Generic: Gamma(n_0), 
+	Symname: i = Generic: Gamma(n_0), Gamma(x), Gamma(y), Gamma(z), 
+	Symname: j = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: k = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: d = Generic: Gamma(x), Gamma(y), Gamma(z), 
+	Symname: alive_cnt = Generic: Gamma(config), Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: cnt = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: i_min = Generic: Gamma(x), Gamma(y), Gamma(z), 
+	Symname: i_max = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: j_min = Generic: Gamma(x), Gamma(y), Gamma(z), 
+	Symname: j_max = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+	Symname: k_min = Generic: Gamma(x), Gamma(y), Gamma(z), 
+	Symname: k_max = Generic: Gamma(z), Gamma(y), Gamma(x), Gamma(n_0), 
+========================================
+----
+{{{ frama-c.byte -taint-analysis -print-source *.c }}}
+----
+typedef unsigned int size_t;
+typedef long long __quad_t;
+typedef long __off_t;
+typedef __quad_t __off64_t;
+struct _IO_FILE;
+typedef struct _IO_FILE FILE;
+typedef void _IO_lock_t;
+struct _IO_marker {
+   struct _IO_marker *_next ;
+   struct _IO_FILE *_sbuf ;
+   int _pos ;
+};
+struct _IO_FILE {
+   int _flags ;
+   char *_IO_read_ptr ;
+   char *_IO_read_end ;
+   char *_IO_read_base ;
+   char *_IO_write_base ;
+   char *_IO_write_ptr ;
+   char *_IO_write_end ;
+   char *_IO_buf_base ;
+   char *_IO_buf_end ;
+   char *_IO_save_base ;
+   char *_IO_backup_base ;
+   char *_IO_save_end ;
+   struct _IO_marker *_markers ;
+   struct _IO_FILE *_chain ;
+   int _fileno ;
+   int _flags2 ;
+   __off_t _old_offset ;
+   unsigned short _cur_column ;
+   signed char _vtable_offset ;
+   char _shortbuf[1] ;
+   _IO_lock_t *_lock ;
+   __off64_t _offset ;
+   void *__pad1 ;
+   void *__pad2 ;
+   void *__pad3 ;
+   void *__pad4 ;
+   size_t __pad5 ;
+   int _mode ;
+   char _unused2[(15U * sizeof(int ) - 4U * sizeof(void *)) - sizeof(size_t )] ;
+};
+extern int fclose(FILE *__stream ) ;
+extern FILE *fopen(char const   * __restrict  __filename ,
+                   char const   * __restrict  __modes ) ;
+extern int fprintf(FILE * __restrict  __stream ,
+                   char const   * __restrict  __format  , ...) ;
+extern int printf(char const   * __restrict  __format  , ...) ;
+extern int fscanf(FILE * __restrict  __stream ,
+                  char const   * __restrict  __format  , ...) ;
+extern void perror(char const   *__s ) ;
+int read_config(char *input_file , int *n_0 , int *config , int max_size ) ;
+int print_config(char *output_file , int n_0 , int g_0 , int *config ,
+                 int *alive_0 ) ;
+int dbg_print_config(int n_0 , int *config ) ;
+int is_alive(int x , int y , int z , int *config , int n_0 ) ;
+int read_config(char *input_file , int *n_0 , int *config , int max_size ) 
+{ FILE *fi ;
+  int i ;
+  int j ;
+  int k ;
+  int _n ;
+  int __retres ;
+  
+  {/*sid:1*/
+  fi = fopen((char const   *)input_file, (char const   *)"r");
+  /*sid:1*/
+  /*T(read_config) = G(n) + G(alive) + G(max_size) + G(n_0) + G(input_file) + G(config) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(__retres) = U*/
+  /*T(input_file) = G(input_file)*/
+  /*T(n_0) = G(n_0)*/
+  /*T(config) = G(config)*/
+  /*T(max_size) = G(max_size)*/
+  /*T(fi) = U*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  /*T(_n) = U*/
+  
+  /*sid:2*/
+  fscanf((FILE *)fi, (char const   *)"%d", n_0);
+  /*sid:2*/
+  /*T(n_0) = T*/
+  /*T(fi) = T*/
+  
+  /*sid:3*/
+  _n = *n_0;
+  /*sid:3*/
+  /*T(_n) = T*/
+  
+  i = 0;
+  /*sid:5*/
+  while (i < _n) {j = 0;
+    while (j < _n) {k = 0;
+      while (k < _n) {fscanf((FILE *)fi, (char const   *)"%d",
+                             config + (((i * _n) * _n + j * _n) + k));
+        k ++;}
+      
+      j ++;}
+    
+    i ++;}
+  
+  /*sid:5*/
+  /*T(config) = T*/
+  /*T(i) = T*/
+  /*T(j) = T*/
+  /*T(k) = T*/
+  
+  fclose(fi);
+  __retres = 0;
+  goto return_label;
+  /*sid:26*/
+  fclose(fi);
+  /*sid:26*/
+  /*T(read_config) = G(n) + G(alive) + G(max_size) + G(n_0) + G(input_file) + G(config) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(__retres) = U*/
+  /*T(input_file) = G(input_file)*/
+  /*T(n_0) = G(n_0)*/
+  /*T(config) = G(config)*/
+  /*T(max_size) = G(max_size)*/
+  /*T(fi) = U*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  /*T(_n) = U*/
+  
+  __retres = -1;
+  /*sid:223*/
+  return_label: /* CIL Label */ 
+  return (__retres);
+  /*sid:223*/
+  /*T(read_config) = U*/
+  /*T(n_0) = T*/
+  /*T(config) = T*/
+  /*T(fi) = T*/
+  /*T(i) = T*/
+  /*T(j) = T*/
+  /*T(k) = T*/
+  /*T(_n) = T*/
+  }
+
+}
+__inline static int max(int x , int y ) 
+{ int tmp ;
+  
+  {/*sid:29*/
+  if (x < y) {/*sid:30*/
+  tmp = y;
+  /*sid:30*/
+  /*T(tmp) = G(x) + G(y)*/
+  }
+  else {/*sid:31*/
+  tmp = x;
+  /*sid:31*/
+  /*T(tmp) = G(x) + G(y)*/
+  }
+  
+  /*sid:29*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(max) = G(n) + G(alive) + G(y) + G(x) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(x) = G(x)*/
+  /*T(y) = G(y)*/
+  /*T(tmp) = U*/
+  
+  /*sid:32*/
+  return (tmp);
+  /*sid:32*/
+  /*T(max) = G(x) + G(y)*/
+  }
+
+}
+__inline static int min(int x , int y ) 
+{ int tmp ;
+  
+  {/*sid:34*/
+  if (x < y) {/*sid:35*/
+  tmp = x;
+  /*sid:35*/
+  /*T(tmp) = G(x) + G(y)*/
+  }
+  else {/*sid:36*/
+  tmp = y;
+  /*sid:36*/
+  /*T(tmp) = G(x) + G(y)*/
+  }
+  
+  /*sid:34*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(min) = G(n) + G(alive) + G(y) + G(x) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(x) = G(x)*/
+  /*T(y) = G(y)*/
+  /*T(tmp) = U*/
+  
+  /*sid:37*/
+  return (tmp);
+  /*sid:37*/
+  /*T(min) = G(x) + G(y)*/
+  }
+
+}
+__inline static int max_distance(int x , int y , int z ) 
+{ int __retres ;
+  
+  {/*sid:38*/
+  __retres = ((x + y) + z) / 5 + 1;
+  /*sid:38*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(__retres) = G(y) + G(x) + G(z)*/
+  /*T(max_distance) = G(n) + G(alive) + G(z) + G(x) + G(y) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(x) = G(x)*/
+  /*T(y) = G(y)*/
+  /*T(z) = G(z)*/
+  
+  /*sid:224*/
+  return (__retres);
+  /*sid:224*/
+  /*T(max_distance) = G(y) + G(x) + G(z)*/
+  }
+
+}
+int is_alive(int x , int y , int z , int *config , int n_0 ) 
+{ int i ;
+  int j ;
+  int k ;
+  int d ;
+  int alive_cnt ;
+  int cnt ;
+  int i_min ;
+  int i_max ;
+  int j_min ;
+  int j_max ;
+  int k_min ;
+  int k_max ;
+  int __retres ;
+  
+  {/*sid:39*/
+  alive_cnt = 0;
+  /*sid:39*/
+  /*T(is_alive) = G(n) + G(alive) + G(n_0) + G(z) + G(x) + G(y) + G(config) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(__retres) = U*/
+  /*T(x) = G(x)*/
+  /*T(y) = G(y)*/
+  /*T(z) = G(z)*/
+  /*T(config) = G(config)*/
+  /*T(n_0) = G(n_0)*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  /*T(d) = U*/
+  /*T(alive_cnt) = U*/
+  /*T(cnt) = U*/
+  /*T(i_min) = U*/
+  /*T(i_max) = U*/
+  /*T(j_min) = U*/
+  /*T(j_max) = U*/
+  /*T(k_min) = U*/
+  /*T(k_max) = U*/
+  
+  cnt = 0;
+  /*sid:41*/
+  d = max_distance(x, y, z);
+  /*sid:41*/
+  /*T(d) = G(x) + G(y) + G(z)*/
+  
+  /*sid:42*/
+  i_min = max(x - d, 0);
+  /*sid:42*/
+  /*T(i_min) = G(x) + G(y) + G(z)*/
+  
+  /*sid:43*/
+  i_max = min((x + d) + 1, n_0);
+  /*sid:43*/
+  /*T(i_max) = G(z) + G(y) + G(x) + G(n_0)*/
+  
+  /*sid:44*/
+  j_min = max(y - d, 0);
+  /*sid:44*/
+  /*T(j_min) = G(x) + G(y) + G(z)*/
+  
+  /*sid:45*/
+  j_max = min((y + d) + 1, n_0);
+  /*sid:45*/
+  /*T(j_max) = G(z) + G(y) + G(x) + G(n_0)*/
+  
+  /*sid:46*/
+  k_min = max(z - d, 0);
+  /*sid:46*/
+  /*T(k_min) = G(x) + G(y) + G(z)*/
+  
+  /*sid:47*/
+  k_max = min((z + d) + 1, n_0);
+  /*sid:47*/
+  /*T(k_max) = G(z) + G(y) + G(x) + G(n_0)*/
+  
+  /*sid:48*/
+  i = i_min;
+  /*sid:48*/
+  /*T(i) = G(x) + G(y) + G(z)*/
+  
+  /*sid:49*/
+  while (i < i_max) {j = j_min;
+    while (j < j_max) {k = k_min;
+      while (k < k_max) {if (x == i) {if (y == j) {if (z == k) {/*sid:69*/
+                                                     goto __Cont;
+                                                     /*sid:69*/
+                                                     /*T(i) = G(x) + G(y) + G(z)*/
+                                                     /*T(alive_cnt) = U*/
+                                                     /*T(cnt) = U*/
+                                                     }
+                                        }
+                           }
+        
+        if (*(config + (((i * n_0) * n_0 + j * n_0) + k))) {alive_cnt ++;}
+        
+        cnt ++;
+        /*sid:78*/
+        __Cont: /* CIL Label */ 
+        k ++;
+        /*sid:78*/
+        /*T(i) = G(n_0) + G(x) + G(y) + G(z)*/
+        /*T(alive_cnt) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+        /*T(cnt) = G(z) + G(y) + G(x) + G(n_0)*/
+        }
+      
+      j ++;}
+    
+    i ++;}
+  
+  /*sid:49*/
+  /*T(i) = G(n_0) + G(x) + G(y) + G(z)*/
+  /*T(j) = G(z) + G(y) + G(x) + G(n_0)*/
+  /*T(k) = G(z) + G(y) + G(x) + G(n_0)*/
+  /*T(alive_cnt) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+  /*T(cnt) = G(z) + G(y) + G(x) + G(n_0)*/
+  
+  if (alive_cnt * 100 < cnt * 25) {/*sid:83*/
+    __retres = 0;
+    /*sid:83*/
+    /*T(__retres) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+    
+    goto return_label;}
+  
+  if (alive_cnt * 100 > cnt * 75) {/*sid:87*/
+    __retres = 0;
+    /*sid:87*/
+    /*T(__retres) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+    
+    goto return_label;}
+  
+  if (alive_cnt * 100 > cnt * 45) {if (alive_cnt * 100 < cnt * 55) {if
+                                      (*(config + (((x * n_0) * n_0 + y * n_0) + z))) {/*sid:95*/
+                                     __retres = 0;
+                                     /*sid:95*/
+                                     /*T(__retres) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+                                     
+                                     goto return_label;}
+                                     
+                                     /*sid:97*/
+                                     __retres = 1;
+                                     /*sid:97*/
+                                     /*T(__retres) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+                                     
+                                     goto return_label;}
+    }
+  
+  /*sid:100*/
+  __retres = 1;
+  /*sid:100*/
+  /*T(__retres) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+  
+  /*sid:229*/
+  return_label: /* CIL Label */ 
+  return (__retres);
+  /*sid:229*/
+  /*T(is_alive) = G(config) + G(z) + G(y) + G(x) + G(n_0)*/
+  }
+
+}
+int print_config(char *output_file , int n_0 , int g_0 , int *config ,
+                 int *alive_0 ) 
+{ FILE *fo ;
+  int i ;
+  int j ;
+  int k ;
+  int tmp ;
+  int tmp_0 ;
+  int __retres ;
+  
+  {/*sid:101*/
+  while (1) {fo = fopen((char const   *)output_file, (char const   *)"w");
+    if (! (fo != (void *)0)) {perror("Unable to open output file");
+      goto fopen_err;}
+    
+    break;}
+  
+  /*sid:101*/
+  /*T(print_config) = G(n) + G(alive) + G(alive_0) + G(g_0) + G(output_file) + G(n_0) + G(config) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(__retres) = U*/
+  /*T(output_file) = G(output_file)*/
+  /*T(n_0) = G(n_0)*/
+  /*T(g_0) = G(g_0)*/
+  /*T(config) = G(config)*/
+  /*T(alive_0) = G(alive_0)*/
+  /*T(fo) = U*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  /*T(tmp) = U*/
+  /*T(tmp_0) = U*/
+  
+  i = 0;
+  /*sid:109*/
+  while (i < n_0) {j = 0;
+    while (j < n_0) {k = 0;
+      while (k < n_0) {while (1) {/*sid:124*/
+                         tmp = fprintf((FILE *)fo, (char const   *)"%d ",
+                                       *(config + (((i * n_0) * n_0 + j * n_0) + k)));
+                         /*sid:124*/
+                         /*T(cube) = G(config) + G(n_0)*/
+                         /*T(alive) = G(config) + G(n_0)*/
+                         /*T(tmp_cube) = G(config) + G(n_0)*/
+                         /*T(n) = G(config) + G(n_0)*/
+                         /*T(g) = G(config) + G(n_0)*/
+                         
+                         if (! (tmp != 0)) {perror("Unable to write to output file");
+                           goto write_err;}
+                         
+                         break;}
+        
+        /*sid:130*/
+        k ++;
+        /*sid:130*/
+        /*T(cube) = G(config) + G(n_0) + G(cube)*/
+        /*T(alive) = G(config) + G(n_0) + G(alive)*/
+        /*T(tmp_cube) = G(config) + G(n_0) + G(tmp_cube)*/
+        /*T(n) = G(config) + G(n_0) + G(n)*/
+        /*T(g) = G(config) + G(n_0) + G(g)*/
+        }
+      
+      fprintf((FILE *)fo, (char const   *)"\n");
+      j ++;}
+    
+    fprintf((FILE *)fo, (char const   *)"\n");
+    i ++;}
+  
+  /*sid:109*/
+  /*T(cube) = G(n_0) + G(config) + G(cube)*/
+  /*T(alive) = G(n_0) + G(config) + G(alive)*/
+  /*T(tmp_cube) = G(n_0) + G(config) + G(tmp_cube)*/
+  /*T(n) = G(n_0) + G(config) + G(n)*/
+  /*T(g) = G(n_0) + G(config) + G(g)*/
+  /*T(i) = G(n_0)*/
+  /*T(j) = G(n_0)*/
+  /*T(k) = G(n_0)*/
+  /*T(tmp) = G(n_0)*/
+  
+  /*sid:135*/
+  i = 0;
+  /*sid:135*/
+  /*T(i) = U*/
+  
+  /*sid:136*/
+  while (i < g_0) {while (1) {/*sid:141*/
+                     tmp_0 = fprintf((FILE *)fo, (char const   *)"%d\n",
+                                     *(alive_0 + i));
+                     /*sid:141*/
+                     /*T(cube) = G(alive_0) + G(g_0)*/
+                     /*T(alive) = G(alive_0) + G(g_0)*/
+                     /*T(tmp_cube) = G(alive_0) + G(g_0)*/
+                     /*T(n) = G(alive_0) + G(g_0)*/
+                     /*T(g) = G(alive_0) + G(g_0)*/
+                     
+                     if (! (tmp_0 != 0)) {perror("Unable to write to output file");
+                       /*sid:145*/
+                       goto write_err;
+                       /*sid:145*/
+                       /*T(cube) = G(g_0) + G(alive_0) + G(config) + G(n_0)*/
+                       /*T(alive) = G(g_0) + G(alive_0) + G(config) + G(n_0)*/
+                       /*T(tmp_cube) = G(g_0) + G(alive_0) + G(config) + G(n_0)*/
+                       /*T(n) = G(g_0) + G(alive_0) + G(config) + G(n_0)*/
+                       /*T(g) = G(g_0) + G(alive_0) + G(config) + G(n_0)*/
+                       /*T(i) = G(g_0) + G(n_0)*/
+                       }
+                     
+                     break;}
+    
+    /*sid:147*/
+    i ++;
+    /*sid:147*/
+    /*T(cube) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(cube)*/
+    /*T(alive) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(alive)*/
+    /*T(tmp_cube) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(tmp_cube)*/
+    /*T(n) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(n)*/
+    /*T(g) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(g)*/
+    }
+  
+  /*sid:136*/
+  /*T(cube) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(cube)*/
+  /*T(alive) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(alive)*/
+  /*T(tmp_cube) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(tmp_cube)*/
+  /*T(n) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(n)*/
+  /*T(g) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(g)*/
+  /*T(i) = G(g_0)*/
+  /*T(tmp_0) = G(g_0)*/
+  
+  fclose(fo);
+  __retres = 0;
+  goto return_label;
+  /*sid:150*/
+  write_err: ;
+  /*sid:150*/
+  /*T(cube) = G(alive_0) + G(g_0) + G(config) + G(n_0)*/
+  /*T(alive) = G(alive_0) + G(g_0) + G(config) + G(n_0)*/
+  /*T(tmp_cube) = G(alive_0) + G(g_0) + G(config) + G(n_0)*/
+  /*T(n) = G(alive_0) + G(g_0) + G(config) + G(n_0)*/
+  /*T(g) = G(alive_0) + G(g_0) + G(config) + G(n_0)*/
+  /*T(i) = G(g_0) + G(n_0)*/
+  /*T(tmp_0) = G(g_0)*/
+  
+  /*sid:151*/
+  fclose(fo);
+  /*sid:151*/
+  /*T(cube) = G(n_0) + G(config) + G(g_0) + G(alive_0) + G(cube)*/
+  /*T(alive) = G(n_0) + G(config) + G(g_0) + G(alive_0) + G(alive)*/
+  /*T(tmp_cube) = G(n_0) + G(config) + G(g_0) + G(alive_0) + G(tmp_cube)*/
+  /*T(n) = G(n_0) + G(config) + G(g_0) + G(alive_0) + G(n)*/
+  /*T(g) = G(n_0) + G(config) + G(g_0) + G(alive_0) + G(g)*/
+  
+  /*sid:152*/
+  fopen_err: 
+  __retres = -1;
+  /*sid:152*/
+  /*T(cube) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(cube)*/
+  /*T(alive) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(alive)*/
+  /*T(tmp_cube) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(tmp_cube)*/
+  /*T(n) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(n)*/
+  /*T(g) = G(g_0) + G(alive_0) + G(n_0) + G(config) + G(g)*/
+  /*T(__retres) = G(n_0)*/
+  /*T(i) = G(n_0) + G(g_0)*/
+  /*T(j) = G(n_0)*/
+  /*T(k) = G(n_0)*/
+  /*T(tmp) = G(n_0)*/
+  /*T(tmp_0) = G(g_0)*/
+  
+  /*sid:231*/
+  return_label: /* CIL Label */ 
+  return (__retres);
+  /*sid:231*/
+  /*T(print_config) = G(n_0)*/
+  /*T(__retres) = G(n_0)*/
+  /*T(i) = G(n_0) + G(g_0)*/
+  }
+
+}
+int dbg_print_config(int n_0 , int *config ) 
+{ int i ;
+  int j ;
+  int k ;
+  int __retres ;
+  
+  {/*sid:153*/
+  i = 0;
+  /*sid:153*/
+  /*T(dbg_print_config) = G(n) + G(alive) + G(config) + G(n_0) + G(cube) + G(tmp_cube) + G(g)*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(__retres) = U*/
+  /*T(n_0) = G(n_0)*/
+  /*T(config) = G(config)*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  
+  /*sid:154*/
+  while (i < n_0) {j = 0;
+    while (j < n_0) {k = 0;
+      while (k < n_0) {/*sid:168*/
+        printf((char const   *)"%d ",
+               *(config + (((i * n_0) * n_0 + j * n_0) + k)));
+        /*sid:168*/
+        /*T(cube) = G(config) + G(n_0)*/
+        /*T(alive) = G(config) + G(n_0)*/
+        /*T(tmp_cube) = G(config) + G(n_0)*/
+        /*T(n) = G(config) + G(n_0)*/
+        /*T(g) = G(config) + G(n_0)*/
+        
+        /*sid:169*/
+        k ++;
+        /*sid:169*/
+        /*T(cube) = G(config) + G(n_0) + G(cube)*/
+        /*T(alive) = G(config) + G(n_0) + G(alive)*/
+        /*T(tmp_cube) = G(config) + G(n_0) + G(tmp_cube)*/
+        /*T(n) = G(config) + G(n_0) + G(n)*/
+        /*T(g) = G(config) + G(n_0) + G(g)*/
+        }
+      
+      printf((char const   *)"\n");
+      j ++;}
+    
+    printf((char const   *)"\n\n");
+    i ++;}
+  
+  /*sid:154*/
+  /*T(cube) = G(n_0) + G(config) + G(cube)*/
+  /*T(alive) = G(n_0) + G(config) + G(alive)*/
+  /*T(tmp_cube) = G(n_0) + G(config) + G(tmp_cube)*/
+  /*T(n) = G(n_0) + G(config) + G(n)*/
+  /*T(g) = G(n_0) + G(config) + G(g)*/
+  /*T(i) = G(n_0)*/
+  /*T(j) = G(n_0)*/
+  /*T(k) = G(n_0)*/
+  
+  printf((char const   *)"\n");
+  __retres = 0;
+  /*sid:232*/
+  return (__retres);
+  /*sid:232*/
+  /*T(dbg_print_config) = U*/
+  }
+
+}
+extern  __attribute__((__nothrow__)) long strtol(char const   * __restrict  __nptr ,
+                                                 char ** __restrict  __endptr ,
+                                                 int __base )  __attribute__((__nonnull__(1))) ;
+extern  __attribute__((__nothrow__,
+__noreturn__)) void exit(int __status ) ;
+int cube[(128 * 128) * 128] ;
+int alive[256] ;
+int tmp_cube[(128 * 128) * 128] ;
+int n ;
+int g ;
+int main(int argc , char **argv ) 
+{ int i ;
+  int j ;
+  int k ;
+  int cnt ;
+  int *old_config ;
+  int *curr_config ;
+  int *aux ;
+  int tmp ;
+  int tmp_0 ;
+  int tmp_1 ;
+  int __retres ;
+  
+  {/*sid:176*/
+  g = (int )strtol((char const   *)*(argv + 1),
+                   (char **)((char **)((void *)0)), 10);
+  /*sid:176*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = U*/
+  /*T(argc) = G(argc)*/
+  /*T(argv) = G(argv)*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  /*T(cnt) = U*/
+  /*T(old_config) = U*/
+  /*T(curr_config) = U*/
+  /*T(aux) = U*/
+  /*T(tmp) = U*/
+  /*T(tmp_0) = U*/
+  /*T(tmp_1) = U*/
+  /*T(__retres) = U*/
+  /*T(main) = G(n) + G(alive) + G(argv) + G(argc) + G(cube) + G(tmp_cube) + G(g)*/
+  
+  while (1) {/*sid:178*/
+    tmp = read_config(*(argv + 2), & n, cube, 128);
+    /*sid:178*/
+    /*T(cube) = T*/
+    /*T(n) = T*/
+    
+    if (! (tmp == 0)) {perror("Unable to read initial config");
+      goto err;}
+    
+    break;}
+  
+  /*sid:184*/
+  old_config = cube;
+  /*sid:184*/
+  /*T(old_config) = T*/
+  
+  /*sid:185*/
+  curr_config = tmp_cube;
+  /*sid:185*/
+  /*T(curr_config) = G(tmp_cube)*/
+  
+  cnt = 0;
+  /*sid:187*/
+  while (cnt < g) {/*sid:191*/
+    i = 0;
+    /*sid:191*/
+    /*T(i) = U*/
+    
+    /*sid:192*/
+    while (i < n) {j = 0;
+      while (j < n) {k = 0;
+        while (k < n) {tmp_0 = is_alive(i, j, k, old_config, n);
+          if (tmp_0)
+          {*(curr_config + (((i * n) * n + j * n) + k)) = 1;
+          (alive[cnt]) ++;}
+          else {*(curr_config + (((i * n) * n + j * n) + k)) = 0;}
+          
+          k ++;}
+        
+        j ++;}
+      
+      i ++;}
+    
+    /*sid:192*/
+    /*T(i) = T*/
+    
+    aux = old_config;
+    old_config = curr_config;
+    curr_config = aux;
+    cnt ++;}
+  
+  /*sid:187*/
+  /*T(alive) = T*/
+  /*T(i) = T*/
+  /*T(j) = T*/
+  /*T(k) = T*/
+  /*T(curr_config) = T*/
+  /*T(aux) = T*/
+  /*T(tmp_0) = T*/
+  
+  /*sid:218*/
+  tmp_1 = print_config(*(argv + 3), n, g, old_config, alive);
+  /*sid:218*/
+  /*T(tmp_cube) = T*/
+  /*T(g) = T*/
+  /*T(tmp_1) = T*/
+  
+  exit(tmp_1);
+  err: ;
+  exit(1);
+  /*sid:233*/
+  return (__retres);
+  /*sid:233*/
+  /*T(cube) = G(cube)*/
+  /*T(alive) = G(alive)*/
+  /*T(tmp_cube) = G(tmp_cube)*/
+  /*T(n) = G(n)*/
+  /*T(g) = G(g)*/
+  /*T(argc) = G(argc)*/
+  /*T(argv) = G(argv)*/
+  /*T(i) = U*/
+  /*T(j) = U*/
+  /*T(k) = U*/
+  /*T(cnt) = U*/
+  /*T(old_config) = U*/
+  /*T(curr_config) = U*/
+  /*T(aux) = U*/
+  /*T(tmp) = U*/
+  /*T(tmp_0) = U*/
+  /*T(tmp_1) = U*/
+  /*T(__retres) = U*/
+  /*T(main) = G(n) + G(alive) + G(argv) + G(argc) + G(cube) + G(tmp_cube) + G(g)*/
+  }
+
+}
+----
