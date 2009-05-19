@@ -61,9 +61,7 @@ int bar(int n)
 } 
 }}}
 ----
-<div onclick='alert("test")'>
-{{{ frama-c.byte -taint-analysis -print-results test.c }}}
-</div>
+<code title="test code"> frama-c.byte -taint-analysis -print-results test.c </code>
 ----
 {{{
 Environment for function main:
