@@ -51,6 +51,8 @@ module ConfigFile =
 let run_taint fmt debug info config_file_name globals =
     let module P = TaintPrinter.Printer(struct
                                         let fmt = fmt
+                                        let debug = debug
+                                        let info = info
                                     end) in   
     let computed_function_envs = ref (Inthash.create 1024) in
     let func_hash = Hashtbl.create 1024 in

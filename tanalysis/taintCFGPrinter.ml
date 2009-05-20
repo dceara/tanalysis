@@ -4,10 +4,14 @@ open Cil
 module Printer(Param:sig
                     val dom_tree : stmt option Inthash.t 
                     val fmt : Format.formatter
+                    val debug : bool
+                    val info : bool
                  end) = struct
                    
     module P = Printer.Printer(struct
                                     let fmt = Param.fmt
+                                    let debug = Param.debug
+                                    let info = Param.info
                                 end)
     let print_cfg func =
         let print_stmt stmt = 

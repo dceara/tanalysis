@@ -88,7 +88,7 @@ module Typing (Param:sig
                     None
                     taint_instances with
             | None -> 
-                P.print () "%s\n" "WARNING!!!!!! INSTANTIATE_FUNC_ENV ERROR";
+                P.print () "%s\n" "[ERROR] INSTANTIATE_FUNC_ENV ERROR";
                 T
             | Some t -> t
         in

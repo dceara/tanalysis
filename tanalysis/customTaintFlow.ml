@@ -27,10 +27,14 @@ module TaintComputer(Param:sig
                                                         end)
     module P = TaintPrinter.Printer(struct
                                         let fmt = Param.fmt
+                                        let debug = Param.debug
+                                        let info = Param.info
                                     end)      
     module CFGP = TaintCFGPrinter.Printer(struct
                                             let dom_tree = Param.dom_tree
                                             let fmt = Param.fmt
+                                            let debug = Param.debug
+                                            let info = Param.info
                                           end)
 
     module Typing = TaintTyping.Typing(struct
@@ -61,9 +65,7 @@ module TaintComputer(Param:sig
         match stmt.skind with
             | (Instr instr) 
                 -> 
-                    if (Param.debug) then (
-                        P.print () "[DEBUG] Instruction reached%s" "\n";
-                    );
+                    P.print_debug () "[DEBUG] Instruction reached%s" "\n";
                     let ret_env = 
                         SC.do_instr new_env instr current_cond_taint Param.func_envs in
                     (ret_env, Same)
@@ -129,10 +131,8 @@ module TaintComputer(Param:sig
         (* Stop when the worklist is empty. *)
         | 0 -> ignore ()
         | _ ->
-        let (current_stmt, nullable_old_stmt, cond_taint) = List.hd worklist in        
-        if (Param.info) then (
-            P.print () "[INFO] Processing instruction %d from worklist\n" current_stmt.sid;
-        );
+        let (current_stmt, nullable_old_stmt, cond_taint) = List.hd worklist in 
+        P.print_info () "[INFO] Processing instruction %d from worklist\n" current_stmt.sid;        
         (* For each predecessor, combine the results. If there aren't any preds *)
         (* then the statements' environment is returned. *)
         let (new_env, cond_taint) = 
@@ -162,9 +162,7 @@ module TaintComputer(Param:sig
 	        match Param.first_stmt_sid == current_stmt.sid 
                 && List.length current_stmt.preds > 0 with
 	            | true -> 
-                    if Param.info then (
-                        P.print () "%s\n" "[INFO] Processing loop block at the begining of the CFG."    
-                    );
+                    P.print_info () "%s\n" "[INFO] Processing loop block at the begining of the CFG.";
                     Typing.combine (Typing.visit_env old_env) new_env;
                 | false -> new_env in  
         (* Check if a fix point has been reached. *)
@@ -176,8 +174,7 @@ module TaintComputer(Param:sig
                 -> 
                     (* Fixed point reached for current statement. The successors *)
                     (* aren't added to the worklist. *)
-                    (if (Param.debug) then
-                        P.print () "[DEBUG] Fixed point reached for sid %d\n" current_stmt.sid);
+                    P.print_debug () "[DEBUG] Fixed point reached for sid %d\n" current_stmt.sid; 
                     Inthash.replace Param.stmt_envs current_stmt.sid env;
                     compute (List.tl worklist)
             | true
@@ -241,11 +238,9 @@ module TaintComputer(Param:sig
         let initial_env = SC.create_initial_env Param.func in 
         (* CFGP.print_cfg Param.func; *)
         (* (initial_env, Param.stmt_envs) *)
-        (if Param.info then
-            P.print () "Computing initial environment for function %s.\n" Param.func.svar.vname); 
+        P.print_info () "Computing initial environment for function %s.\n" Param.func.svar.vname; 
         init_environments initial_env;
-        (if Param.info then
-            P.print () "Computing environment for function %s.\n" Param.func.svar.vname);
+        P.print_info () "Computing environment for function %s.\n" Param.func.svar.vname; 
         compute (List.map (fun s -> (s, None, [(0, U)])) worklist);
         let final = combine_return_envs initial_env in
         if Param.print_int then (
