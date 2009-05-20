@@ -30,15 +30,21 @@ class print func_envs = object(self)
             | None ->
                 assert(false)
             | Some vinfo ->
-		        let (_, stmt_envs) = Inthash.find func_envs vinfo.vid in
-                let env = Inthash.find stmt_envs s.sid in
-                let (has_diff, result_env) = self#getDifferences stmt_envs env s in
-                match has_diff with
-                    | true ->
-                        super#pGlobal fmt (GText (Format.sprintf "/*sid:%d*/" s.sid));       
-                        super#pAnnotatedStmt next fmt s;
-                        self#pDifferences fmt result_env s
-                    | false ->
+                try 
+			        let (_, stmt_envs) = Inthash.find func_envs vinfo.vid in
+	                let env = Inthash.find stmt_envs s.sid in
+	                let (has_diff, result_env) = self#getDifferences stmt_envs env s in
+	                match has_diff with
+	                    | true ->
+	                        super#pGlobal fmt (GText (Format.sprintf "/*sid:%d*/" s.sid));       
+	                        super#pAnnotatedStmt next fmt s;
+	                        self#pDifferences fmt result_env s
+	                    | false ->
+	                        super#pAnnotatedStmt next fmt s
+                with
+                    | Not_found ->
+                        (* TODO: check what happens with extern variables *)
+                        super#pGlobal fmt (GText "/* TODO: CHECK TAINT */");
                         super#pAnnotatedStmt next fmt s
     	
 end

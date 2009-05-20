@@ -273,6 +273,12 @@ module Initializer(Param:sig
                 String.sub str 0 index
             with Not_found ->
                 str in
+            let str =
+            try
+                let index = String.index str '\t' in
+                String.sub str 0 index
+            with Not_found ->
+                str in
             try
                 let index = String.index str '#' in
                 String.sub str 0 index

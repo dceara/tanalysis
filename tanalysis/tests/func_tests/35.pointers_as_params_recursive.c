@@ -1,5 +1,5 @@
 
-int main(int argc, char** argv) //argc = G, argv = G
+int main(int argc, char** argv) 
 {
     int tainted = taint();
     int result_test = 1;

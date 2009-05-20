@@ -170,14 +170,12 @@ module ResultsComputer(Param:sig
                         
             let effect_added = do_null_lval null_lval in
             let finfo = get_lval_vinfo (Utils.extract_lvalue_from_expr call_expr) in
-            (* TODO: remove hardcoding for CIL mock function *)
-            if finfo.vname = "__builtin_alloca" then (
-                ignore ()
-            ) else (
+            try 
 	            let callee_func = Hashtbl.find Param.func_hash finfo.vname in
 	            do_check_pointer_params callee_func effect_added;
 	            do_function_call callee_func
-            )             
+            with Not_found ->
+                ignore () 
         in
         
         inc_stmt_count ();
