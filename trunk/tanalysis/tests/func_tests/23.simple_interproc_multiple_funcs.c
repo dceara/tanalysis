@@ -1,4 +1,4 @@
-int main(int argc, char** argv) //argc = G, argv = G
+int main(int argc, char** argv) 
 {
     int x = bar(0, 1, 2);
     int y = bar(0, 1, argc);

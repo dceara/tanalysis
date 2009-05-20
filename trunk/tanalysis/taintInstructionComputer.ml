@@ -199,13 +199,8 @@ module InstrComputer(Param:sig
                     try
                         do_get_function_call_taint env vinfo param_exprs func_envs
                     with Not_found ->
-                        (* TODO: remove hardcoding for CIL mock function *)
-                        if vinfo.vname = "__builtin_alloca" then (
-                            U
-                        ) else (
-	                        P.print () "[ERROR] Cannot find lvalue: %s\n" vinfo.vname;
-	                        T 
-                        )
+                        P.print () "[ERROR] Cannot find lvalue: %s\n" vinfo.vname;
+                        T 
             in
             let offset_taint = do_offset env offset func_envs in
             let taint = Typing.combine_taint taint offset_taint in
