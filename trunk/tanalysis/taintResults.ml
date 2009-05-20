@@ -33,6 +33,8 @@ module ResultsComputer(Param:sig
 
     module P = TaintPrinter.Printer(struct
                                         let fmt = Param.fmt
+                                        let debug = Param.debug
+                                        let info = Param.info
                                     end) 
 
     type func_frame = Frame of fundec
@@ -160,7 +162,7 @@ module ResultsComputer(Param:sig
                 let new_visited_ref = ref (Inthash.create 1024) in
                 match do_check_recursive_call curr_func_stack callee_func with
                     | false ->
-                        P.print () "Analyzing results for function %s\n" callee_func.svar.vname;
+                        P.print_info () "Analyzing results for function %s\n" callee_func.svar.vname;
                         compute callee_env 
                             ((Frame func)::curr_func_stack) 
                             (callee_func, new_visited_ref, new_worklist)
@@ -237,13 +239,13 @@ module ResultsComputer(Param:sig
     and compute env_instance curr_func_stack (func, visited_ref, worklist) =
         match List.length worklist with
         | 0 -> 
-            P.print () "Finished analyzing function %s\n" func.svar.vname;
-            P.print () "%s" "Current stack: ";
+            P.print_info () "Finished analyzing function %s\n" func.svar.vname;
+            P.print_info () "%s" "Current stack: ";
             List.iter
                 (fun (Frame f) ->
-                    P.print () "%s, " f.svar.vname)
+                    P.print_info () "%s, " f.svar.vname)
                 (List.rev curr_func_stack);
-            P.print () "%s" "\n";
+            P.print_info () "%s" "\n";
             ignore ()
         | _ -> 
             let curr_stmt = List.hd worklist in

@@ -1,12 +1,11 @@
-(* Frama-C journal generated at 11:23 the 19/05/2009 *)
+(* Frama-C journal generated at 10:05 the 20/05/2009 *)
 
 (* Running *)
 let start () =
  let () = Journal.run () in
  let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
- let () = Journal.apply "Cmdline.taint-analysis.print-source.set" true in
- let () = Cmdline.Files.add "tests/real_tests/PicEditor/t1_serial.c" in
- let () = Cmdline.Files.add "tests/real_tests/PicEditor/common.c" in
+ let () = Journal.apply "Cmdline.taint-analysis.debug.set" true in
+ let () = Cmdline.Files.add "tests/func_tests/21.simple_interprocedural.c" in
  let () = File.init_from_cmdline () in
  (* Finished *)
  Journal.finished ()

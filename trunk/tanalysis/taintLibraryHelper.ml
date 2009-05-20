@@ -24,6 +24,8 @@ module Initializer(Param:sig
 
     module P = TaintPrinter.Printer(struct
                                         let fmt = Param.fmt
+                                        let debug = Param.debug
+                                        let info = Param.info
                                     end)
     module Typing = TaintTyping.Typing(struct
                                          let fmt = Param.fmt
@@ -59,9 +61,7 @@ module Initializer(Param:sig
                              U
                             m_g
         in
-        if Param.info then (
-            P.print () "[INFO] Adding library function: %s\n" fname
-        );
+        P.print_info () "[INFO] Adding library function: %s\n" fname; 
         let param_types = List.map 
                             (fun (pname, ptype, ptaint) ->
                                 (pname, ptype, []))
@@ -88,9 +88,7 @@ module Initializer(Param:sig
                     (get_taint funcdec (get_param_meta_taint formal.vname)))
             funcdec.sformals; 
         Inthash.add (!Param.func_envs_ref) funcdec.svar.vid (env, Inthash.create 1024);
-        if Param.info then (
-            P.print () "[INFO] Added library function: %s\n" fname
-        );
+        P.print_info () "[INFO] Added library function: %s\n" fname; 
         Inthash.add (!Param.lib_func_hash_ref) funcdec.svar.vid funcdec
 
     let start () =

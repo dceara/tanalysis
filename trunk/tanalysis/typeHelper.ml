@@ -17,6 +17,8 @@ module TypeGetter(Param:sig
                         
     module P = Printer.Printer(struct
                                     let fmt = Param.fmt
+                                    let debug = Param.debug
+                                    let info = Param.info
                                 end)                    
     
     let rec is_structure typ =
@@ -101,6 +103,8 @@ module TypeComparer(Param:sig
 
     module P = Printer.Printer(struct
                                     let fmt = Param.fmt
+                                    let debug = Param.debug
+                                    let info = Param.info
                                 end)
 
     (* TODO: Arch dependency *)
@@ -180,32 +184,23 @@ module TypeComparer(Param:sig
         match typ with
             (* TODO: *)
             | TVoid _ -> 
-                (* P.print () "%s\\n" "DEBUG1"; *)
                 TypeSize (RefCount ref_cnt, 100000)
             | TInt (ikind, _) -> 
-                (* P.print () "%s\\n" "DEBUG2"; *)
                 do_get_type_size_int (RefCount ref_cnt) ikind
             | TFloat (fkind, _) -> 
-                (* P.print () "%s\\n" "DEBUG3"; *)
                 do_get_type_size_float (RefCount ref_cnt) fkind
             | TPtr (ptr_typ, _) -> 
-                (* P.print () "%s\\n" "DEBUG4"; *)
                 do_get_type_size_ptr (RefCount ref_cnt) ptr_typ
             (* TODO: Probably this isn't ok. What do we do if we have a fixed size array? *)
             | TArray (arr_typ, _, _) -> 
-                (* P.print () "%s\\n" "DEBUG5"; *)
                 do_get_type_size_arr (RefCount ref_cnt) arr_typ 
             | TNamed (tinfo, _) -> 
-                (* P.print () "DEBUG6 tname = %s\n" tinfo.tname; *)
                 get_type_size (RefCount ref_cnt) tinfo.ttype
             | TComp (compinfo, _) -> 
-                (* P.print () "%s\\n" "DEBUG7"; *)
                 do_get_type_size_comp (RefCount ref_cnt) compinfo
             | TEnum _ -> 
-                (* P.print () "%s\\n" "DEBUG8"; *)
                 TypeSize (RefCount ref_cnt, enum_size ())
             | _ -> 
-                (* P.print () "%s\\n" "DEBUG9"; *)
                 TypeSize (RefCount ref_cnt, 0)
     
     let rec get_expr_type_size (RefCount ref_cnt) expr  =

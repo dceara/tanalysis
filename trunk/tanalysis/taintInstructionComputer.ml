@@ -189,9 +189,7 @@ module InstrComputer(Param:sig
     (* func_envs - the environments for already computed functions *)    
     and get_lvalue_taint env lvalue param_exprs func_envs =
         let get_lvalue_taint_vinfo vinfo offset =
-            if Param.debug then (
-                P.print () "[DEBUG] Getting taint for lvalue: %s\n" vinfo.vname
-            );
+            P.print_debug () "[DEBUG] Getting taint for lvalue: %s\n" vinfo.vname; 
             let taint = 
                 try
                     Gamma.get_taint env vinfo.vid 
@@ -204,9 +202,8 @@ module InstrComputer(Param:sig
             in
             let offset_taint = do_offset env offset func_envs in
             let taint = Typing.combine_taint taint offset_taint in
-            if Param.debug then (
-                P.print () "[DEBUG] Taint for lvalue %s: " vinfo.vname;
-                P.print_taint () taint);
+            P.print_debug () "[DEBUG] Taint for lvalue %s: " vinfo.vname;
+            P.print_taint_debug () taint; 
             taint
         in
         (* Gets the taint for a lvalue that is a memory location. I.e.: a pointer. *)
@@ -214,13 +211,11 @@ module InstrComputer(Param:sig
             let taint = do_expr env expr [] func_envs in
             let offset_taint = do_offset env offset func_envs in
             let taint = Typing.combine_taint taint offset_taint in
-            if Param.debug then (
-                P.print () "[DEBUG] Taint for memory lvalue: %s" "\n";
-                P.print_taint () taint);
+            P.print_debug () "[DEBUG] Taint for memory lvalue: %s" "\n";
+            P.print_taint_debug () taint; 
             taint
         in
-        (if Param.info then
-            P.print () "[INFO] Getting lvalue taint %s" "\n"); 
+        P.print_info () "[INFO] Getting lvalue taint %s" "\n";
         match lvalue with
             | ((Var vinfo), offset) -> get_lvalue_taint_vinfo vinfo offset
             | ((Mem exp), offset) -> get_lvalue_taint_mem exp offset         
@@ -234,98 +229,84 @@ module InstrComputer(Param:sig
     (* func_envs - the previously computed function environments *)
     do_expr env expr param_exprs func_envs =
         let do_const () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for Constant is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for Constant is: ";
+            P.print_taint_debug () U;
             U
         in
         let do_lvalue lvalue =
             let taint = get_lvalue_taint env lvalue param_exprs func_envs in
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for Lvalue is: ";
-                P.print_taint () taint);
+            P.print_debug () "%s" "[DEBUG] Taint for Lvalue is: ";
+            P.print_taint_debug () taint;
             taint
         in
         let do_sizeOf () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for SizeOf is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for SizeOf is: ";
+            P.print_taint_debug () U;
             U
         in
         let do_sizeOfE expr =
             let taint = do_expr env expr param_exprs func_envs in
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for SizeOfE is: ";
-                P.print_taint () taint);
+            P.print_debug () "%s" "[DEBUG] Taint for SizeOfE is: ";
+            P.print_taint_debug () taint; 
             taint
         in
         let do_sizeOfStr () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for SizeOfStr is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for SizeOfStr is: ";
+            P.print_taint_debug () U;
             U
         in
         let do_alignOf () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for AlignOf is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for AlignOf is: ";
+            P.print_taint_debug () U;
             U
         in
         let do_alignOfE () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for AlignOfE is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for AlignOfE is: ";
+            P.print_taint_debug () U;  
             U
         in
         let do_unOp expr =
             let taint = do_expr env expr param_exprs func_envs in
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for UnOp is: ";
-                P.print_taint () taint);
+            P.print_debug () "%s" "[DEBUG] Taint for UnOp is: ";
+            P.print_taint_debug () taint; 
             taint
         in
         let do_binOp expr1 expr2 =
             let taint = Typing.combine_taint 
                             (do_expr env expr1 param_exprs func_envs) 
                             (do_expr env expr2 param_exprs func_envs) in
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for BinOp is: ";
-                P.print_taint () taint);
+            P.print_debug () "%s" "[DEBUG] Taint for BinOp is: ";
+            P.print_taint_debug () taint; 
             taint
         in
         let do_castE typ expr =
             let taint =
                 match TH.check_type typ expr with
                     | true -> do_expr env expr param_exprs func_envs
-                    | false -> T in  
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for CastE is: ";
-                P.print_taint () taint);
+                    | false -> T in
+            P.print_debug () "%s" "[DEBUG] Taint for CastE is: ";
+            P.print_taint_debug () taint;   
             taint
         in
         let do_addrOf lvalue =
             let taint = get_lvalue_taint env lvalue param_exprs func_envs in
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for AddrOf is: ";
-                P.print_taint () taint);
+            P.print_debug () "%s" "[DEBUG] Taint for AddrOf is: ";
+            P.print_taint_debug () taint; 
             taint
         in
         let do_startOf lvalue = 
-            let taint = get_lvalue_taint env lvalue param_exprs func_envs in 
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for StartOf is: ";
-                P.print_taint () taint);
+            let taint = get_lvalue_taint env lvalue param_exprs func_envs in
+            P.print_debug () "%s" "[DEBUG] Taint for StartOf is: ";
+            P.print_taint_debug () taint;  
             taint
         in
         let do_info () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for Info is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for Info is: ";
+            P.print_taint_debug () U;
             U
         in
         
-        (if Param.info then
-            P.print () "[INFO] Processing instruction %s" "\n");
+        P.print_info () "[INFO] Processing instruction %s" "\n"; 
         match expr with
             | Const _ -> do_const ()  
             | Lval lvalue -> do_lvalue lvalue                    
@@ -351,21 +332,18 @@ module InstrComputer(Param:sig
     (* func_envs - the previously computed function environments *)
     let do_null_expr env null_expr param_exprs func_envs =
         let do_null () =
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for Null expr is: ";
-                P.print_taint () U);
+            P.print_debug () "%s" "[DEBUG] Taint for Null expr is: ";
+            P.print_taint_debug () U; 
             U
         in
         let do_not_null expr =
             let taint = do_expr env expr param_exprs func_envs in
-            if Param.debug then (
-                P.print () "%s" "[DEBUG] Taint for NotNull expr is: ";
-                P.print_taint () taint);
+            P.print_debug () "%s" "[DEBUG] Taint for NotNull expr is: ";
+            P.print_taint_debug () taint; 
             taint
         in
         
-        (if Param.info then
-            P.print () "[INFO] Processing nullable expression %s" "\n");
+        P.print_info () "[INFO] Processing nullable expression %s" "\n"; 
         match null_expr with
             | None -> do_null ()
             | Some expr -> do_not_null expr 
@@ -381,8 +359,7 @@ module InstrComputer(Param:sig
     (* func_env - the previously computed function environments *)
     let do_assign env lvalue expr cond_taint param_exprs func_env =
         let do_assign_lvalue_tainted vinfo offset =
-            (if Param.debug then
-                P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
+            P.print_debug () "[DEBUG] Assigning T to %s\n" vinfo.vname; 
             let aliases = Alias.get_aliases vinfo in
             List.iter 
                 (fun info -> Gamma.set_taint env info.vid T)
@@ -392,10 +369,8 @@ module InstrComputer(Param:sig
         let do_assign_lvalue vinfo expr offset =
             let expr_taint = do_expr env expr param_exprs func_env in
             let offset_taint = do_offset env offset func_env in
-            if Param.debug then (
-                P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
-                P.print_taint () expr_taint
-            );
+            P.print_debug () "[DEBUG] Assigning to %s taint:" vinfo.vname;
+            P.print_taint_debug () expr_taint; 
             let taint = Typing.combine_taint expr_taint cond_taint in
             let taint = Typing.combine_taint taint offset_taint in
             let aliases = Alias.get_aliases vinfo in
@@ -406,8 +381,7 @@ module InstrComputer(Param:sig
         in
         let do_assign_lvalue_mem_tainted ptr_expr =
             let vinfo = Utils.extract_vinfo_from_ptr_expr ptr_expr in
-            (if Param.debug then
-                P.print () "[DEBUG] Assigning T to %s\n" vinfo.vname);
+            P.print_debug () "[DEBUG] Assigning T to %s\n" vinfo.vname; 
             let aliases = Alias.get_aliases vinfo in
             List.iter 
                 (fun info -> Gamma.set_taint env info.vid T)
@@ -418,10 +392,8 @@ module InstrComputer(Param:sig
             let vinfo = Utils.extract_vinfo_from_ptr_expr ptr_expr in
             let vinfo_expr_taint = do_expr env ptr_expr [] func_env in
             let expr_taint = do_expr env expr param_exprs func_env in
-            if Param.debug then (
-                P.print () "[DEBUG] Assigning to %s taint:" vinfo.vname;
-                P.print_taint () expr_taint
-            );
+            P.print_debug () "[DEBUG] Assigning to %s taint:" vinfo.vname;
+            P.print_taint_debug () expr_taint; 
             let taint = Typing.combine_taint expr_taint cond_taint in
             let taint = Typing.combine_taint taint vinfo_expr_taint in
             let aliases = Alias.get_aliases vinfo in
@@ -431,8 +403,7 @@ module InstrComputer(Param:sig
             env
         in
         
-        (if Param.info then
-            P.print () "[INFO] Processing assign instruction %s" "\n");
+        P.print_info () "[INFO] Processing assign instruction %s" "\n"; 
         match (lvalue, cond_taint) with
             | ((Var vinfo, offset), T) -> do_assign_lvalue_tainted vinfo offset                   
             | ((Var vinfo, offset), _) -> do_assign_lvalue vinfo expr offset
@@ -452,27 +423,23 @@ module InstrComputer(Param:sig
             let taint = do_expr env cast_expr param_exprs func_envs in
             let taint = Typing.combine_taint taint cond_taint in
             Gamma.set_taint env vinfo.vid taint;
-            if Param.debug then (
-                P.print () "[DEBUG] Assigning to %s taint value:" vinfo.vname;
-                P.print_taint () taint
-            );
+            P.print_debug () "[DEBUG] Assigning to %s taint value:" vinfo.vname;
+            P.print_taint_debug () taint; 
             env
         in  
         let do_call_void () =
             ignore (do_expr env cast_expr param_exprs func_envs); 
             env 
         in
-        
-        (if Param.info then
-            P.print () "[INFO] Processing call instruction %s" "\n");
+
+        P.print_info () "[INFO] Processing call instruction %s" "\n";         
         match null_lval with
             | Some (Var vinfo, _) -> do_call_lval vinfo 
             | _ -> do_call_void ()
     
     (* Changes the environment according to the instruction *)
     let do_instr env instr cond_taint func_envs =
-        (if Param.info then
-            P.print () "[INFO] Processing instruction %s" "\n");
+        P.print_info () "[INFO] Processing instruction %s" "\n"; 
         match instr with
             | (Set (lvalue, expr, _))
                 -> do_assign env lvalue expr cond_taint [] func_envs
@@ -485,8 +452,7 @@ module InstrComputer(Param:sig
     let do_return_instr env func null_expr cond_taint func_envs =
         let fname = func.svar.vname in
         let fid = func.svar.vid in
-        (if Param.info then
-            P.print () "[INFO] Processing return instruction for function %s\n" fname);
+        P.print_info () "[INFO] Processing return instruction for function %s\n" fname; 
         let old_taint = 
             (try 
                 Gamma.get_taint env fid
@@ -498,47 +464,38 @@ module InstrComputer(Param:sig
                                 cond_taint 
                                 (do_null_expr env null_expr [] func_envs))) in
         Gamma.set_taint env (-fid) new_taint;
-        if Param.debug then (
-            P.print () "[DEBUG] FID: %d\n" fid;
-            P.print () "[DEBUG] Old taint for return in function %s:" fname;
-            P.print_taint () old_taint;
-            P.print () "[DEBUG] New taint for return in function %s:" fname;
-            P.print_taint () new_taint
-        );
+        P.print_debug () "[DEBUG] FID: %d\n" fid;
+        P.print_debug () "[DEBUG] Old taint for return in function %s:" fname;
+        P.print_taint_debug () old_taint;
+        P.print_debug () "[DEBUG] New taint for return in function %s:" fname;
+        P.print_taint_debug () new_taint;   
         env
         
     (* Only return the taintedness of the expression. The successors will be computed*)
     (* later. *)
     let do_if_instr env expr true_block false_block cond_taint func_env =
-        (if Param.info then
-            P.print () "[INFO] Processing if instruction %s" "\n");
+        P.print_info () "[INFO] Processing if instruction %s" "\n"; 
         let expr_taint = do_expr env expr [] func_env in 
         let new_cond_taint = Typing.combine_taint expr_taint cond_taint in
-        if Param.debug then (
-            P.print () "%s" "[DEBUG] Condition taint for if instruction:";
-            P.print_taint () cond_taint;
-            P.print () "%s" "[DEBUG] New condition taint for if instruction:";
-            P.print_taint () new_cond_taint;
-        );
+        P.print_debug () "%s" "[DEBUG] Condition taint for if instruction:";
+        P.print_taint_debug () cond_taint;
+        P.print_debug () "%s" "[DEBUG] New condition taint for if instruction:";
+        P.print_taint_debug () new_cond_taint; 
         new_cond_taint
         
     (* Only return the taintedness of the expression. The successors will be computed*)
     (* later. *)
     let do_switch_instr env expr cond_taint func_env =
-        (if Param.info then
-            P.print () "[INFO] Processing switch instruction %s" "\n");
+        P.print_info () "[INFO] Processing switch instruction %s" "\n"; 
         let expr_taint = do_expr env expr [] func_env in 
         let new_cond_taint = Typing.combine_taint expr_taint cond_taint in
-        if Param.debug then (
-            P.print () "%s" "[DEBUG] Condition taint for if instruction:";
-            P.print_taint () cond_taint;
-            P.print () "%s" "[DEBUG] New condition taint for if instruction:";
-            P.print_taint () new_cond_taint;
-        );
+        P.print_debug () "%s" "[DEBUG] Condition taint for if instruction:";
+        P.print_taint_debug () cond_taint;
+        P.print_debug () "%s" "[DEBUG] New condition taint for if instruction:";
+        P.print_taint_debug () new_cond_taint;  
         new_cond_taint
         
     let do_loop_instr env stmt_block stmt_continue stmt_break cond_taint =
-         (if Param.info then
-            P.print () "[INFO] Processing loop instruction %s" "\n");
+        P.print_info () "[INFO] Processing loop instruction %s" "\n"; 
         (env, cond_taint)                     
 end
