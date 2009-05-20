@@ -94,7 +94,7 @@ grabh(struct header *hp, int gflags)
 #ifndef TIOCSTI
 	ttyset = 0;
 #endif
-	if (tcgetattr(fileno(stdin), &ttybuf) < 0) {
+	if (tcgetattr(fileno(NULL), &ttybuf) < 0) {
 		warn("tcgetattr");
 		return(-1);
 	}
@@ -112,7 +112,7 @@ grabh(struct header *hp, int gflags)
 	extproc = ((ttybuf.c_lflag & EXTPROC) ? 1 : 0);
 	if (extproc) {
 		flag = 0;
-		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+		if (ioctl(fileno(NULL), TIOCEXT, &flag) < 0)
 			warn("TIOCEXT: off");
 	}
 # endif /* TIOCEXT */
@@ -120,7 +120,7 @@ grabh(struct header *hp, int gflags)
 	if (gflags & GTO) {
 #ifndef TIOCSTI
 		if (!ttyset && hp->h_to != NULL)
-			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
+			ttyset++, tcsetattr(fileno(NULL), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("To: ", detract(hp->h_to, 0));
 		if (s == NULL)
@@ -130,7 +130,7 @@ grabh(struct header *hp, int gflags)
 	if (gflags & GSUBJECT) {
 #ifndef TIOCSTI
 		if (!ttyset && hp->h_subject != NULL)
-			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
+			ttyset++, tcsetattr(fileno(NULL), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("Subject: ", hp->h_subject);
 		if (s == NULL)
@@ -140,7 +140,7 @@ grabh(struct header *hp, int gflags)
 	if (gflags & GCC) {
 #ifndef TIOCSTI
 		if (!ttyset && hp->h_cc != NULL)
-			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
+			ttyset++, tcsetattr(fileno(NULL), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("Cc: ", detract(hp->h_cc, 0));
 		if (s == NULL)
@@ -150,7 +150,7 @@ grabh(struct header *hp, int gflags)
 	if (gflags & GBCC) {
 #ifndef TIOCSTI
 		if (!ttyset && hp->h_bcc != NULL)
-			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
+			ttyset++, tcsetattr(fileno(NULL), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("Bcc: ", detract(hp->h_bcc, 0));
 		if (s == NULL)
@@ -166,13 +166,13 @@ out:
 	ttybuf.c_cc[VERASE] = c_erase;
 	ttybuf.c_cc[VKILL] = c_kill;
 	if (ttyset)
-		tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
+		tcsetattr(fileno(NULL), TCSADRAIN, &ttybuf);
 	(void)sigaction(SIGQUIT, &savequit, NULL);
 #else
 # ifdef	TIOCEXT
 	if (extproc) {
 		flag = 1;
-		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+		if (ioctl(fileno(NULL), TIOCEXT, &flag) < 0)
 			warn("TIOCEXT: on");
 	}
 # endif /* TIOCEXT */
@@ -231,10 +231,10 @@ readtty(char *pr, char *src)
 	(void)sigaction(SIGTTOU, &act, NULL);
 	(void)sigaction(SIGTTIN, &act, NULL);
 	(void)sigprocmask(SIG_UNBLOCK, &intset, &oset);
-	clearerr(stdin);
+	clearerr(NULL);
 	memset(cp, 0, canonb + sizeof(canonb) - cp);
 	for (cp2 = cp; cp2 < canonb + sizeof(canonb) - 1; ) {
-		c = getc(stdin);
+		c = getc(NULL);
 		switch (ttysignal) {
 			case SIGINT:
 				ttysignal = 0;
@@ -262,10 +262,10 @@ readtty(char *pr, char *src)
 	if (cp2 == NULL)
 		return(NULL);			/* user hit ^C */
 	*cp2 = '\0';
-	if (c == EOF && ferror(stdin)) {
+	if (c == EOF && ferror(NULL)) {
 redo:
 		cp = strlen(canonb) > 0 ? canonb : NULL;
-		clearerr(stdin);
+		clearerr(NULL);
 		/* XXX - make iterative, not recursive */
 		return(readtty(pr, cp));
 	}

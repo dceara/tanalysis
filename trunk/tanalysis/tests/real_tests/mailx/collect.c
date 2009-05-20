@@ -116,7 +116,7 @@ cont:
 		}
 	}
 	for (;;) {
-		c = readline(stdin, linebuf, LINESIZE, &sig);
+		c = readline(NULL, linebuf, LINESIZE, &sig);
 
 		/* Act on any signal caught during readline() ignoring 'c' */
 		switch (sig) {
@@ -488,7 +488,7 @@ mesedit(FILE *fp, int c)
 
 /*
  * Pipe the message through the command.
- * Old message is on stdin of command;
+ * Old message is on NULL of command;
  * New message collected from stdout.
  * Sh -c must return 0 to accept the new message.
  */
@@ -511,7 +511,7 @@ mespipe(FILE *fp, char *cmd)
 	}
 	(void)rm(tempname);
 	/*
-	 * stdin = current message.
+	 * NULL = current message.
 	 * stdout = new message.
 	 */
 	shell = value("SHELL");
@@ -598,7 +598,7 @@ collabort(void)
 		if (value("ignore") != NULL) {
 			puts("@");
 			//fflush(stdout);
-			clearerr(stdin);
+			clearerr(NULL);
 		} else {
 			//fflush(stdout);
 			//fputs("\n(Interrupt -- one more to kill letter)\n",

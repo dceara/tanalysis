@@ -208,7 +208,7 @@ file_pid(FILE *fp)
 
 /*
  * Run a command without a shell, with optional arguments and splicing
- * of stdin (-1 means none) and stdout.  The command name can be a sequence
+ * of NULL (-1 means none) and stdout.  The command name can be a sequence
  * of words.
  * Signals must be handled by the caller.
  * "nset" contains the signals to ignore in the new process.
@@ -277,7 +277,7 @@ prepare_child(sigset_t *nset, int infd, int outfd)
 	if (infd > 0) {
 		dup2(infd, 0);
 	} else if (infd != 0) {
-		/* we don't want the child stealing my stdin input */
+		/* we don't want the child stealing my NULL input */
 		close(0);
 		open(_PATH_DEVNULL, O_RDONLY, 0);
 	}
