@@ -461,7 +461,7 @@ igshow(struct ignoretab *tab, char *which)
 		for (igp = tab->i_head[h]; igp != 0; igp = igp->i_link)
 			*ap++ = igp->i_field;
 	*ap = 0;
-	qsort(ring, tab->i_count, sizeof(char *), igcomp);
+	qsort(ring, tab->i_count, sizeof(char *), NULL);
 	for (ap = ring; *ap != 0; ap++)
 		puts(*ap);
 	return(0);

@@ -278,7 +278,7 @@ main(int argc, char **argv)
 	 */
 	tinit();
 	setscreensize();
-	input = stdin;
+	input = NULL;
 	rcvmode = !to;
 	spreserve();
 	if (!nosrc)

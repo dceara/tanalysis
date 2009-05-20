@@ -357,7 +357,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 	 * start a pipe if needed.
 	 */
 	if (cmd) {
-		restoreterm = (tcgetattr(fileno(stdin), &tbuf) == 0);
+		restoreterm = (tcgetattr(fileno(NULL), &tbuf) == 0);
 		obuf = Popen(cmd, "w");
 		if (obuf == NULL) {
 			warn("%s", cmd);
@@ -371,7 +371,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 				nlines += message[*ip - 1].m_lines;
 		}
 		if (page || nlines > (*cp ? atoi(cp) : realscreenheight)) {
-			restoreterm = (tcgetattr(fileno(stdin), &tbuf) == 0);
+			restoreterm = (tcgetattr(fileno(NULL), &tbuf) == 0);
 			cp = value("PAGER");
 			obuf = Popen(cp, "w");
 			if (obuf == NULL) {
@@ -397,7 +397,7 @@ type1(int *msgvec, char *cmd, int doign, int page)
 	if (obuf != NULL) {
 		(void)Pclose(obuf);
 		if (restoreterm)
-			(void)tcsetattr(fileno(stdin), TCSADRAIN, &tbuf);
+			(void)tcsetattr(fileno(NULL), TCSADRAIN, &tbuf);
 	}
 	return(0);
 }

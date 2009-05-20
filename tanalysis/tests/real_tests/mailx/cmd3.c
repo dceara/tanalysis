@@ -526,7 +526,7 @@ sort(char **list)
 		;
 	if (ap-list < 2)
 		return;
-	qsort(list, ap-list, sizeof(*list), diction);
+	qsort(list, ap-list, sizeof(*list), NULL);
 }
 
 /*
