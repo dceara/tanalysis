@@ -410,8 +410,6 @@ module InstrComputer(Param:sig
             | ((Mem ptr_expr, _), T) -> do_assign_lvalue_mem_tainted ptr_expr
             | ((Mem ptr_expr, _), _) -> do_assign_lvalue_mem ptr_expr expr   
             
-    (* TODO: Makes the assumption that all the functions return a single value and have no *)
-    (* side effects. *)
     (* Params: *)
     (* env - the current environment *)
     (* null_lval - the nullable lvalue *)

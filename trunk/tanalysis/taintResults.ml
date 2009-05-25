@@ -47,8 +47,17 @@ module ResultsComputer(Param:sig
 
     let taint_stmt_count = ref 0;;
 
-    let inc_taint_stmt_count () =
-        taint_stmt_count := !taint_stmt_count + 1
+    let taint_stmt_ids = ref (Inthash.create 1024);;
+
+    let inc_taint_stmt_count stmt =
+        let matches_vulnerable_scheme () =
+            (* TODO match statement against schemes *)
+            true
+        in
+        
+        taint_stmt_count := !taint_stmt_count + 1;
+        if matches_vulnerable_scheme () then
+            Inthash.add !taint_stmt_ids stmt.sid stmt
 
     let check_tainted taint stmt = 
         match taint with 
@@ -73,7 +82,7 @@ module ResultsComputer(Param:sig
                             curr_stmt_env
                             vinfo.vid)
                         curr_stmt) then (
-                    inc_taint_stmt_count ();
+                    inc_taint_stmt_count curr_stmt;
                     true
                 ) else (
                     false
@@ -102,7 +111,7 @@ module ResultsComputer(Param:sig
 		                                let expr_vinfo = Utils.extract_vinfo_from_ptr_expr p_expr in
 		                                let taint = Gamma.get_taint curr_stmt_env expr_vinfo.vid in
                                         if check_tainted taint curr_stmt then (
-                                            inc_taint_stmt_count ();
+                                            inc_taint_stmt_count curr_stmt;
                                             (idx + 1, true)
                                         ) else (
                                             (idx + 1, false)
@@ -200,7 +209,7 @@ module ResultsComputer(Param:sig
                             curr_stmt_env 
                             (Typing.get_function_return_vid func.svar))
                         curr_stmt) then
-                    inc_taint_stmt_count ()
+                    inc_taint_stmt_count curr_stmt
 
     and do_stmt env_instance curr_func_stack func visited_ref curr_stmt =
         let visited = 
@@ -237,8 +246,8 @@ module ResultsComputer(Param:sig
         )
         
     and compute env_instance curr_func_stack (func, visited_ref, worklist) =
-        match List.length worklist with
-        | 0 -> 
+        match worklist with
+        | [] -> 
             P.print_info () "Finished analyzing function %s\n" func.svar.vname;
             P.print_info () "%s" "Current stack: ";
             List.iter
@@ -247,17 +256,16 @@ module ResultsComputer(Param:sig
                 (List.rev curr_func_stack);
             P.print_info () "%s" "\n";
             ignore ()
-        | _ -> 
-            let curr_stmt = List.hd worklist in
+        | curr_stmt::rest -> 
             match do_stmt env_instance curr_func_stack func visited_ref curr_stmt with
             | [] ->
                 compute env_instance
                     curr_func_stack
-                        (func, visited_ref, List.tl worklist)
+                        (func, visited_ref, rest)
             | succs ->
                 compute env_instance 
                     curr_func_stack 
-                        (func, visited_ref, List.append (List.tl worklist) succs)
+                        (func, visited_ref, List.append (rest) succs)
             
 end
 
