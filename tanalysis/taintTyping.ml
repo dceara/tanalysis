@@ -72,7 +72,6 @@ module Typing (Param:sig
     
     let visit_env (_, env) = (true, env)
     
-    (* TODO: instantiate all taints in the env according to taint_instances *)
     let instantiate_func_env env_hash taint_instances =
         let _find_instance vinfo =
             match 
@@ -127,12 +126,6 @@ module Typing (Param:sig
     let process_local env vinfo =
         Gamma.set_taint env vinfo.vid U;
         env
-        (* 
-        (* TODO: Initialize all locals to U *)
-        (match TG.is_structure vinfo.vtype with
-            | false -> Gamma.set_taint env vinfo.vid T
-            | true -> Gamma.set_taint env vinfo.vid U);
-        env *)
     
     (* Formals are initialized to G. *)
     let process_formal env vinfo =
