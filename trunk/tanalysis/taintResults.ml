@@ -261,8 +261,7 @@ module ResultsComputer(Param:sig
             
 end
 
-let get_results format dbg inf f_envs f_hash gls =
-    let get_main_func () =
+let get_main_func globals =
         (* TODO: remove hardcoding for entry point *)
         match List.fold_left
             (fun result g ->
@@ -273,11 +272,11 @@ let get_results format dbg inf f_envs f_hash gls =
                             | GFun (funcdec, _) when funcdec.svar.vname = "main" -> Some funcdec
                             | _ -> None)
             None
-            gls with
-        | None -> assert (false)
+            globals with
+        | None -> failwith "[FATAL]: TAINT RESULTS: Missing main function."
         | Some result -> result
-    in
-    
+
+let get_results format dbg inf f_envs f_hash gls =
     let module Computer = ResultsComputer(struct
 					                        let globals = gls
 					                        let func_envs = f_envs
@@ -286,7 +285,7 @@ let get_results format dbg inf f_envs f_hash gls =
 					                        let debug = dbg      
 					                        let info = inf     
 					                     end) in
-    let main_func = get_main_func () in
+    let main_func = get_main_func gls in
     let (_, main_instance) = Inthash.find f_envs main_func.svar.vid in
     let worklist = 
         match List.length main_func.sallstmts with
