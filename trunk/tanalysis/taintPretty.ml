@@ -2,7 +2,6 @@ open Cil
 open Cil_types
 open TaintGamma
 
-(* functionEnvironment *)
 class print func_envs = object(self)
     inherit defaultCilPrinterClass as super
 
