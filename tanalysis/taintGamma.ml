@@ -3,11 +3,10 @@ open Cil
 
 type taintValue = T | U | G of varinfo list
 
-type formalParam = Formal of varinfo
+(* A constraint is a pair of formal id * constraint taint. *)
+type taintConstraint = string * taintValue
 
-type actualParam = Actual of varinfo
-
-type paramBinding = Param of formalParam * actualParam
+type taintConstraints = taintConstraint list
 
 (* The environment is a mapping between symbol ids and taint values. *)
 type environment = bool * ((int, taintValue) Hashtbl.t)

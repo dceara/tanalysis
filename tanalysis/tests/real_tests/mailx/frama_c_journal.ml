@@ -1,12 +1,14 @@
-(* Frama-C journal generated at 10:19 the 19/05/2009 *)
+(* Frama-C journal generated at 05:47 the 27/05/2009 *)
 
 (* Running *)
 let start () =
  let () = Journal.run () in
  let () = Cmdline.CppCommand.set "gcc -C -E -D_BSD_SOURCE -DDEBIAN -IEXT -I." in
  let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
- let () = Journal.apply "Cmdline.taint-analysis.config_file.set" "../../../default.cfg" in
- let () = Journal.apply "Cmdline.taint-analysis.do-results.set" true in
+ let () = Journal.apply "Cmdline.taint-analysis.prepare-slice.set" true in
+ let () = Journal.apply "Cmdline.taint-analysis.config-file.set" "../../../default.cfg" in
+ let () = Journal.apply "Cmdline.taint-analysis.constr-config-file.set"
+  "../../../constr_default.cfg" in
  let () = Cmdline.Files.add "_aux.c" in
  let () = Cmdline.Files.add "cmd1.c" in
  let () = Cmdline.Files.add "cmd2.c" in

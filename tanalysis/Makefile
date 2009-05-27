@@ -18,8 +18,9 @@ pack: utils \
 	taintTyping \
 	alias \
 	taintPretty \
+	slicePretty \
 	taintInstructionComputer \
-	taintLibraryHelper \
+	taintConfigHelper \
 	customTaintFlow sccCallgraph \
 	sccCallgraph \
 	taintResults \
@@ -33,8 +34,9 @@ pack: utils \
 					   taintTyping.cmo \
 					   alias.cmo \
 					   taintPretty.cmo \
+					   slicePretty.cmo \
 					   taintInstructionComputer.cmo \
-					   taintLibraryHelper.cmo \
+					   taintConfigHelper.cmo \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
 					   taintResults.cmo \
@@ -72,11 +74,14 @@ alias: alias.ml
 
 taintPretty: taintPretty.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^	
+	
+slicePretty: slicePretty.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
 taintInstructionComputer: taintInstructionComputer.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 	
-taintLibraryHelper: taintLibraryHelper.ml
+taintConfigHelper: taintConfigHelper.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 	
 customTaintFlow: customTaintFlow.ml

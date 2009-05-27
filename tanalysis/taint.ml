@@ -12,11 +12,14 @@ let option_print_intermediate () = "taint-analysis.print-intermediate"
 let option_print_final () = "taint-analysis.print-final"
 let option_print_source () = "taint-analysis.print-source"
 let option_do_results () = "taint-analysis.do-results"
-let option_config_file () = "taint-analysis.config_file"
+let option_config_file () = "taint-analysis.config-file"
+let option_constr_config_file () = "taint-analysis.constr-config-file"
 let option_debugging () = "taint-analysis.debug"
 let option_info () = "taint-analysis.info"
+let option_prepare_slice () = "taint-analysis.prepare-slice"
 
 let default_config_file () = "default.cfg"
+let default_constr_config_file () = "default_constr.cfg"
 
 (* Register a new Frama-C option. *)
 module Enabled =
@@ -47,8 +50,16 @@ module Info =
 (* Register config file sub option. *)
 module ConfigFile =
     Cmdline.Dynamic.Register.EmptyString(struct let name = option_config_file () end)
+    
+(* Register constraint config file sub option. *)
+module ConstrConfigFile =
+    Cmdline.Dynamic.Register.EmptyString(struct let name = option_constr_config_file () end)
 
-let run_taint fmt debug info config_file_name globals =
+(* Register prepare slice sub option. *)
+module PrepareSliceEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_prepare_slice () end)
+
+let run_taint fmt debug info config_file_name constr_config_file_name globals =
     let module P = TaintPrinter.Printer(struct
                                         let fmt = fmt
                                         let debug = debug
@@ -57,6 +68,7 @@ let run_taint fmt debug info config_file_name globals =
     let computed_function_envs = ref (Inthash.create 1024) in
     let func_hash = Hashtbl.create 1024 in
     let lib_func_hash = Inthash.create 1024 in
+    let func_constr_hash = Inthash.create 1024 in
     List.iter
         (fun global ->
             match global with
@@ -64,15 +76,17 @@ let run_taint fmt debug info config_file_name globals =
                 | _ -> ignore ())
         globals;
     let intialize_library_calls () =
-        TaintLibraryHelper.run 
+        TaintConfigHelper.run_library
             fmt 
             debug 
             info
             config_file_name 
+            constr_config_file_name
             computed_function_envs
             globals
             (ref func_hash)
             (ref lib_func_hash)
+            (ref func_constr_hash)
     in    
     let perform_analysis print_intermediate =
         let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
@@ -138,23 +152,42 @@ let run_taint fmt debug info config_file_name globals =
     in
     let do_results enabled =
         if enabled then
-             match get_results 
+            match get_results 
 	                fmt 
 	                debug 
 	                info 
 	                !computed_function_envs 
 	                func_hash 
-	                globals with
-            | (stmt_count, taint_stmt_count) ->
+	                globals
+                    (Inthash.create 1024) with
+            | (stmt_count, taint_stmt_count, _) ->
                 P.print () "STMT_COUNT: %d TAINT_STMT_COUNT: %d\n" stmt_count taint_stmt_count
+    in
+    let do_prepare_slice enabled = 
+        if enabled then
+            match get_results 
+                    fmt 
+                    debug 
+                    info 
+                    !computed_function_envs 
+                    func_hash 
+                    globals
+                    func_constr_hash with
+            | (_, _, vulnerable_statements) ->
+                Cil.dumpFile (new SlicePretty.print vulnerable_statements) stdout "test" (Cil_state.file ());
     in
     
     intialize_library_calls ();
+    P.print_info () "%s\n" "Performing Taint Analysis";
     perform_analysis (PrintIntermediateEnabled.get ());
+    P.print_info () "%s\n" "Printing Results";
     print_results (PrintFinalEnabled.get ());
+    P.print_info () "%s\n" "Printing Annotated Source";
     print_source (PrintSourceEnabled.get ());
-    do_results (DoResultsEnabled.get ())
-    
+    P.print_info () "%s\n" "Doing results";
+    do_results (DoResultsEnabled.get ());
+    P.print_info () "%s\n" "Preparing slice";
+    do_prepare_slice (PrepareSliceEnabled.get ())
 
 let run fmt =
     if Enabled.get () then
@@ -164,7 +197,11 @@ let run fmt =
             match ConfigFile.is_set () with
                 | true -> ConfigFile.get ()
                 | false -> default_config_file () in
-        run_taint fmt (Debugging.get ()) (Info.get ()) config_file_name globals
+        let constr_config_file_name =
+            match ConstrConfigFile.is_set () with
+                | true -> ConstrConfigFile.get ()
+                | false -> default_constr_config_file () in
+        run_taint fmt (Debugging.get ()) (Info.get ()) config_file_name constr_config_file_name globals
         
 (* Extend the Frama-C command line. *)
 let () =
@@ -191,6 +228,10 @@ let () =
        Arg.Unit DoResultsEnabled.on,
        ": Compute a percentage of the tainted instructions.";
     
+       "-do-prepare-slice",
+       Arg.Unit PrepareSliceEnabled.on,
+       ": Print a source file prepared for slicing for vulnerable statements";
+    
        "-taint-debug", (* plug-in option *)
        Arg.Unit Debugging.on,
        ": Turn debugging ON."; 
@@ -201,7 +242,11 @@ let () =
     
        "-config-file",
        Arg.String (Cmdline.Dynamic.Apply.String.set (option_config_file () )),
-       ": The config file used for setting the entry point and annotating functions";] 
+       ": The config file used for setting the entry point and annotating functions";
+    
+       "-constr-config-file",
+       Arg.String (Cmdline.Dynamic.Apply.String.set (option_constr_config_file () )),
+       ": The constraint config file containing the constraints that must be met by the called functions.";] 
 
 (* Extend the Frama-C entry point (the "main" of Frama-C). *)
 let () = Db.Main.extend run 

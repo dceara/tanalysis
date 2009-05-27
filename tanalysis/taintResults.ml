@@ -6,6 +6,7 @@ module ResultsComputer(Param:sig
                         val globals : global list     
                         val func_envs : functionEnvironment
                         val func_hash : (string, fundec) Hashtbl.t 
+                        val func_constr_hash : taintConstraints Inthash.t
                         val fmt : Format.formatter
                         val debug : bool      
                         val info : bool     
@@ -47,33 +48,59 @@ module ResultsComputer(Param:sig
 
     let taint_stmt_count = ref 0;;
 
-    let taint_stmt_ids = ref (Inthash.create 1024);;
+    let vulnerable_statements = ref (Inthash.create 1024);;
+
+    let add_vulnerable_statement stmt =
+        Inthash.add !vulnerable_statements stmt.sid stmt
 
     let inc_taint_stmt_count stmt =
-        let matches_vulnerable_scheme () =
-            (* TODO match statement against schemes *)
-            true
-        in
-        
-        taint_stmt_count := !taint_stmt_count + 1;
-        if matches_vulnerable_scheme () then
-            Inthash.add !taint_stmt_ids stmt.sid stmt
+        taint_stmt_count := !taint_stmt_count + 1
 
     let check_tainted taint stmt = 
         match taint with 
-            | G _ -> 
-                P.print () "WARNING: G reached in results check. Sid: %d:" stmt.sid;
-                P.print_taint () taint;
-                true
-            | _ -> 
-                Gamma.compare_taint taint T
+        | G _ -> 
+            P.print () "WARNING: G reached in results check. Sid: %d:" stmt.sid;
+            P.print_taint () taint;
+            true
+        | _ -> 
+            Gamma.compare_taint taint T
 
     let rec do_instr env_instance curr_stmt curr_func_stack func instr =
         let curr_stmt_env = Inthash.find env_instance curr_stmt.sid in
         let get_lval_vinfo lval =
             match lval with
-                | (Var vinfo, _) -> vinfo
-                | (Mem exp, _) -> Utils.extract_vinfo_from_ptr_expr exp
+            | (Var vinfo, _) -> vinfo
+            | (Mem exp, _) -> Utils.extract_vinfo_from_ptr_expr exp
+        in
+        let do_check_array_constraints lval =
+            let rec do_check_array_offset offset =
+                match offset with
+                | NoOffset -> 
+                    P.print_info () "%s\n" "[INFO] Found no offset for lvalue.";
+                    true
+                | Field (_, inner_offset) ->
+                    P.print_info () "%s\n" "[INFO] Found field offset for lvalue."; 
+                    do_check_array_offset inner_offset
+                | Index (expr, inner_offset) ->
+                    P.print_info () "%s\n" "[INFO] Found index offset for lvalue.";
+                    let expr_taint = SC.do_expr curr_stmt_env expr [] Param.func_envs in
+                    P.print_info () "%s" "[INFO] Taint value for index: ";
+                    P.print_taint_info () expr_taint;
+                    (match check_tainted expr_taint curr_stmt with
+                    | true -> false
+                    | false -> do_check_array_offset inner_offset)
+            in
+            
+            match lval with
+            | (Var _, offset) ->
+                P.print_info () "%s" "[INFO] Checking array offset for lvalue:\n";
+                (match do_check_array_offset offset with
+                | false -> add_vulnerable_statement curr_stmt
+                | true -> ignore ())
+            | (Mem exp, offset) ->
+                P.print_info () "%s" "[INFO] Checking array offset for pointer\n";
+                add_vulnerable_statement curr_stmt
+                    
         in
         let do_assign lval =
             let vinfo = get_lval_vinfo lval in
@@ -82,6 +109,8 @@ module ResultsComputer(Param:sig
                             curr_stmt_env
                             vinfo.vid)
                         curr_stmt) then (
+                    P.print_info () "[INFO] Checking array constraints for lval %s\n" vinfo.vname;
+                    do_check_array_constraints lval;
                     inc_taint_stmt_count curr_stmt;
                     true
                 ) else (
@@ -135,16 +164,46 @@ module ResultsComputer(Param:sig
                     curr_stmt.preds 
             in
             let rec do_check_recursive_call func_stack callee_func =
-                 match func_stack with
+                match func_stack with
                     | [] -> false
                     | (Frame f)::tl ->
                         if f.svar.vid == callee_func.svar.vid then true
                         else
                             do_check_recursive_call tl callee_func
             in
+            let do_check_function_constraints callee_func taint_instances =
+                if Inthash.mem Param.func_constr_hash callee_func.svar.vid then
+                P.print_info () "[INFO] Checking function constraint for function %s\n" callee_func.svar.vname;
+                let func_constraints = Inthash.find Param.func_constr_hash callee_func.svar.vid in
+                let holds = 
+                    List.fold_left
+                        (fun holds (formal_name, cons_ftaint) ->
+                            match holds with
+                            | false -> false
+                            | true ->
+                                P.print_info () "[INFO] Searching for formal %s\n" formal_name;
+	                            try
+	                                let (tiformal, titaint) 
+	                                    = List.find
+	                                        (fun (tiformal, _) -> formal_name = tiformal.vname)
+	                                        taint_instances in
+                                    P.print_info () "%s" "[INFO] Actual taint is: ";
+                                    P.print_taint_info () titaint;
+                                    Typing.check_constraint titaint cons_ftaint
+                                with Not_found ->
+                                    P.print_info () "[INFO] Formal %s not found\n" formal_name;
+                                    true)
+                        true
+                        func_constraints in
+                P.print_info () "[INFO] Constraints hold for function %s: %B\n" callee_func.svar.vname holds;
+                match holds with
+                | false ->add_vulnerable_statement curr_stmt
+                | true -> ignore ()
+            in
             let do_function_call callee_func =
                 let caller_env = get_caller_env () in
                 let p_len = List.length param_exprs in
+                (* Create the list of taint instances formal params + globals. *)
                 let (_, taint_instances) = 
                     List.fold_left
                         (fun (idx, instances) formal ->
@@ -162,7 +221,10 @@ module ResultsComputer(Param:sig
                             (global, g_taint)::instances)
                         taint_instances
                         (SC.list_global_vars () ()) in
+                (* Check if the called function parameters hold the constraints for the callee. *)
+                do_check_function_constraints callee_func taint_instances;
                 let (_, callee_env) = Inthash.find Param.func_envs callee_func.svar.vid in
+                (* Create the context dependent environment for the callee. *)
                 let callee_env = Typing.instantiate_func_env callee_env taint_instances in
                 let new_worklist =
                     match List.length callee_func.sallstmts with
@@ -284,11 +346,12 @@ let get_main_func globals =
         | None -> failwith "[FATAL]: TAINT RESULTS: Missing main function."
         | Some result -> result
 
-let get_results format dbg inf f_envs f_hash gls =
+let get_results format dbg inf f_envs f_hash gls f_constr_hash =
     let module Computer = ResultsComputer(struct
 					                        let globals = gls
 					                        let func_envs = f_envs
-					                        let func_hash = f_hash 
+					                        let func_hash = f_hash
+                                            let func_constr_hash = f_constr_hash 
 					                        let fmt = format
 					                        let debug = dbg      
 					                        let info = inf     
@@ -302,4 +365,4 @@ let get_results format dbg inf f_envs f_hash gls =
     let visited_ref = ref (Inthash.create 1024) in
     Printf.printf "%s\n" "Analyzing results for function main";
     Computer.compute main_instance [] (main_func, visited_ref, worklist);
-    (!Computer.stmt_count, !Computer.taint_stmt_count)
+    (!Computer.stmt_count, !Computer.taint_stmt_count, !Computer.vulnerable_statements)
