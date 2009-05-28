@@ -21,14 +21,6 @@ module Typing (Param:sig
                                         let info = Param.info
                                     end)
     
-    (* Checks if a taint constraint holds. *)
-    let check_constraint taint constraint_taint =
-        match (constraint_taint, taint) with
-            | (T, _) -> true
-            | (U, U) -> true
-            | (U, _) -> false
-            | (G _, _) -> failwith "[FATAL] G cannot be a constraint"
-    
     (* Applies the oplus operator between taint values. *)
     let combine_taint t1 t2 =
         let taint_comparator g1 g2 =

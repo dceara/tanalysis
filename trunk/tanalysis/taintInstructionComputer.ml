@@ -96,7 +96,7 @@ module InstrComputer(Param:sig
                             match found with
                                 | true -> (idx, found)
                                 | false ->
-                                    if dep.vname == f.vname then (idx, true)
+                                    if dep.vname = f.vname then (idx, true)
                                     else (idx + 1, false))
                         (0, false)
                         formals in
@@ -138,8 +138,8 @@ module InstrComputer(Param:sig
 	                        (match actual_param with
 	                            | None -> ignore ()
 	                            | Some a_vinfo ->
-	                                let a_taint = instantiate_call_taint env callee_env param_exprs formals formal.vid in
-	                                Gamma.set_taint env a_vinfo.vid a_taint);
+                                    let a_taint = instantiate_call_taint env callee_env param_exprs formals formal.vid in
+                                    Gamma.set_taint env a_vinfo.vid a_taint);
                             idx + 1)
                 0
                 formals)
@@ -189,7 +189,6 @@ module InstrComputer(Param:sig
     (* func_envs - the environments for already computed functions *)    
     and get_lvalue_taint env lvalue param_exprs func_envs =
         let get_lvalue_taint_vinfo vinfo offset =
-            P.print_debug () "[DEBUG] Getting taint for lvalue: %s\n" vinfo.vname; 
             let taint = 
                 try
                     Gamma.get_taint env vinfo.vid 
