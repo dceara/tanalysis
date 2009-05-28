@@ -1,8 +1,6 @@
 open Cil_types
 open TaintGamma
 
-type taintMetaValue = M_T | M_U | M_G of string list
-
 module Initializer(Param:sig
                         val globals : global list
                         val func_hash_ref : (string, fundec) Hashtbl.t ref
@@ -40,7 +38,7 @@ module Initializer(Param:sig
             match  
 	            List.find
 	                (fun (pname, ptype, ptaint) -> 
-	                    name == pname)
+	                    name = pname)
 	                params with
             | (_, _, ptaint) -> ptaint
         in
@@ -71,7 +69,7 @@ module Initializer(Param:sig
         let param_types = 
             match List.length param_types with
                 | 0 -> None
-                | _ -> Some param_types in
+                | _ -> Some (List.rev param_types) in
         let fun_type = 
             TFun (ret_type, param_types, false, []) in         
         let funcdec = Cil.emptyFunction fname in
@@ -84,6 +82,9 @@ module Initializer(Param:sig
             (get_taint funcdec ret_taint); 
         List.iter
             (fun formal ->
+                let taint = get_taint funcdec (get_param_meta_taint formal.vname) in
+                P.print_info () "For formal %s: " formal.vname;
+                P.print_taint_info () taint;
                 Gamma.set_taint 
                     env 
                     formal.vid 
@@ -210,9 +211,17 @@ module Initializer(Param:sig
                     let param_taint = taint_from_str (read_str in_chan) in
                     let param_taint =
 	                    match param_taint with 
-	                    | M_T -> T
-                        | M_U -> U
-                        | M_G _ -> failwith "[FATAL] Parameter contstraint cannot be generic" in
+	                    | M_T -> M_T
+                        | M_U -> M_U
+                        | M_G _ 
+                            ->
+                                (let param_dep_count = read_integer in_chan in
+                                let dep_list = ref [] in
+                                for j = 1 to param_dep_count do
+                                    let param_dep = read_str in_chan in
+                                    dep_list := param_dep::!dep_list
+                                done;
+                                M_G !dep_list) in 
                     param_constraints := (param_name, param_taint)::!param_constraints 
                 done;
                 try 

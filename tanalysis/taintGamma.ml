@@ -3,8 +3,10 @@ open Cil
 
 type taintValue = T | U | G of varinfo list
 
+type taintMetaValue = M_T | M_U | M_G of string list
+
 (* A constraint is a pair of formal id * constraint taint. *)
-type taintConstraint = string * taintValue
+type taintConstraint = string * taintMetaValue
 
 type taintConstraints = taintConstraint list
 

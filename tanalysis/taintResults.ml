@@ -53,7 +53,7 @@ module ResultsComputer(Param:sig
     let add_vulnerable_statement stmt =
         Inthash.add !vulnerable_statements stmt.sid stmt
 
-    let inc_taint_stmt_count stmt =
+    let inc_taint_stmt_count () =
         taint_stmt_count := !taint_stmt_count + 1
 
     let check_tainted taint stmt = 
@@ -111,7 +111,7 @@ module ResultsComputer(Param:sig
                         curr_stmt) then (
                     P.print_info () "[INFO] Checking array constraints for lval %s\n" vinfo.vname;
                     do_check_array_constraints lval;
-                    inc_taint_stmt_count curr_stmt;
+                    inc_taint_stmt_count ();
                     true
                 ) else (
                     false
@@ -140,7 +140,7 @@ module ResultsComputer(Param:sig
 		                                let expr_vinfo = Utils.extract_vinfo_from_ptr_expr p_expr in
 		                                let taint = Gamma.get_taint curr_stmt_env expr_vinfo.vid in
                                         if check_tainted taint curr_stmt then (
-                                            inc_taint_stmt_count curr_stmt;
+                                            inc_taint_stmt_count ();
                                             (idx + 1, true)
                                         ) else (
                                             (idx + 1, false)
@@ -172,38 +172,65 @@ module ResultsComputer(Param:sig
                             do_check_recursive_call tl callee_func
             in
             let do_check_function_constraints callee_func taint_instances =
-                if Inthash.mem Param.func_constr_hash callee_func.svar.vid then
-                P.print_info () "[INFO] Checking function constraint for function %s\n" callee_func.svar.vname;
-                let func_constraints = Inthash.find Param.func_constr_hash callee_func.svar.vid in
-                let holds = 
-                    List.fold_left
-                        (fun holds (formal_name, cons_ftaint) ->
-                            match holds with
-                            | false -> false
-                            | true ->
-                                P.print_info () "[INFO] Searching for formal %s\n" formal_name;
-	                            try
-	                                let (tiformal, titaint) 
-	                                    = List.find
-	                                        (fun (tiformal, _) -> formal_name = tiformal.vname)
-	                                        taint_instances in
-                                    P.print_info () "%s" "[INFO] Actual taint is: ";
-                                    P.print_taint_info () titaint;
-                                    Typing.check_constraint titaint cons_ftaint
+                let do_check_taint_constraint taint meta_taint =
+                    match meta_taint with
+                    | M_T -> true
+                    | M_U -> if taint == U then true else false
+                    | M_G g ->
+                        let constr_taint = List.fold_left
+                            (fun taint dep_name ->
+                                try
+                                    let (tiformal, titaint) 
+                                        = List.find
+                                            (fun (tiformal, _) -> dep_name = tiformal.vname)
+                                            taint_instances in
+                                    Typing.combine_taint taint titaint
                                 with Not_found ->
-                                    P.print_info () "[INFO] Formal %s not found\n" formal_name;
-                                    true)
-                        true
-                        func_constraints in
-                P.print_info () "[INFO] Constraints hold for function %s: %B\n" callee_func.svar.vname holds;
-                match holds with
-                | false ->add_vulnerable_statement curr_stmt
-                | true -> ignore ()
+                                    P.print () "[WARNING] Unable to find constraint dependency: %s\n" dep_name;
+                                    taint) 
+                            U
+                            g in
+                        match (constr_taint, taint) with
+                        | (T, _) -> true
+                        | (G _, _) -> true
+                        | (U, U) -> true
+                        | _ -> false
+                in
+                
+                if Inthash.mem Param.func_constr_hash callee_func.svar.vid then (
+	                P.print_info () "[INFO] Checking function constraint for function %s\n" callee_func.svar.vname;
+	                let func_constraints = Inthash.find Param.func_constr_hash callee_func.svar.vid in
+	                let holds = 
+	                    List.fold_left
+	                        (fun holds (formal_name, cons_f_meta_taint) ->
+	                            match holds with
+	                            | false -> false
+	                            | true ->
+	                                P.print_info () "[INFO] Searching for formal %s\n" formal_name;
+		                            try
+		                                let (tiformal, titaint) 
+		                                    = List.find
+		                                        (fun (tiformal, _) -> formal_name = tiformal.vname)
+		                                        taint_instances in
+	                                    P.print_info () "%s" "[INFO] Actual taint is: ";
+	                                    P.print_taint_info () titaint;
+	                                    do_check_taint_constraint titaint cons_f_meta_taint
+	                                with Not_found ->
+	                                    P.print_info () "[INFO] Formal %s not found\n" formal_name;
+	                                    true)
+	                        true
+	                        func_constraints in
+	                P.print_info () "[INFO] Constraints hold for function %s: %B\n" callee_func.svar.vname holds;
+	                match holds with
+	                | false ->add_vulnerable_statement curr_stmt
+	                | true -> ignore ())
             in
             let do_function_call callee_func =
+                P.print_info () "[INFO] Doing function call for function %s\n" callee_func.svar.vname;
                 let caller_env = get_caller_env () in
                 let p_len = List.length param_exprs in
                 (* Create the list of taint instances formal params + globals. *)
+                P.print_info () "[INFO] Creating taint instances list for %s\n" callee_func.svar.vname;
                 let (_, taint_instances) = 
                     List.fold_left
                         (fun (idx, instances) formal ->
@@ -222,15 +249,18 @@ module ResultsComputer(Param:sig
                         taint_instances
                         (SC.list_global_vars () ()) in
                 (* Check if the called function parameters hold the constraints for the callee. *)
+                P.print_info () "[INFO] Checking function constraints for %s\n" callee_func.svar.vname;
                 do_check_function_constraints callee_func taint_instances;
                 let (_, callee_env) = Inthash.find Param.func_envs callee_func.svar.vid in
                 (* Create the context dependent environment for the callee. *)
+                P.print_info () "[INFO] Instantiating function env for %s\n" callee_func.svar.vname;
                 let callee_env = Typing.instantiate_func_env callee_env taint_instances in
                 let new_worklist =
                     match List.length callee_func.sallstmts with
                         | 0 -> []
                         | _ -> [List.hd callee_func.sallstmts] in
                 let new_visited_ref = ref (Inthash.create 1024) in
+                P.print_info () "[INFO] Checking if the call to %s is recursive\n" callee_func.svar.vname;
                 match do_check_recursive_call curr_func_stack callee_func with
                     | false ->
                         P.print_info () "Analyzing results for function %s\n" callee_func.svar.vname;
@@ -238,6 +268,7 @@ module ResultsComputer(Param:sig
                             ((Frame func)::curr_func_stack) 
                             (callee_func, new_visited_ref, new_worklist)
                     | true ->
+                        P.print_info () "Ignoring recursive function call to %s\n" callee_func.svar.vname;
                         ignore ()
             in
                         
@@ -271,7 +302,7 @@ module ResultsComputer(Param:sig
                             curr_stmt_env 
                             (Typing.get_function_return_vid func.svar))
                         curr_stmt) then
-                    inc_taint_stmt_count curr_stmt
+                    inc_taint_stmt_count ()
 
     and do_stmt env_instance curr_func_stack func visited_ref curr_stmt =
         let visited = 
@@ -308,8 +339,8 @@ module ResultsComputer(Param:sig
         )
         
     and compute env_instance curr_func_stack (func, visited_ref, worklist) =
-        match worklist with
-        | [] -> 
+        match List.length worklist with
+        | 0 -> 
             P.print_info () "Finished analyzing function %s\n" func.svar.vname;
             P.print_info () "%s" "Current stack: ";
             List.iter
@@ -318,16 +349,17 @@ module ResultsComputer(Param:sig
                 (List.rev curr_func_stack);
             P.print_info () "%s" "\n";
             ignore ()
-        | curr_stmt::rest -> 
+        | _ -> 
+            let curr_stmt = List.hd worklist in
             match do_stmt env_instance curr_func_stack func visited_ref curr_stmt with
             | [] ->
                 compute env_instance
                     curr_func_stack
-                        (func, visited_ref, rest)
+                        (func, visited_ref, List.tl worklist)
             | succs ->
                 compute env_instance 
                     curr_func_stack 
-                        (func, visited_ref, List.append (rest) succs)
+                        (func, visited_ref, List.append (List.tl worklist) succs)
             
 end
 
