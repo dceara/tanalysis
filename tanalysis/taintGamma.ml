@@ -106,7 +106,7 @@ module Gamma = struct
             (fun vid taint -> if compare_taint U taint = false then count := !count + 1)
             env;
         !count 
-        
+                
     let count_dependencies (_, env) var_list =
         let count = ref 0 in
         Hashtbl.iter

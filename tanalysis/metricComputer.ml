@@ -376,6 +376,7 @@ module MetricComputer(Param:sig
             start_stmt.sid 
             end_stmt.sid;
         let (shortest_path, weight) = Dij.shortest_path g start_v end_v in
+        let weight = ref weight in
         let path_list = ref [] in
         List.iter 
             (fun e -> 
@@ -389,7 +390,7 @@ module MetricComputer(Param:sig
             print_node_info dst node_mappings;
             path_list := dst::!path_list
         );
-        (!path_list, weight)
+        (!path_list, !weight)
     
     let add_removed_edges (g, node_mappings, vertex_mappings) shortest_path weight removed_edges =
         let is_in_list lst v =

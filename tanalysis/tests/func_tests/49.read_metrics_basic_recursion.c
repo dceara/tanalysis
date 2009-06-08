@@ -1,27 +1,18 @@
-int main(int argc, char** argv) //argc = G, argv = G
+void main() //argc = G, argv = G
 {
-    int a, b;
-    int a1, b1;
-    a = b = 0;              
-    a1 = b1 = taint();      
+    int a;
+    int c;
+    
+    if (c) {
+        a = 2;
+    } else {
+        a = taint();
+    }              
     
     while (a < 10) { 
-        while (b < 20) {
-            b++;
-            taint();        
-        }
-        a++;
-    } 
+        c = taint ();
+    }
     
-    /* 
-    a1 = 0;  
-    while (a1 < 10) {
-        while (b1 < argc) { 
-            b1++;          
-        }
-        a1++;              
-    } */
-    
-    return 0;
+    return;
 }
  

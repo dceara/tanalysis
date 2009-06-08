@@ -105,7 +105,7 @@ module MinTaintMetric(Param:sig
             (* In the case of an empty instruction block we have no environment for it so *)
             (* we return the default value. *)
             (* TODO: fix this *) 
-	        let pred_envs = List.map (fun pred -> get_stmt_env pred) stmt.succs in
+	        let pred_envs = List.map (fun pred -> get_stmt_env pred) stmt.preds in
 	        let env = get_stmt_env stmt in
 	        let diff_env = Gamma.get_differences env pred_envs in
 	        let pos_tainted_cnt = Gamma.get_possible_tainted_count diff_env in
