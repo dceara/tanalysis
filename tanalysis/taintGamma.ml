@@ -100,6 +100,32 @@ module Gamma = struct
                 env_list;
             result_env
     
+    let get_possible_tainted_count (_, env) =
+        let count = ref 0 in
+        Hashtbl.iter
+            (fun vid taint -> if compare_taint U taint = false then count := !count + 1)
+            env;
+        !count 
+        
+    let count_dependencies (_, env) var_list =
+        let count = ref 0 in
+        Hashtbl.iter
+            (fun vid taint -> 
+                match taint with
+                | U
+                | T -> ignore ()
+                | G g ->
+                    List.iter
+                        (fun var_vinfo ->
+                            List.iter
+                                (fun vinfo ->
+                                    if vinfo.vname = var_vinfo.vname then
+                                        count := !count + 1)
+                                g)
+                        var_list)
+            env;
+        !count 
+    
     let env_iter f env =
         let env = match env with (_, _env) -> _env in
         Hashtbl.iter

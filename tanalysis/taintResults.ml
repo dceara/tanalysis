@@ -67,11 +67,6 @@ module ResultsComputer(Param:sig
 
     let rec do_instr env_instance curr_stmt curr_func_stack func instr =
         let curr_stmt_env = Inthash.find env_instance curr_stmt.sid in
-        let get_lval_vinfo lval =
-            match lval with
-            | (Var vinfo, _) -> vinfo
-            | (Mem exp, _) -> Utils.extract_vinfo_from_ptr_expr exp
-        in
         let do_check_array_constraints lval =
             let rec do_check_array_offset offset =
                 match offset with
@@ -103,7 +98,7 @@ module ResultsComputer(Param:sig
                     
         in
         let do_assign lval =
-            let vinfo = get_lval_vinfo lval in
+            let vinfo = Utils.get_lval_vinfo lval in
                 if (check_tainted
                         (Gamma.get_taint
                             curr_stmt_env
@@ -273,7 +268,7 @@ module ResultsComputer(Param:sig
             in
                         
             let effect_added = do_null_lval null_lval in
-            let finfo = get_lval_vinfo (Utils.extract_lvalue_from_expr call_expr) in
+            let finfo = Utils.get_lval_vinfo (Utils.extract_lvalue_from_expr call_expr) in
             try 
 	            let callee_func = Hashtbl.find Param.func_hash finfo.vname in
 	            do_check_pointer_params callee_func effect_added;

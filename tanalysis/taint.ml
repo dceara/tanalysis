@@ -6,6 +6,10 @@ open SccCallgraph
 open Callgraph
 open CustomTaintFlow
 open TaintResults
+open MinReadMetrics
+open MaxReadMetrics
+open MinTaintMetrics
+open MaxTaintMetrics
 
 let option_enabled () = "taint-analysis.enabled"
 let option_print_intermediate () = "taint-analysis.print-intermediate"
@@ -17,6 +21,10 @@ let option_constr_config_file () = "taint-analysis.constr-config-file"
 let option_debugging () = "taint-analysis.debug"
 let option_info () = "taint-analysis.info"
 let option_prepare_slice () = "taint-analysis.prepare-slice"
+let option_min_read_metric () = "taint-analysis.min-read-metric"
+let option_max_read_metric () = "taint-analysis.max-read-metric"
+let option_min_taint_metric () = "taint-analysis.min-taint-metric"
+let option_max_taint_metric () = "taint-analysis.max-taint-metric"
 
 let default_config_file () = "default.cfg"
 let default_constr_config_file () = "default_constr.cfg"
@@ -58,6 +66,22 @@ module ConstrConfigFile =
 (* Register prepare slice sub option. *)
 module PrepareSliceEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_prepare_slice () end)
+    
+(* Register read metric sub option. *)
+module MinReadMetricEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_min_read_metric () end)
+
+(* Register read metric sub option. *)
+module MaxReadMetricEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_max_read_metric () end)
+    
+(* Register min taint metric sub option. *)
+module MinTaintMetricEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_min_taint_metric () end)
+    
+(* Register max taint metric sub option. *)
+module MaxTaintMetricEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_max_taint_metric () end)
 
 let run_taint fmt debug info config_file_name constr_config_file_name globals =
     let module P = TaintPrinter.Printer(struct
@@ -176,6 +200,40 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
             | (_, _, vulnerable_statements) ->
                 Cil.dumpFile (new SlicePretty.print vulnerable_statements) stdout "test" (Cil_state.file ());
     in
+    let do_min_read_metrics enabled =
+        if enabled then
+            compute_min_read_metrics 
+                fmt
+                debug 
+                info
+                func_hash
+    in
+    let do_max_read_metrics enabled =
+        if enabled then
+            compute_max_read_metrics 
+                fmt
+                debug 
+                info
+                func_hash
+    in
+    let do_min_taint_metrics enabled =
+        if enabled then
+            compute_min_taint_metrics 
+                fmt
+                debug 
+                info
+                func_hash
+                !computed_function_envs
+    in
+    let do_max_taint_metrics enabled =
+        if enabled then
+            compute_max_taint_metrics 
+                fmt
+                debug 
+                info
+                func_hash
+                !computed_function_envs
+    in
     
     intialize_library_calls ();
     P.print_info () "%s\n" "Performing Taint Analysis";
@@ -187,7 +245,16 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
     P.print_info () "%s\n" "Doing results";
     do_results (DoResultsEnabled.get ());
     P.print_info () "%s\n" "Preparing slice";
-    do_prepare_slice (PrepareSliceEnabled.get ())
+    do_prepare_slice (PrepareSliceEnabled.get ());
+    P.print_info () "%s\n" "Computing min read metrics";
+    do_min_read_metrics (MinReadMetricEnabled.get ());
+    P.print_info () "%s\n" "Computing max read metrics";
+    do_max_read_metrics (MaxReadMetricEnabled.get ());
+    P.print_info () "%s\n" "Computing min taint metrics";
+    do_min_taint_metrics (MinTaintMetricEnabled.get ());
+    P.print_info () "%s\n" "Computing max taint metrics";
+    do_max_taint_metrics (MaxTaintMetricEnabled.get ())
+    
 
 let run fmt =
     if Enabled.get () then
@@ -231,6 +298,22 @@ let () =
        "-do-prepare-slice",
        Arg.Unit PrepareSliceEnabled.on,
        ": Print a source file prepared for slicing for vulnerable statements";
+    
+       "-do-min-read-metrics",
+       Arg.Unit MinReadMetricEnabled.on,
+       ": Computes the best min read metrics path";
+    
+       "-do-max-read-metrics",
+       Arg.Unit MaxReadMetricEnabled.on,
+       ": Computes the best max read metrics path";    
+    
+       "-do-min-taint-metrics",
+       Arg.Unit MinTaintMetricEnabled.on,
+       ": Computes the best min taint metrics path";  
+    
+       "-do-max-taint-metrics",
+       Arg.Unit MaxTaintMetricEnabled.on,
+       ": Computes the best max taint metrics path";  
     
        "-taint-debug", (* plug-in option *)
        Arg.Unit Debugging.on,

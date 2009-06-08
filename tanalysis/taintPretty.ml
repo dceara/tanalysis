@@ -33,9 +33,9 @@ class print func_envs = object(self)
 			        let (_, stmt_envs) = Inthash.find func_envs vinfo.vid in
 	                let env = Inthash.find stmt_envs s.sid in
 	                let (has_diff, result_env) = self#getDifferences stmt_envs env s in
+                    super#pGlobal fmt (GText (Format.sprintf "/*sid:%d*/" s.sid)); 
 	                match has_diff with
 	                    | true ->
-	                        super#pGlobal fmt (GText (Format.sprintf "/*sid:%d*/" s.sid));       
 	                        super#pAnnotatedStmt next fmt s;
 	                        self#pDifferences fmt result_env s
 	                    | false ->
