@@ -29,6 +29,7 @@ pack: utils \
 	maxReadMetrics \
 	minTaintMetrics \
 	maxTaintMetrics \
+	metricPretty \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
 					   printer.cmo \
@@ -50,6 +51,7 @@ pack: utils \
 					   maxReadMetrics.cmo \
 					   minTaintMetrics.cmo \
 					   maxTaintMetrics.cmo \
+					   metricPretty.cmo \
 					   taint.cmo 
 
 xmlr: xmlr.ml
@@ -113,6 +115,9 @@ minTaintMetrics: minTaintMetrics.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 	
 maxTaintMetrics: maxTaintMetrics.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+	
+metricPretty: metricPretty.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 	
 taint: taint.ml

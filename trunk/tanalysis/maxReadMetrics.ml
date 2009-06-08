@@ -114,6 +114,6 @@ let compute_max_read_metrics format dbg inf f_hash =
     let (new_graph, removed_edges) = Computer.break_loops graph in
     let (start_stmt, end_stmt) = MRM.get_path_bound_stmts f_hash in
     let (shortest_path, weight) = Computer.get_best_path new_graph start_stmt end_stmt in
-    let (path_node_list, weight) = Computer.add_removed_edges new_graph shortest_path weight removed_edges in
+    let (path_stmt_hash, weight) = Computer.add_removed_edges new_graph shortest_path weight removed_edges in
     MRM.print_value weight; 
-    ignore ()
+    path_stmt_hash

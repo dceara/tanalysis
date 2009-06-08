@@ -111,6 +111,12 @@ module MetricComputer(Param:sig
             -> true
         | _ -> false   
     
+    let get_node_stmt node =
+        match node with
+        | Statement s -> s
+        | BeginCall (_, s) -> s
+        | EndCall (_, s) -> s
+    
     let get_node_value g node_mappings v =
         let node = Hashtbl.find node_mappings v in
         match node with
@@ -276,6 +282,8 @@ module MetricComputer(Param:sig
                         preds in
                     if cnt > 0 then entry := v)
                 scc;
+            P.print_info () "%s\n" "Entry node :";
+            print_node_info !entry node_mappings;
             !entry
         in
         let do_get_loop_edge scc =
@@ -288,7 +296,7 @@ module MetricComputer(Param:sig
 	                List.iter 
 	                    (fun succ ->
 	                        if Hashtbl.mem visited succ then 
-	                            back_edge := Some vertex
+	                            back_edge := Some (vertex, succ)
 	                        else if List.mem succ scc then
 	                            df succ)
                         succs)
@@ -298,9 +306,11 @@ module MetricComputer(Param:sig
             df entry_point;
             match !back_edge with
             | None -> 
+                P.print_info () "%s\n" "[INFO] Didn't find any back edge";
                 None
-            | Some vertex -> 
-                Some (vertex, entry_point)
+            | Some (vertex, succ) -> 
+                P.print_info () "%s\n" "[INFO] Found back edge";
+                Some (vertex, succ)
         in
         let removed_edges_ref = ref [] in
         let has_loops = ref true in
@@ -318,6 +328,10 @@ module MetricComputer(Param:sig
                         match do_get_loop_edge scc with
                         | None -> ignore ()
                         | Some (start_removed_edge, end_removed_edge) ->  
+                            P.print_info () "%s\n" "start edge:";
+                            print_node_info start_removed_edge node_mappings;
+                            P.print_info () "%s\n" "end edge:";
+                            print_node_info end_removed_edge node_mappings;
 		                    G.remove_edge g start_removed_edge end_removed_edge;
 	                        removed_edges_ref := 
                                 (start_removed_edge, end_removed_edge)::!removed_edges_ref;
@@ -444,5 +458,11 @@ module MetricComputer(Param:sig
                     scc)
                 )
             sccs;
-        (List.append shortest_path !new_nodes, !weight)
+        let stmt_hash = ref (Inthash.create 1024) in
+        List.iter
+            (fun v -> 
+                let stmt = get_node_stmt (Hashtbl.find node_mappings v) in
+                Inthash.add !stmt_hash stmt.sid stmt)
+        (List.append shortest_path !new_nodes);
+        (!stmt_hash, !weight)
 end 
