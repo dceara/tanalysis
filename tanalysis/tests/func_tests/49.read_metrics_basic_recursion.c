@@ -1,15 +1,27 @@
-int main(int argc) 
+int main(int argc, char** argv) //argc = G, argv = G
 {
-    foo(222);
+    int a, b;
+    int a1, b1;
+    a = b = 0;              
+    a1 = b1 = taint();      
+    
+    while (a < 10) { 
+        while (b < 20) {
+            b++;
+            taint();        
+        }
+        a++;
+    } 
+    
+    /* 
+    a1 = 0;  
+    while (a1 < 10) {
+        while (b1 < argc) { 
+            b1++;          
+        }
+        a1++;              
+    } */
+    
     return 0;
 }
-
-void foo(int n)
-{
-    if (n) {
-        foo(n-1);
-    }
-    if (n > 10) {
-    }
-    return;
-}
+ 

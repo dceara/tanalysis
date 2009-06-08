@@ -201,38 +201,28 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
                 Cil.dumpFile (new SlicePretty.print vulnerable_statements) stdout "test" (Cil_state.file ());
     in
     let do_min_read_metrics enabled =
-        if enabled then
-            compute_min_read_metrics 
-                fmt
-                debug 
-                info
-                func_hash
+        if enabled then (
+            let stmt_hash = compute_min_read_metrics fmt debug info func_hash in
+            Cil.dumpFile (new MetricPretty.print stmt_hash) stdout "test" (Cil_state.file ())
+        )
     in
     let do_max_read_metrics enabled =
-        if enabled then
-            compute_max_read_metrics 
-                fmt
-                debug 
-                info
-                func_hash
+        if enabled then (
+            let stmt_hash = compute_max_read_metrics fmt debug info func_hash in
+            Cil.dumpFile (new MetricPretty.print stmt_hash) stdout "test" (Cil_state.file ())
+        )
     in
     let do_min_taint_metrics enabled =
-        if enabled then
-            compute_min_taint_metrics 
-                fmt
-                debug 
-                info
-                func_hash
-                !computed_function_envs
+        if enabled then (
+            let stmt_hash = compute_min_taint_metrics fmt debug info func_hash !computed_function_envs in
+            Cil.dumpFile (new MetricPretty.print stmt_hash) stdout "test" (Cil_state.file ())
+        )
     in
     let do_max_taint_metrics enabled =
-        if enabled then
-            compute_max_taint_metrics 
-                fmt
-                debug 
-                info
-                func_hash
-                !computed_function_envs
+        if enabled then (
+            let stmt_hash = compute_max_taint_metrics fmt debug info func_hash !computed_function_envs in
+            Cil.dumpFile (new MetricPretty.print stmt_hash) stdout "test" (Cil_state.file ())
+        )
     in
     
     intialize_library_calls ();
