@@ -24,6 +24,11 @@ pack: utils \
 	customTaintFlow sccCallgraph \
 	sccCallgraph \
 	taintResults \
+	metricComputer \
+	minReadMetrics \
+	maxReadMetrics \
+	minTaintMetrics \
+	maxTaintMetrics \
 	taint 
 	$(CC) $(PACKFLAGS) utils.cmo \
 					   printer.cmo \
@@ -40,6 +45,11 @@ pack: utils \
 					   customTaintFlow.cmo \
 					   sccCallgraph.cmo \
 					   taintResults.cmo \
+					   metricComputer.cmo \
+					   minReadMetrics.cmo \
+					   maxReadMetrics.cmo \
+					   minTaintMetrics.cmo \
+					   maxTaintMetrics.cmo \
 					   taint.cmo 
 
 xmlr: xmlr.ml
@@ -88,6 +98,21 @@ customTaintFlow: customTaintFlow.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 
 taintResults: taintResults.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+
+metricComputer: metricComputer.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+
+minReadMetrics: minReadMetrics.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+	
+maxReadMetrics: maxReadMetrics.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+	
+minTaintMetrics: minTaintMetrics.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+	
+maxTaintMetrics: maxTaintMetrics.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 	
 taint: taint.ml

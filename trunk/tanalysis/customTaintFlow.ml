@@ -236,8 +236,8 @@ module TaintComputer(Param:sig
     (* must hold only the starting statement *)
     let start worklist = 
         let initial_env = SC.create_initial_env Param.func in 
-        (* CFGP.print_cfg Param.func; *)
-        (* (initial_env, Param.stmt_envs) *)
+        (* CFGP.print_cfg Param.func;
+        (initial_env, Param.stmt_envs) *)
         P.print_info () "Computing initial environment for function %s.\n" Param.func.svar.vname; 
         init_environments initial_env;
         P.print_info () "Computing environment for function %s.\n" Param.func.svar.vname; 
