@@ -25,10 +25,8 @@ module MinReadMetric = struct
             else
                 nc1 - nc2
     
-    let equal
-        (ReadMetric (NonCyclic nc1, Cyclic c1)) 
-        (ReadMetric (NonCyclic nc2, Cyclic c2)) =
-            if nc1 = nc2 && c1 == c2 then true else false
+    let equal m1 m2 =
+        if compare m1 m2 == 0 then true else false
 
     let default = ReadMetric (NonCyclic 0, Cyclic 0)
 

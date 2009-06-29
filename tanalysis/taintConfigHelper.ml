@@ -237,7 +237,7 @@ module Initializer(Param:sig
         with Sys_error _ ->
             P.print () "[WARNING] Cannot open constraints config file"
     
-    let init_from_file () =
+    let init () =
         init_library_from_file ();
         init_constraints_from_file ()
 
@@ -256,4 +256,4 @@ let run_library format dbg inf config_fname constr_config_fname func_envs glbls 
 		                        let func_envs_ref = func_envs
                                 let constr_func_hash_ref = constr_func_hash
                                end) in
-    I.init_from_file ()
+    I.init ()

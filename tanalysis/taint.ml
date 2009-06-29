@@ -95,21 +95,23 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
     List.iter
         (fun global ->
             match global with
-                | GFun (funcdec, _) -> Hashtbl.add func_hash funcdec.svar.vname funcdec
-                | _ -> ignore ())
+            | GFun (funcdec, _) -> Hashtbl.add func_hash funcdec.svar.vname funcdec
+            | _ -> ignore ())
         globals;
+    let print_function_count () =
+        ignore ()
+        (* let cnt = ref 0 in
+        List.iter 
+            (fun global ->
+                match global with 
+                | GFun (funcdec, _) -> cnt := !cnt + 1
+                | _ -> ignore ())
+            globals;
+        P.print () "Function count = %d\n" !cnt *) 
+    in
     let intialize_library_calls () =
-        TaintConfigHelper.run_library
-            fmt 
-            debug 
-            info
-            config_file_name 
-            constr_config_file_name
-            computed_function_envs
-            globals
-            (ref func_hash)
-            (ref lib_func_hash)
-            (ref func_constr_hash)
+        TaintConfigHelper.run_library fmt debug info config_file_name constr_config_file_name
+            computed_function_envs globals (ref func_hash) (ref lib_func_hash) (ref func_constr_hash)
     in    
     let perform_analysis print_intermediate =
         let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
@@ -125,15 +127,8 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
                     (match get_function node with
                         | None -> next_func remaining
                         | Some func ->
-                            run_custom_taint_non_recursive 
-                                fmt 
-                                debug 
-                                info
-                                print_intermediate 
-                                func 
-                                computed_function_envs 
-                                func_hash
-                                globals)
+                            run_custom_taint_non_recursive fmt debug info print_intermediate 
+                                func computed_function_envs func_hash globals)
                 | FuncRecursive node_list -> 
                     let func_list = List.fold_left 
                                         (fun res node 
@@ -143,15 +138,8 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
                                                     | Some func -> List.concat [res;[func]]) 
                                         []
                                         node_list in
-                    run_custom_taint_recursive 
-                        fmt 
-                        debug 
-                        info 
-                        print_intermediate
-                        func_list 
-                        computed_function_envs 
-                        func_hash
-                        globals
+                    run_custom_taint_recursive fmt debug info print_intermediate
+                        func_list computed_function_envs func_hash globals
         in
         List.iter next_func lst;
     in
@@ -175,27 +163,15 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
     in
     let do_results enabled =
         if enabled then
-            match get_results 
-	                fmt 
-	                debug 
-	                info 
-	                !computed_function_envs 
-	                func_hash 
-	                globals
-                    (Inthash.create 1024) with
+            match get_results fmt debug info !computed_function_envs func_hash 
+	                globals (Inthash.create 1024) with
             | (stmt_count, taint_stmt_count, _) ->
                 P.print () "STMT_COUNT: %d TAINT_STMT_COUNT: %d\n" stmt_count taint_stmt_count
     in
     let do_prepare_slice enabled = 
         if enabled then
-            match get_results 
-                    fmt 
-                    debug 
-                    info 
-                    !computed_function_envs 
-                    func_hash 
-                    globals
-                    func_constr_hash with
+            match get_results fmt debug info !computed_function_envs func_hash 
+                    globals func_constr_hash with
             | (_, _, vulnerable_statements) ->
                 Cil.dumpFile (new SlicePretty.print vulnerable_statements) stdout "test" (Cil_state.file ());
     in
@@ -224,6 +200,7 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
         )
     in
     
+    print_function_count ();
     intialize_library_calls ();
     P.print_info () "%s\n" "Performing Taint Analysis";
     perform_analysis (PrintIntermediateEnabled.get ());

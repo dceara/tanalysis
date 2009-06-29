@@ -1,12 +1,9 @@
-(* Frama-C journal generated at 09:11 the 08/06/2009 *)
+(* Frama-C journal generated at 18:21 the 28/06/2009 *)
 
 (* Running *)
 let start () =
  let () = Journal.run () in
- let () = Journal.apply "Cmdline.taint-analysis.enabled.set" true in
- let () = Journal.apply "Cmdline.taint-analysis.max-taint-metric.set" true in
- let () = Cmdline.Files.add "tests/func_tests/49.read_metrics_basic_recursion.c" in
- let () = File.init_from_cmdline () in
+ let () = Cmdline.PrintShare.set true in
  (* Finished *)
  Journal.finished ()
 
