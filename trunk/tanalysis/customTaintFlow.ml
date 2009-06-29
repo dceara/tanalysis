@@ -151,8 +151,7 @@ module TaintComputer(Param:sig
                                 Typing.combine env pred_env)
                             (Inthash.find Param.stmt_envs first_pred_id)    
                             (List.tl current_stmt.preds)),
-                    combine_cond_taint current_stmt nullable_old_stmt cond_taint
-                    )
+                    combine_cond_taint current_stmt nullable_old_stmt cond_taint)
         in
         let old_env = Gamma.copy (Inthash.find Param.stmt_envs current_stmt.sid) in
         
