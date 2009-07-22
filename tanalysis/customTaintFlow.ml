@@ -15,6 +15,7 @@ module TaintComputer(Param:sig
                         val debug : bool      
                         val info : bool     
                         val print_int : bool
+                        val main_func_name : string option
                      end) = struct
 
 
@@ -24,6 +25,7 @@ module TaintComputer(Param:sig
                                                             let fmt = Param.fmt
                                                             let debug = Param.debug
                                                             let info = Param.info
+                                                            let main_func_name = Param.main_func_name
                                                         end)
     module P = TaintPrinter.Printer(struct
                                         let fmt = Param.fmt
@@ -252,7 +254,7 @@ end
 (* Runs the analysis on a given function with regard to the already computed *)
 (* environments. *)
 (* Returns the new environment for f. *)
-let run_custom_taint format dbg inf print_intermediate f f_envs f_hash gls =
+let run_custom_taint format dbg inf print_intermediate f f_envs f_hash gls main_func =
     let tree = Dominators.computeIDom f in 
     let start_stmt = List.hd f.sallstmts in
     let module TaintComputer = TaintComputer(struct
@@ -267,13 +269,14 @@ let run_custom_taint format dbg inf print_intermediate f f_envs f_hash gls =
                                                 let debug = dbg
                                                 let info = inf
                                                 let print_int = print_intermediate
+                                                let main_func_name = main_func
                                             end) in
     TaintComputer.start [start_stmt]
 
 (* Runs the analysis for a non recursive function f. Adds the new environment for *)
 (* f to the function environments. *)
-let run_custom_taint_non_recursive format debug info print_intermediate f f_envs f_hash gls =
-    let (env, all_stmts_envs) = run_custom_taint format debug info print_intermediate f f_envs f_hash gls in
+let run_custom_taint_non_recursive format debug info print_intermediate f f_envs f_hash gls main_func =
+    let (env, all_stmts_envs) = run_custom_taint format debug info print_intermediate f f_envs f_hash gls main_func in
     Inthash.add !f_envs f.svar.vid (env, all_stmts_envs)
 
 (* Runs taint analysis on a given list of mutually recursive functions. *)
@@ -282,7 +285,7 @@ let run_custom_taint_non_recursive format debug info print_intermediate f f_envs
 (* f_list - the list of fundec for the mutually recursive functions *)
 (* f_envs - the already computed function environments *)
 (* gls - the list of globals in the program *)
-let run_custom_taint_recursive format dbg inf print_intermediate f_list f_envs f_hash gls =
+let run_custom_taint_recursive format dbg inf print_intermediate f_list f_envs f_hash gls main_func =
     let module Typing = TaintTyping.Typing(struct
                                          let fmt = format
                                          let debug = dbg
@@ -299,6 +302,7 @@ let run_custom_taint_recursive format dbg inf print_intermediate f_list f_envs f
                                                             let fmt = format
                                                             let debug = dbg
                                                             let info = inf
+                                                            let main_func_name = main_func
                                                         end) in
     (* Function that iterates until no more changes are made to the environments *)
     (* for the mutually recursive functions. *)
@@ -306,7 +310,7 @@ let run_custom_taint_recursive format dbg inf print_intermediate f_list f_envs f
         match List.fold_left
                 (fun changed f ->
                     let (old_env, _) = Inthash.find !f_envs f.svar.vid in
-                    let (new_env, all_stmt_envs) = run_custom_taint format dbg inf print_intermediate f f_envs f_hash gls in
+                    let (new_env, all_stmt_envs) = run_custom_taint format dbg inf print_intermediate f f_envs f_hash gls main_func in
                     match Gamma.compare old_env new_env with
                         | false -> 
                             Inthash.replace !f_envs f.svar.vid (new_env, all_stmt_envs);

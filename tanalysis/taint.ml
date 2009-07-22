@@ -25,6 +25,8 @@ let option_max_read_metric () = "taint-analysis.max-read-metric"
 let option_min_taint_metric () = "taint-analysis.min-taint-metric"
 let option_max_taint_metric () = "taint-analysis.max-taint-metric"
 
+let option_main_function () = "taint-analysis.main-function"
+
 let default_config_file () = "default.cfg"
 let default_constr_config_file () = "default_constr.cfg"
 
@@ -62,6 +64,10 @@ module ConfigFile =
 module ConstrConfigFile =
     Cmdline.Dynamic.Register.EmptyString(struct let name = option_constr_config_file () end)
 
+(* Register main function name sub option. *)
+module MainFunction =
+    Cmdline.Dynamic.Register.EmptyString(struct let name = option_main_function () end)
+	
 (* Register prepare slice sub option. *)
 module PrepareSliceEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_prepare_slice () end)
@@ -100,20 +106,16 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
         globals;
     let print_function_count () =
         ignore ()
-        (* let cnt = ref 0 in
-        List.iter 
-            (fun global ->
-                match global with 
-                | GFun (funcdec, _) -> cnt := !cnt + 1
-                | _ -> ignore ())
-            globals;
-        P.print () "Function count = %d\n" !cnt *) 
     in
     let intialize_library_calls () =
         TaintConfigHelper.run_library fmt debug info config_file_name constr_config_file_name
             computed_function_envs globals (ref func_hash) (ref lib_func_hash) (ref func_constr_hash)
     in    
     let perform_analysis print_intermediate =
+        let main_func =
+            match MainFunction.is_set () with
+                | true -> Some (MainFunction.get ())
+                | false -> None in
         let (mappings, nodes, g, lst) = SccCallgraph.get_scc () in
         let get_function node = 
             let n = Hashtbl.find mappings node in
@@ -122,24 +124,24 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
         in
         let rec next_func component =
             match SccCallgraph.get_next_call mappings nodes g component with
-                | FuncNone -> ignore ()
-                | FuncNonRecursive (node, remaining) -> 
-                    (match get_function node with
-                        | None -> next_func remaining
-                        | Some func ->
-                            run_custom_taint_non_recursive fmt debug info print_intermediate 
-                                func computed_function_envs func_hash globals)
-                | FuncRecursive node_list -> 
-                    let func_list = List.fold_left 
-                                        (fun res node 
-                                            -> 
-                                                match get_function node with
-                                                    | None -> res
-                                                    | Some func -> List.concat [res;[func]]) 
-                                        []
-                                        node_list in
-                    run_custom_taint_recursive fmt debug info print_intermediate
-                        func_list computed_function_envs func_hash globals
+            | FuncNone -> ignore ()
+            | FuncNonRecursive (node, remaining) -> 
+                (match get_function node with
+                | None -> next_func remaining
+                | Some func ->
+                    run_custom_taint_non_recursive fmt debug info print_intermediate 
+                        func computed_function_envs func_hash globals main_func)
+            | FuncRecursive node_list -> 
+                let func_list = List.fold_left 
+                                    (fun res node 
+                                        -> 
+                                            match get_function node with
+                                            | None -> res
+                                            | Some func -> List.concat [res;[func]]) 
+                                    []
+                                    node_list in
+                run_custom_taint_recursive fmt debug info print_intermediate
+                    func_list computed_function_envs func_hash globals main_func
         in
         List.iter next_func lst;
     in
@@ -295,7 +297,11 @@ let () =
     
        "-constr-config-file",
        Arg.String (Cmdline.Dynamic.Apply.String.set (option_constr_config_file () )),
-       ": The constraint config file containing the constraints that must be met by the called functions.";] 
+       ": The constraint config file containing the constraints that must be met by the called functions.";
+       
+       "-main-function",
+       Arg.String (Cmdline.Dynamic.Apply.String.set (option_main_function () )),
+       ": The name of the main function for considering command line arguments as tainted.";] 
 
 (* Extend the Frama-C entry point (the "main" of Frama-C). *)
 let () = Db.Main.extend run 

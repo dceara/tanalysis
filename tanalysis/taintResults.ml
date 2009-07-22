@@ -18,6 +18,7 @@ module ResultsComputer(Param:sig
                                                             let fmt = Param.fmt
                                                             let debug = Param.debug
                                                             let info = Param.info
+                                                            let main_func_name = None
                                                         end)
     
     module Typing = TaintTyping.Typing (struct

@@ -7,7 +7,8 @@ module InstrComputer(Param:sig
                         val func_hash : (string, fundec) Hashtbl.t
                         val fmt : Format.formatter
                         val debug : bool      
-                        val info : bool     
+                        val info : bool 
+                        val main_func_name : string option
                      end) = struct
     module P = TaintPrinter.Printer(struct
                                         let fmt = Param.fmt
@@ -53,7 +54,7 @@ module InstrComputer(Param:sig
     
     (* Creates an intial environment for a function. *)
     (* The formals, locals, globals and the return value are initialized. *)
-    let create_initial_env func = 
+    let create_initial_env_func func = 
         let initial_env = Gamma.create_env () in
         (List.iter
             (fun formal ->
@@ -79,6 +80,37 @@ module InstrComputer(Param:sig
                             (list_global_vars () ()) in 
         ignore (Typing.process_function_return initial_env func.svar ret_taint);
         initial_env
+    
+    (* Creates an intial environment for the main function. *)
+    (* The formals, locals, globals and the return value are initialized. *)
+    let create_initial_env_main func = 
+        let initial_env = Gamma.create_env () in
+        (List.iter
+            (fun formal ->
+                ignore (Gamma.set_taint initial_env formal.vid T))
+            func.sformals);  
+        (List.iter 
+            (fun local ->
+                ignore (Typing.process_local initial_env local))
+            func.slocals);
+        (List.iter
+            (fun global ->
+                ignore (Typing.process_global initial_env global))
+            (list_global_vars () ()));
+        let ret_taint = T in
+        ignore (Typing.process_function_return initial_env func.svar ret_taint);
+        initial_env
+    
+    (* Creates an intial environment for a function. *)
+    (* The formals, locals, globals and the return value are initialized. *)
+    let create_initial_env func = 
+        match Param.main_func_name with 
+        | None -> create_initial_env_func func
+        | Some main_name -> 
+            if main_name = func.svar.vname then
+                create_initial_env_main func
+            else
+                create_initial_env_func func
     
     (* Performs the function call and returns the taintedness for the result. *)
     (* Params: *)

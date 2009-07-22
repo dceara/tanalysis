@@ -20,6 +20,7 @@ module Initializer(Param:sig
                                                             let fmt = Param.fmt
                                                             let debug = Param.debug
                                                             let info = Param.info
+                                                            let main_func_name = None
                                                         end)
 
     module P = TaintPrinter.Printer(struct
