@@ -402,8 +402,15 @@ module InstrComputer(Param:sig
             let offset_taint = do_offset env offset func_env in
             P.print_debug () "[DEBUG] Assigning to %s taint:" vinfo.vname;
             P.print_taint_debug () expr_taint; 
+            (* If the symbol is a structure or array which was tainted, *)
+            (* we must combine the old taint too. *)
+            let prev_taint = 
+                match offset with 
+                | NoOffset -> U
+                | _ -> Gamma.get_taint env vinfo.vid in
             let taint = Typing.combine_taint expr_taint cond_taint in
             let taint = Typing.combine_taint taint offset_taint in
+            let taint = Typing.combine_taint taint prev_taint in
             let aliases = Alias.get_aliases vinfo in
             List.iter 
                 (fun info -> Gamma.set_taint env info.vid taint)
@@ -419,14 +426,21 @@ module InstrComputer(Param:sig
                 aliases;
             env
         in
-        let do_assign_lvalue_mem ptr_expr expr =
+        let do_assign_lvalue_mem ptr_expr expr offset =
             let vinfo = Utils.extract_vinfo_from_ptr_expr ptr_expr in
             let vinfo_expr_taint = do_expr env ptr_expr [] func_env in
             let expr_taint = do_expr env expr param_exprs func_env in
             P.print_debug () "[DEBUG] Assigning to %s taint:" vinfo.vname;
             P.print_taint_debug () expr_taint; 
+            (* If the symbol is a structure or array which was tainted, *)
+            (* we must combine the old taint too. *)
+            let prev_taint = 
+                match offset with 
+                | NoOffset -> U
+                | _ -> Gamma.get_taint env vinfo.vid in
             let taint = Typing.combine_taint expr_taint cond_taint in
             let taint = Typing.combine_taint taint vinfo_expr_taint in
+            let taint = Typing.combine_taint taint prev_taint in
             let aliases = Alias.get_aliases vinfo in
             List.iter 
                 (fun info -> Gamma.set_taint env info.vid taint)
@@ -439,7 +453,7 @@ module InstrComputer(Param:sig
             | ((Var vinfo, offset), T) -> do_assign_lvalue_tainted vinfo offset                   
             | ((Var vinfo, offset), _) -> do_assign_lvalue vinfo expr offset
             | ((Mem ptr_expr, _), T) -> do_assign_lvalue_mem_tainted ptr_expr
-            | ((Mem ptr_expr, _), _) -> do_assign_lvalue_mem ptr_expr expr   
+            | ((Mem ptr_expr, offset), _) -> do_assign_lvalue_mem ptr_expr expr offset   
             
     (* Params: *)
     (* env - the current environment *)
