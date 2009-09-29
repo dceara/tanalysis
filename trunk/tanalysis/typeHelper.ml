@@ -4,9 +4,6 @@ open Cil
 
 type refCountType = RefCount of int
 
-(* TODO: void* types *)
-(* type sizeType = Size of int | VoidSize *)
-
 type typeSize = TypeSize of refCountType * int
 
 module TypeGetter(Param:sig
