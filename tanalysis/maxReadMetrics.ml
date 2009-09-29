@@ -1,3 +1,5 @@
+(* TODO: OBSOLETE better implementation required sept-2009 *)
+
 open Cil
 open Cilutil
 open Cil_types
