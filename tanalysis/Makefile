@@ -18,6 +18,7 @@ pack: utils \
 	taintTyping \
 	alias \
 	taintPretty \
+  vulnerablePretty \
 	slicePretty \
 	taintInstructionComputer \
 	taintConfigHelper \
@@ -40,6 +41,7 @@ pack: utils \
 					   taintTyping.cmo \
 					   alias.cmo \
 					   taintPretty.cmo \
+             vulnerablePretty.cmo \
 					   slicePretty.cmo \
 					   taintInstructionComputer.cmo \
 					   taintConfigHelper.cmo \
@@ -90,6 +92,9 @@ taintPretty: taintPretty.ml
 slicePretty: slicePretty.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
+vulnerablePretty: vulnerablePretty.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
 taintInstructionComputer: taintInstructionComputer.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^  
 	
