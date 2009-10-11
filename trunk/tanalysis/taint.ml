@@ -15,6 +15,7 @@ let option_print_intermediate () = "taint-analysis.print-intermediate"
 let option_print_final () = "taint-analysis.print-final"
 let option_print_source () = "taint-analysis.print-source"
 let option_do_results () = "taint-analysis.do-results"
+let option_print_vulnerable_source () = "taint-analysis.print-vulnerable"
 let option_config_file () = "taint-analysis.config-file"
 let option_constr_config_file () = "taint-analysis.constr-config-file"
 let option_debugging () = "taint-analysis.debug"
@@ -49,6 +50,9 @@ module PrintSourceEnabled =
 (* Register a new Frama-C option. *)
 module DoResultsEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_do_results () end)
+    
+module PrintVulnerableSourceEnabled =
+    Cmdline.Dynamic.Register.False(struct let name = option_print_vulnerable_source () end)
 
 module Debugging = 
     Cmdline.Dynamic.Register.False(struct let name = option_debugging () end)
@@ -170,6 +174,13 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
             | (stmt_count, taint_stmt_count, _) ->
                 P.print () "STMT_COUNT: %d TAINT_STMT_COUNT: %d\n" stmt_count taint_stmt_count
     in
+    let print_vulnerable_source enabled =
+        if enabled then
+          match get_results fmt debug info !computed_function_envs func_hash
+                    globals func_constr_hash with
+          | (_, _, vulnerable_statements) ->
+                Cil.dumpFile (new VulnerablePretty.print vulnerable_statements) stdout "test" (Cil_state.file ());
+    in    
     let do_prepare_slice enabled = 
         if enabled then
             match get_results fmt debug info !computed_function_envs func_hash 
@@ -212,6 +223,8 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
     print_source (PrintSourceEnabled.get ());
     P.print_info () "%s\n" "Doing results";
     do_results (DoResultsEnabled.get ());
+    P.print_info () "%s\n" "Printing vulnerable source";
+    print_vulnerable_source (PrintVulnerableSourceEnabled.get ());
     P.print_info () "%s\n" "Preparing slice";
     do_prepare_slice (PrepareSliceEnabled.get ());
     P.print_info () "%s\n" "Computing min read metrics";
@@ -262,6 +275,10 @@ let () =
        "-do-results", (* plug-in option *)
        Arg.Unit DoResultsEnabled.on,
        ": Compute a percentage of the tainted instructions.";
+       
+       "-print-vulnerable", 
+       Arg.Unit PrintVulnerableSourceEnabled.on,
+       ": Print the source file with comments for vulnerable function calls";
     
        "-do-prepare-slice",
        Arg.Unit PrepareSliceEnabled.on,

@@ -462,22 +462,31 @@ module InstrComputer(Param:sig
     (* cond_taint - the current condition taint *)
     (* func_envs - the previously computed environments *)
     let do_call env null_lval cast_expr param_exprs cond_taint func_envs =
-        let do_call_lval vinfo =
+        (* TODO: BUG_LVAL_PTR: Missed the case where the lvalue is a pointer *)
+        (* TODO: Check if fix is OK. *)
+        (* let do_call_lval vinfo =
             let taint = do_expr env cast_expr param_exprs func_envs in
             let taint = Typing.combine_taint taint cond_taint in
             Gamma.set_taint env vinfo.vid taint;
             P.print_debug () "[DEBUG] Assigning to %s taint value:" vinfo.vname;
             P.print_taint_debug () taint; 
             env
-        in  
+        in *) 
+        let do_call_lval lval =
+            do_assign env lval cast_expr cond_taint param_exprs func_envs
+        in
         let do_call_void () =
+            P.print_debug () "%s\n" "[DEBUG] Processing void call";
             ignore (do_expr env cast_expr param_exprs func_envs); 
             env 
         in
 
         P.print_info () "[INFO] Processing call instruction %s" "\n";         
         match null_lval with
-            | Some (Var vinfo, _) -> do_call_lval vinfo 
+            (* TODO: BUG_LVAL_PTR: Missed the case where the lvalue is a pointer *)
+            (* TODO: Check if fix is OK. *)
+            (* | Some (Var vinfo, _) -> do_call_lval vinfo *)
+            | Some lval -> do_call_lval lval
             | _ -> do_call_void ()
     
     (* Changes the environment according to the instruction *)
