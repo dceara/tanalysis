@@ -95,8 +95,11 @@ module ResultsComputer(Param:sig
                 | true -> ignore ())
             | (Mem exp, offset) ->
                 P.print_info () "%s" "[INFO] Checking array offset for pointer\n";
-                add_vulnerable_statement curr_stmt
-                    
+                (* TODO: Check if this is OK. *)
+                (* add_vulnerable_statement curr_stmt *)
+                (match do_check_array_offset offset with
+                | false -> add_vulnerable_statement curr_stmt
+                | true -> ignore ())
         in
         let do_assign lval =
             let vinfo = Utils.get_lval_vinfo lval in
@@ -379,7 +382,7 @@ let get_results format dbg inf f_envs f_hash gls f_constr_hash =
 					                        let globals = gls
 					                        let func_envs = f_envs
 					                        let func_hash = f_hash
-                                            let func_constr_hash = f_constr_hash 
+                                  let func_constr_hash = f_constr_hash 
 					                        let fmt = format
 					                        let debug = dbg      
 					                        let info = inf     
