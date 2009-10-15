@@ -9,6 +9,7 @@ open MinReadMetrics
 open MaxReadMetrics
 open MinTaintMetrics
 open MaxTaintMetrics
+open Visitor
 
 let option_enabled () = "taint-analysis.enabled"
 let option_print_intermediate () = "taint-analysis.print-intermediate"
@@ -179,7 +180,7 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
           match get_results fmt debug info !computed_function_envs func_hash
                     globals func_constr_hash with
           | (_, _, vulnerable_statements) ->
-                Cil.dumpFile (new VulnerablePretty.print vulnerable_statements) stdout "test" (Cil_state.file ());
+                visitFramacFile (new VulnerableVisitor.visitor (vulnerable_statements, fmt, debug, info)) (Cil_state.file())
     in    
     let do_prepare_slice enabled = 
         if enabled then
