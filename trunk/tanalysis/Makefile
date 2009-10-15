@@ -16,9 +16,11 @@ pack: utils \
 	taintPrinter \
 	taintCFGPrinter \
 	taintTyping \
+  vulnerableUtils \
 	alias \
 	taintPretty \
   vulnerablePretty \
+  vulnerableVisitor \
 	slicePretty \
 	taintInstructionComputer \
 	taintConfigHelper \
@@ -39,9 +41,11 @@ pack: utils \
 					   taintPrinter.cmo \
 					   taintCFGPrinter.cmo \
 					   taintTyping.cmo \
+             vulnerableUtils.cmo \
 					   alias.cmo \
 					   taintPretty.cmo \
              vulnerablePretty.cmo \
+             vulnerableVisitor.cmo \
 					   slicePretty.cmo \
 					   taintInstructionComputer.cmo \
 					   taintConfigHelper.cmo \
@@ -79,10 +83,13 @@ taintTyping: taintTyping.ml
 
 taintPrinter: taintPrinter.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
-
+  
 taintCFGPrinter: taintCFGPrinter.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
+vulnerableUtils: vulnerableUtils.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
 alias: alias.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^	
 
@@ -93,6 +100,9 @@ slicePretty: slicePretty.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
 vulnerablePretty: vulnerablePretty.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+
+vulnerableVisitor: vulnerableVisitor.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
   
 taintInstructionComputer: taintInstructionComputer.ml

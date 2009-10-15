@@ -1,3 +1,5 @@
+(* WARNING: This class is deprecated and should be removed! *)
+
 open Cil
 open Cil_types
 open TaintGamma

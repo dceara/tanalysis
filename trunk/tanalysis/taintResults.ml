@@ -1,6 +1,7 @@
 open Cil_types
 open Cil
 open TaintGamma
+open VulnerableUtils
 
 module ResultsComputer(Param:sig
                         val globals : global list     
@@ -51,8 +52,15 @@ module ResultsComputer(Param:sig
 
     let vulnerable_statements = ref (Inthash.create 1024);;
 
-    let add_vulnerable_statement stmt =
-        Inthash.add !vulnerable_statements stmt.sid stmt
+    let add_vulnerable_statement_function_constraint stmt fname =
+        Inthash.add !vulnerable_statements stmt.sid (FunctionConstraint fname)
+        
+    let add_vulnerable_statement_buffer_index stmt bufname =
+        Inthash.add !vulnerable_statements stmt.sid (BufferIndex bufname)
+    
+    (* WARNING: This function is deprecated and should be removed! *)
+    (* let add_vulnerable_statement stmt =
+        Inthash.add !vulnerable_statements stmt.sid stmt *)
 
     let inc_taint_stmt_count () =
         taint_stmt_count := !taint_stmt_count + 1
@@ -88,17 +96,16 @@ module ResultsComputer(Param:sig
             in
             
             match lval with
-            | (Var _, offset) ->
+            | (Var vinfo, offset) ->
                 P.print_info () "%s" "[INFO] Checking array offset for lvalue:\n";
                 (match do_check_array_offset offset with
-                | false -> add_vulnerable_statement curr_stmt
+                | false -> add_vulnerable_statement_buffer_index curr_stmt vinfo.vname
                 | true -> ignore ())
             | (Mem exp, offset) ->
                 P.print_info () "%s" "[INFO] Checking array offset for pointer\n";
-                (* TODO: Check if this is OK. *)
-                (* add_vulnerable_statement curr_stmt *)
                 (match do_check_array_offset offset with
-                | false -> add_vulnerable_statement curr_stmt
+                (* TODO: extract pointer name from expression exp *)
+                | false -> add_vulnerable_statement_buffer_index curr_stmt "pointer"
                 | true -> ignore ())
         in
         let do_assign lval =
@@ -221,7 +228,7 @@ module ResultsComputer(Param:sig
 	                        func_constraints in
 	                P.print_info () "[INFO] Constraints hold for function %s: %B\n" callee_func.svar.vname holds;
 	                match holds with
-	                | false ->add_vulnerable_statement curr_stmt
+                  | false -> add_vulnerable_statement_function_constraint curr_stmt callee_func.svar.vname
 	                | true -> ignore ())
             in
             let do_function_call callee_func =
