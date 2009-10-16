@@ -1,3 +1,4 @@
+open Cil_types
 
 (* The type of the detected vulnerability. *)
-type vulnerability = FunctionConstraint of string | BufferIndex of string 
+type vulnerability = FunctionConstraint of stmt * string | BufferIndex of stmt * string 

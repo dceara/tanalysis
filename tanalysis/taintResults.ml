@@ -50,17 +50,13 @@ module ResultsComputer(Param:sig
 
     let taint_stmt_count = ref 0;;
 
-    let vulnerable_statements = ref (Inthash.create 1024);;
+    let vulnerable_statements = ref [];;
 
     let add_vulnerable_statement_function_constraint stmt fname =
-        Inthash.add !vulnerable_statements stmt.sid (FunctionConstraint fname)
+        vulnerable_statements := (FunctionConstraint (stmt, fname))::!vulnerable_statements
         
     let add_vulnerable_statement_buffer_index stmt bufname =
-        Inthash.add !vulnerable_statements stmt.sid (BufferIndex bufname)
-    
-    (* WARNING: This function is deprecated and should be removed! *)
-    (* let add_vulnerable_statement stmt =
-        Inthash.add !vulnerable_statements stmt.sid stmt *)
+        vulnerable_statements := (BufferIndex (stmt, bufname))::!vulnerable_statements
 
     let inc_taint_stmt_count () =
         taint_stmt_count := !taint_stmt_count + 1
