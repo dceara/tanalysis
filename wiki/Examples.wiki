@@ -1,4 +1,4 @@
-#summary This page shows some examples outputs obtained with STAC for different inputs.
+#summary This page shows some examples of outputs obtained with STAC for different inputs.
 
 <wiki:toc max_depth="1" />
 
