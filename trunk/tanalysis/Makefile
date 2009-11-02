@@ -7,7 +7,14 @@ PACKFLAGS=-pack -o $(PLUGIN_NAME).cmo
 CP=cp -f
 RM=rm -f
 
-build: pack
+build: pack_alias pack
+
+pack_alias: uref \
+  setp \
+  steensgaard \
+  olf \
+  golf \
+  ptranal
 
 pack: utils \
 	printer \
@@ -32,8 +39,15 @@ pack: utils \
 	minTaintMetrics \
 	maxTaintMetrics \
 	metricPretty \
+  testPointsTo \
 	taint 
-	$(CC) $(PACKFLAGS) utils.cmo \
+	$(CC) $(PACKFLAGS) uref.cmo \
+             setp.cmo \
+             steensgaard.cmo \
+             olf.cmo \
+             golf.cmo \
+             ptranal.cmo \
+             utils.cmo \
 					   printer.cmo \
 					   typeHelper.cmo \
 					   taintGamma.cmo \
@@ -56,8 +70,31 @@ pack: utils \
 					   minTaintMetrics.cmo \
 					   maxTaintMetrics.cmo \
 					   metricPretty.cmo \
+             testPointsTo.cmo \
 					   taint.cmo 
 
+#PTRANALYSIS BEGINS HERE
+
+uref: uref.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
+setp: setp.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
+steensgaard: steensgaard.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
+olf: olf.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
+golf: golf.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+  
+ptranal: ptranal.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+
+#PTRANALYSIS ENDS HERE
+             
 xmlr: xmlr.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 
@@ -128,6 +165,9 @@ maxTaintMetrics: maxTaintMetrics.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 	
 metricPretty: metricPretty.ml
+	$(CC) $(PREFLAGS) $(CFLAGS) $^
+
+testPointsTo: testPointsTo.ml
 	$(CC) $(PREFLAGS) $(CFLAGS) $^
 	
 taint: taint.ml

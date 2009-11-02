@@ -16,21 +16,11 @@ module VulnerablePrinter (Param:sig
                               end)
                               
   let print () = 
-    let _extract_loc s = 
-      match s.skind with
-      | Instr i ->
-        (match i with
-        | Set (_, _, (loc, _)) -> Some loc
-        | Call (_, _, _, (loc, _)) -> Some loc
-        | _ -> None
-        )
-      | _ -> None
-    in
     List.iter 
       (fun vulnerability ->
         match vulnerability with
         | FunctionConstraint (s, fname) -> 
-            (match _extract_loc s with 
+            (match extract_loc s with 
             | Some loc ->
               P.print () 
                   "[%s:%i] Vulnerability: Function constraint doesn't hold for function '%s'\n" 
@@ -39,7 +29,7 @@ module VulnerablePrinter (Param:sig
             | None -> ignore ()
             )
         | BufferIndex (s, bufname) -> 
-            (match _extract_loc s with 
+            (match extract_loc s with 
             | Some loc ->
               P.print () 
                   "[%s:%i] Vulnerability: Buffer write with tainted index for buffer '%s'\n" 

@@ -399,4 +399,8 @@ let get_results format dbg inf f_envs f_hash gls f_constr_hash =
     let visited_ref = ref (Inthash.create 1024) in
     Printf.printf "%s\n" "Analyzing results for function main";
     Computer.compute main_instance [] (main_func, visited_ref, worklist);
-    (!Computer.stmt_count, !Computer.taint_stmt_count, !Computer.vulnerable_statements)
+    let vulnerable_statements = 
+      List.sort 
+        (fun v1 v2 -> VulnerableUtils.compare v1 v2)
+        !Computer.vulnerable_statements in                  
+    (!Computer.stmt_count, !Computer.taint_stmt_count, vulnerable_statements)
