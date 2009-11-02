@@ -27,6 +27,9 @@ let option_max_read_metric () = "taint-analysis.max-read-metric"
 let option_min_taint_metric () = "taint-analysis.min-taint-metric"
 let option_max_taint_metric () = "taint-analysis.max-taint-metric"
 
+(* TESTING *)
+let option_test_ptranal () = "taint-analysis.ptranal"
+
 let option_main_function () = "taint-analysis.main-function"
 
 let default_config_file () = "default.cfg"
@@ -93,6 +96,10 @@ module MinTaintMetricEnabled =
 module MaxTaintMetricEnabled =
     Cmdline.Dynamic.Register.False(struct let name = option_max_taint_metric () end)
 
+(* TESTING *)
+module PtranalEnabled = 
+    Cmdline.Dynamic.Register.False(struct let name = option_test_ptranal () end)
+    
 let run_taint fmt debug info config_file_name constr_config_file_name globals =
     let module P = TaintPrinter.Printer(struct
                                         let fmt = fmt
@@ -214,6 +221,12 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
             Cil.dumpFile (new MetricPretty.print stmt_hash) stdout "test" (Cil_state.file ())
         )
     in
+    (* TESTING *)
+    let do_ptranal enabled =
+        if enabled then (
+            visitFramacFile (new TestPointsTo.visitor) (Cil_state.file())
+        )
+    in
     
     print_function_count ();
     intialize_library_calls ();
@@ -236,8 +249,10 @@ let run_taint fmt debug info config_file_name constr_config_file_name globals =
     P.print_info () "%s\n" "Computing min taint metrics";
     do_min_taint_metrics (MinTaintMetricEnabled.get ());
     P.print_info () "%s\n" "Computing max taint metrics";
-    do_max_taint_metrics (MaxTaintMetricEnabled.get ())
-    
+    do_max_taint_metrics (MaxTaintMetricEnabled.get ());
+    (* TESTING *)
+    P.print_info () "%s\n" "Computing points to analysis";
+    do_ptranal (PtranalEnabled.get ())
 
 let run fmt =
     if Enabled.get () then
@@ -309,6 +324,11 @@ let () =
        "-taint-info", (* plug-in option *)
        Arg.Unit Info.on,
        ": Turn info ON.";
+    
+      (* TESTING *)
+      "-do-ptranal",
+       Arg.Unit PtranalEnabled.on,
+       ": Computes points to analysis"; 
     
        "-config-file",
        Arg.String (Cmdline.Dynamic.Apply.String.set (option_config_file () )),
