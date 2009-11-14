@@ -1,3 +1,4 @@
+(*test*)
 open Cil_types
 
 module AliasAnalysis(Param:sig
