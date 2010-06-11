@@ -1,5 +1,4 @@
 <wiki:toc max_depth="3" />
-=Initial Taint Analysis Implementation=
 
 =Overview=
 The goal of the project is to analyze C programs and identify potentially harmful instructions (or ideally patterns) from the security point of view. The more general objective is to detect software vulnerabilities. To achieve this goal, the taint analysis will be used to facilitate the construction of test-cases for detecting activable vulnerabilities inside a modular approach in the <a href="http://vulcain.imag.fr/index.html">MSTIC Vulcain project</a>.
